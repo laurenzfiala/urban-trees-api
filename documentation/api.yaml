@@ -1,0 +1,62 @@
+swagger: '2.0'
+info:
+  description: ''
+  version: 0.0.1
+  title: Urban Trees API
+  termsOfService: ''
+  contact:
+    email: laurenz.fiala@outlook
+  license:
+    name: ''
+    url: 'test://test'
+host: test.test
+basePath: /test
+tags:
+  - name: tree
+    description: Data corresponding to trees
+  - name: beacon
+    description: Data corresponding to beacons and their data collection
+  - name: observation
+    description: Data corresponding to phenology & physiognomy data
+schemes:
+  - https
+paths:
+  '/tree/{treeId}':
+    get:
+      tags:
+        - tree
+      summary: Return information about a single tree
+      description: ''
+      operationId: ''
+      produces:
+        - application/json
+      parameters:
+        - name: treeId
+          in: path
+          description: ID of a tree
+          required: true
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Successful
+          schema:
+            $ref: '#/definitions/Tree'
+        '400':
+          description: Invalid tree id
+      security:
+        - api_key: []
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: api_key
+    in: header
+definitions:
+  Tree:
+    type: object
+    required:
+      - id
+    properties:
+      id:
+        type: integer
+        format: int64

@@ -1,62 +1,480 @@
-swagger: '2.0'
+
+#
+# Version and API info
+#
+
+swagger: "2.0"
 info:
-  description: ''
-  version: 0.0.1
-  title: Urban Trees API
-  termsOfService: ''
+  description: ""
+  version: "0.0.1"
+  title: "Urban Trees API"
+  termsOfService: ""
   contact:
-    email: laurenz.fiala@outlook
+    email: "laurenz.fiala@outlook.at"
   license:
-    name: ''
-    url: 'test://test'
-host: test.test
-basePath: /test
+    name: ""
+    url: "test://test"
+host: "test.test"
+basePath: "/test"
 tags:
-  - name: tree
-    description: Data corresponding to trees
-  - name: beacon
-    description: Data corresponding to beacons and their data collection
-  - name: observation
-    description: Data corresponding to phenology & physiognomy data
+- name: "tree"
+  description: "Retrieve and store tree information"
+- name: "beacon"
+  description: "Data corresponding to beacons and their data collection"
+- name: "observation"
+  description: "New observation data"
 schemes:
-  - https
+- "https"
+
+#
+# Paths
+#
+
 paths:
-  '/tree/{treeId}':
+  /tree/{treeId}:
     get:
       tags:
-        - tree
-      summary: Return information about a single tree
-      description: ''
-      operationId: ''
+      - "tree"
+      summary: "Return information about a single tree"
+      description: ""
       produces:
-        - application/json
+      - "application/json"
       parameters:
-        - name: treeId
-          in: path
-          description: ID of a tree
-          required: true
-          type: integer
-          format: int64
+      - name: "treeId"
+        in: "path"
+        description: "ID of a tree"
+        required: true
+        type: "integer"
+        format: "int32"
       responses:
-        '200':
-          description: Successful
+        200:
+          description: "Successful"
           schema:
-            $ref: '#/definitions/Tree'
-        '400':
-          description: Invalid tree id
+            $ref: "#/definitions/Tree"
+        400:
+          description: "Invalid tree id"
       security:
-        - api_key: []
+      - api_key: []
+
+  /tree/{treeId}/physiognomy/:
+    get:
+      tags:
+      - "tree"
+      summary: "Return one or more physiognomy datasets (optionally in a given timespan)"
+      description: ""
+      produces:
+      - "application/json"
+      parameters:
+      - name: "treeId"
+        in: "path"
+        description: "ID of associated tree"
+        required: true
+        type: "integer"
+        format: "int32"
+      - name: "timespan_min"
+        in: query
+        description: "Oldest date"
+        type: "integer"
+        format: "int64"
+      - name: "timespan_max"
+        in: query
+        description: "Newest date"
+        type: "integer"
+        format: "int64"
+      responses:
+          200:
+            description: "Successful"
+            schema:
+              type: array
+              items:
+                $ref: "#/definitions/PhysiognomyDataset"
+          400:
+            description: "Invalid tree id"
+      security:
+      - api_key: []
+    post:
+      tags:
+      - "tree"
+      - "observation"
+      summary: "Store a single physiognomy dataset"
+      description: ""
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "treeId"
+        in: "path"
+        description: "ID of associated tree"
+        required: true
+        type: "integer"
+        format: "int32"
+      - in: body
+        name: body
+        description: "Dataset to store"
+        required: true
+        schema:
+          $ref: "#/definitions/PhysiognomyDataset"
+      responses:
+          201:
+            description: "Successfully stored"
+          400:
+            description: "Invalid data"
+            schema:
+              $ref: "#/definitions/PostError"
+      security:
+      - api_key: []
+      
+  /tree/{treeId}/phenology/:
+    get:
+      tags:
+      - "tree"
+      summary: "Return one or more phenology datasets (optionally in a given timespan)"
+      description: ""
+      produces:
+      - "application/json"
+      parameters:
+      - name: "treeId"
+        in: "path"
+        description: "ID of associated tree"
+        required: true
+        type: "integer"
+        format: "int32"
+      - name: "timespan_min"
+        in: query
+        description: "Oldest date"
+        type: "integer"
+        format: "int64"
+      - name: "timespan_max"
+        in: query
+        description: "Newest date"
+        type: "integer"
+        format: "int64"
+      responses:
+          200:
+            description: "Successful"
+            schema:
+              type: array
+              items:
+                $ref: "#/definitions/PhenologyDataset"
+          400:
+            description: "Invalid tree id"
+      security:
+      - api_key: []
+    post:
+      tags:
+      - "tree"
+      - "observation"
+      summary: "Store a single physiognomy dataset"
+      description: ""
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "treeId"
+        in: "path"
+        description: "ID of associated tree"
+        required: true
+        type: "integer"
+        format: "int32"
+      - in: body
+        name: body
+        description: "Dataset to store"
+        required: true
+        schema:
+          $ref: "#/definitions/PhenologyDataset"
+      responses:
+          201:
+            description: "Successfully stored"
+          400:
+            description: "Invalid data"
+            schema:
+              $ref: "#/definitions/PostError"
+      security:
+      - api_key: []
+
+  /beacon/{beaconId}:
+    get:
+      tags:
+      - "beacon"
+      summary: "Return information about a single beacon"
+      description: ""
+      produces:
+      - "application/json"
+      parameters:
+      - name: "beaconId"
+        in: "path"
+        description: "ID of a beacon"
+        required: true
+        type: "integer"
+        format: "int32"
+      responses:
+        200:
+          description: "Successful"
+          schema:
+            $ref: "#/definitions/Beacon"
+        400:
+          description: "Invalid beacon id"
+      security:
+      - api_key: []
+
+  /beacon/{beaconId}/data/:
+    get:
+      tags:
+      - "beacon"
+      summary: "Return one or more beacon datasets (optionally in a given timespan)"
+      description: "Returns all stored datasets. If timespan_max is given, only returns up to that point. Same is valid for timespan_min."
+      produces:
+      - "application/json"
+      parameters:
+      - name: "beaconId"
+        in: "path"
+        description: "ID of corresponding beacon"
+        required: true
+        type: "integer"
+        format: "int32"
+      - name: "timespan_min"
+        in: query
+        description: "Oldest date"
+        type: "integer"
+        format: "int64"
+      - name: "timespan_max"
+        in: query
+        description: "Newest date"
+        type: "integer"
+        format: "int64"
+      responses:
+          200:
+            description: "Successful"
+            schema:
+              type: array
+              items:
+                $ref: "#/definitions/BeaconDataset"
+          400:
+            description: "Invalid beacon id"
+          404:
+            description: "No data found in given timespan"
+      security:
+      - api_key: []
+    post:
+      tags:
+      - "beacon"
+      summary: "Store one or more beacon datasets"
+      description: ""
+      consumes:
+      - "application/json"
+      parameters:
+      - name: "beaconId"
+        in: "path"
+        description: "ID of corresponding beacon"
+        required: true
+        type: "integer"
+        format: "int32"
+      - in: body
+        name: body
+        description: "Datasets to store"
+        required: true
+        schema:
+          type: array
+          items:
+            $ref: "#/definitions/BeaconDataset"
+      responses:
+        201:
+          description: "Successfully stored"
+        400:
+          description: "Invalid data"
+          schema:
+            $ref: "#/definitions/PostError"
+      security:
+      - api_key: []
+
+#
+# Security
+#
+
 securityDefinitions:
   api_key:
     type: apiKey
     name: api_key
     in: header
+
+#
+# Definitions
+#
+
 definitions:
+  
+  # Entities
   Tree:
-    type: object
+    type: "object"
     required:
-      - id
+      - "id"
+      - "location"
+      - "species"
+      - "type"
     properties:
       id:
-        type: integer
-        format: int64
+        type: "integer"
+        format: "int32"
+      location:
+        $ref: "#/definitions/TreeLocation"
+      species:
+        type: "string"
+      type:
+        type: "string"
+      seed_age:
+        description: "Latest observed seed_age date"
+        type: "integer"
+        format: "int32"
+      age_description:
+        description: "Latest observed age_description"
+        type: "string"
+  
+  PhysiognomyDataset:
+    type: "object"
+    required:
+      - "tree_id"
+    properties:
+      tree_id:
+        type: "integer"
+        format: "int32"
+      tree_height:
+        type: "integer"
+        format: "int32"
+      stem_circumference:
+        type: "integer"
+        format: "int32"
+      crown_start_height:
+        type: "integer"
+        format: "int32"
+      crown_width:
+        type: "integer"
+        format: "int32"
+      observation_date:
+        $ref: "#/definitions/Timestamp"
+  
+  PhenologyDataset:
+    type: "object"
+    required:
+      - "tree_id"
+    properties:
+      tree_id:
+        type: "integer"
+        format: "int32"
+      observer:
+        type: "string"
+      observations:
+        type: array
+        items:
+          $ref: "#/definitions/PhenologyObservation"
+      observation_date:
+        $ref: "#/definitions/Timestamp"
+        
+  PhenologyObservation:
+    type: "object"
+    required:
+      - "object_id"
+      - "object"
+      - "result_id"
+      - "result"
+    properties:
+      object_id:
+        type: "integer"
+        format: "int32"
+      object:
+        type: "string"
+      result_id:
+        type: "integer"
+        format: "int32"
+      result:
+        type: "string"
+  
+  Beacon:
+    type: "object"
+    required:
+      - "id"
+      - "bluetooth_address"
+    properties:
+      id:
+        type: "integer"
+        format: "int32"
+      tree_id:
+        type: "integer"
+        format: "int32"
+      bluetooth_address:
+        type: "string"
+        
+  BeaconDataset:
+    type: "object"
+    required:
+      - "beacon_id"
+    properties:
+      beacon_id:
+        type: "integer"
+        format: "int32"
+      humidity:
+        type: "number"
+        format: "float"
+      temperature:
+        type: "number"
+        format: "float"
+      observation_date:
+        $ref: "#/definitions/Timestamp"
+      
+  TreeLocation:
+    type: "object"
+    required:
+      - "id"
+    properties:
+      id:
+        type: "integer"
+        format: "int32"
+      coordinates:
+        $ref: "#/definitions/Coordinates"
+      street:
+        type: "string"
+      city:
+        type: "string"
+        
+  Coordinates:
+    type: "object"
+    required:
+      - "x"
+      - "y"
+    properties:
+      x:
+        type: "number"
+        format: "float"
+      y:
+        type: "number"
+        format: "float"
+        
+  Timestamp:
+    type: "object"
+    required:
+      - "millis"
+    properties:
+      millis:
+        description: "UTC milliseconds from 1970"
+        type: "integer"
+        format: "int64"
+      dateString:
+        description: "UTC date and time string"
+        type: "string"
+        
+  # Error Responses
+  PostError:
+    type: "object"
+    required:
+      - "name"
+      - "description"
+      - "code"
+    properties:
+      name:
+        description: "General error name"
+        type: "string"
+      description:
+        description: "Specific error description"
+        type: "string"
+      code:
+        description: "Application error code"
+        type: "integer"
+        format: "int32"
+    

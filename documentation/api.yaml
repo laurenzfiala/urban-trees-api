@@ -370,11 +370,18 @@ definitions:
   PhenologyObservation:
     type: "object"
     required:
+      - "type_id"
+      - "type"
       - "object_id"
       - "object"
       - "result_id"
       - "result"
     properties:
+      type_id:
+        type: "integer"
+        format: "int32"
+      type:
+        type: "string"
       object_id:
         type: "integer"
         format: "int32"

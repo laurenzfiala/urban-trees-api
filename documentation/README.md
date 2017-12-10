@@ -4,3 +4,6 @@ This directory contains API definitions for the project. They are written in the
 
 All API definitions are in `*.yaml` format.
 
+# Additional Documentation
+
+More in-depth information on entities and how they are used in the API my be found in `Entity_Doumentation.md`.

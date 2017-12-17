@@ -319,13 +319,13 @@ definitions:
         type: "string"
       type:
         type: "string"
-      seed_age:
-        description: "Latest observed seed_age date"
+      plantation_year:
+        description: "Latest observed plantation_year"
         type: "integer"
         format: "int32"
-      age_description:
-        description: "Latest observed age_description"
-        type: "string"
+      is_plantation_year_estimate:
+        description: "Whether lastest observed plantation_year is an estimate or not"
+        type: "boolean"
   
   PhysiognomyDataset:
     type: "object"
@@ -338,10 +338,10 @@ definitions:
       tree_height:
         type: "integer"
         format: "int32"
-      stem_circumference:
+      trunk_circumference:
         type: "integer"
         format: "int32"
-      crown_start_height:
+      crown_base:
         type: "integer"
         format: "int32"
       crown_width:
@@ -358,7 +358,7 @@ definitions:
       tree_id:
         type: "integer"
         format: "int32"
-      observer:
+      observers:
         type: "string"
       observations:
         type: array

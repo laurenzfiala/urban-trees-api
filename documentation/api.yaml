@@ -308,7 +308,7 @@ definitions:
       - "id"
       - "location"
       - "species"
-      - "type"
+      - "genus"
     properties:
       id:
         type: "integer"
@@ -317,7 +317,7 @@ definitions:
         $ref: "#/definitions/TreeLocation"
       species:
         type: "string"
-      type:
+      genus:
         type: "string"
       plantation_year:
         description: "Latest observed plantation_year"

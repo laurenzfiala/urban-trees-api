@@ -1,0 +1,51 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.TreeMapper">
+
+    <resultMap id="TreeResultMap" type="at.sparklingscience.urbantrees.domain.Tree">
+        <id column="id" property="tree_id" />
+        <result column="species" property="species" />
+        <result column="genus" property="genus" />
+        <result column="plantation_year" property="plantationYear" />
+        <result column="is_plantation_year_estimate" property="isPlantationYearEstimate" />
+        <collection property="location" ofType="at.sparklingscience.urbantrees.domain.TreeLocation" >
+            <id property="id" column="location_id" />
+            <result column="street" property="street" />
+            <result column="city" property="city" />
+            <collection property="coordinates" ofType="at.sparklingscience.urbantrees.domain.Coordinates" >
+	            <result column="coords_x" property="x" />
+	            <result column="coords_y" property="y" />
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="findTreeById" resultMap="TreeResultMap">
+        select 
+		    t.id as tree_id,
+		    l.id as location_id,
+		    l.coords_x,
+		    l.coords_y,
+		    l.street,
+		    c.name as city,
+		    s.species,
+		    g.genus,
+		    a.plantation_year,
+		    a.is_plantation_year_estimate
+		from 
+		    tree_data.tree t,
+		    tree_data.tree_location l,
+		    tree_data.city c,
+		    tree_data.tree_species s,
+		    tree_data.tree_genus g,
+		    tree_data.tree_age a
+		where
+		    t.id = #{id}
+		    and t.location_id = l.id
+		    and l.id = c.id
+		    and t.species_id = s.id
+		    and t.genus_id = g.id
+		    and t.id = a.tree_id
+    </select>
+</mapper>

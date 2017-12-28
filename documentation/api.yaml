@@ -60,7 +60,7 @@ paths:
     get:
       tags:
       - "tree"
-      summary: "Return one or more physiognomy datasets (optionally in a given timespan)"
+      summary: "Return one or more physiognomy datasets, sorted by descending observation date (optionally in a given timespan)"
       description: ""
       produces:
       - "application/json"
@@ -127,7 +127,7 @@ paths:
     get:
       tags:
       - "tree"
-      summary: "Return one or more phenology datasets (optionally in a given timespan)"
+      summary: "Return one or more phenology datasets, sorted by descending observation date (optionally in a given timespan)"
       description: ""
       produces:
       - "application/json"
@@ -219,7 +219,7 @@ paths:
     get:
       tags:
       - "beacon"
-      summary: "Return one or more beacon datasets (optionally in a given timespan)"
+      summary: "Return one or more beacon datasets, sorted by descending observation date (optionally in a given timespan)"
       description: "Returns all stored datasets. If timespan_max is given, only returns up to that point. Same is valid for timespan_min."
       produces:
       - "application/json"

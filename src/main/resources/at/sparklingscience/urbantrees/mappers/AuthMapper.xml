@@ -1,0 +1,20 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.AuthMapper">
+
+    <resultMap id="AuthResultMap" type="Integer">
+        <result column="amount" property="value" />
+    </resultMap>
+
+    <select id="hasValidApiKey" resultMap="AuthResultMap">
+        select 
+		    count(0) as amount
+		from 
+		    access_data.api_key
+		where
+		    api_key = #{apiKey}
+    </select>
+    
+</mapper>

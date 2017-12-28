@@ -1,0 +1,50 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.PhysiognomyMapper">
+
+    <resultMap id="PhysiognomyResultMap" type="at.sparklingscience.urbantrees.domain.PhysiognomyDataset">
+	    <result column="tree_id" property="treeId" />
+	    <result column="tree_height" property="treeHeight" />
+	    <result column="trunk_circumference" property="trunkCircumference" />
+	    <result column="crown_base" property="crownBase" />
+	    <result column="crown_width" property="crownWidth" />
+	    <result column="observe_dat" property="timestamp" />
+    </resultMap>
+
+    <select id="findPhysiognomyByTreeId" resultMap="PhysiognomyResultMap">
+        select
+		    p.tree_id,
+		    p.tree_height,
+		    p.trunk_circumference,
+		    p.crown_base,
+		    p.crown_width,
+		    p.observe_dat
+		from
+		    tree_data.tree t,
+		    tree_data.physiognomy p
+		where
+		    t.id = #{treeId}
+		    and t.id = p.tree_id
+		    <if test="timespanMin != null">
+                and p.observe_dat &gt;= #{timespanMin}
+            </if>
+		    <if test="timespanMax != null">
+                and p.observe_dat &lt;= #{timespanMax}
+            </if>
+        order by
+            p.observe_dat desc
+    </select>
+    
+    <insert id="insertPhysionomyDataset">
+        insert into
+            tree_data.physiognomy
+	        (id, tree_id, tree_height, trunk_circumference, crown_base, 
+	        crown_width, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+        values 
+            (default, #{treeId}, #{treeHeight}, #{trunkCircumference}, #{crownBase},
+            #{crownWidth}, #{timestamp}, now(), now(), user, user)
+	</insert>
+
+</mapper>

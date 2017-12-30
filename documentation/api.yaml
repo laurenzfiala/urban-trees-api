@@ -71,12 +71,12 @@ paths:
         required: true
         type: "integer"
         format: "int32"
-      - name: "timespan_min"
+      - name: "timespanMin"
         in: query
         description: "Oldest date"
         type: "integer"
         format: "int64"
-      - name: "timespan_max"
+      - name: "timespanMax"
         in: query
         description: "Newest date"
         type: "integer"
@@ -138,12 +138,12 @@ paths:
         required: true
         type: "integer"
         format: "int32"
-      - name: "timespan_min"
+      - name: "timespanMin"
         in: query
         description: "Oldest date"
         type: "integer"
         format: "int64"
-      - name: "timespan_max"
+      - name: "timespanMax"
         in: query
         description: "Newest date"
         type: "integer"
@@ -220,7 +220,7 @@ paths:
       tags:
       - "beacon"
       summary: "Return one or more beacon datasets, sorted by descending observation date (optionally in a given timespan)"
-      description: "Returns all stored datasets. If timespan_max is given, only returns up to that point. Same is valid for timespan_min."
+      description: "Returns all stored datasets. If timespanMax is given, only returns up to that point. Same is valid for timespanMin."
       produces:
       - "application/json"
       parameters:
@@ -230,12 +230,12 @@ paths:
         required: true
         type: "integer"
         format: "int32"
-      - name: "timespan_min"
+      - name: "timespanMin"
         in: query
         description: "Oldest date"
         type: "integer"
         format: "int64"
-      - name: "timespan_max"
+      - name: "timespanMax"
         in: query
         description: "Newest date"
         type: "integer"
@@ -292,7 +292,7 @@ paths:
 securityDefinitions:
   api_key:
     type: apiKey
-    name: api_key
+    name: x-api-key
     in: header
 
 #
@@ -319,43 +319,44 @@ definitions:
         type: "string"
       genus:
         type: "string"
-      plantation_year:
-        description: "Latest observed plantation_year"
+      plantationYear:
+        description: "Latest observed plantation year"
         type: "integer"
         format: "int32"
-      is_plantation_year_estimate:
-        description: "Whether lastest observed plantation_year is an estimate or not"
+      isPlantationYearEstimate:
+        description: "Whether lastest observed plantationYear is an estimate or not"
         type: "boolean"
   
   PhysiognomyDataset:
     type: "object"
     required:
-      - "tree_id"
+      - "treeId"
     properties:
-      tree_id:
+      treeId:
         type: "integer"
         format: "int32"
-      tree_height:
+      treeHeight:
         type: "integer"
         format: "int32"
-      trunk_circumference:
+      trunkCircumference:
         type: "integer"
         format: "int32"
-      crown_base:
+      crownBase:
         type: "integer"
         format: "int32"
-      crown_width:
+      crownWidth:
         type: "integer"
         format: "int32"
-      observation_date:
-        $ref: "#/definitions/Timestamp"
+      observationDate:
+        description: "UTC date and time string"
+        type: "string"
   
   PhenologyDataset:
     type: "object"
     required:
-      - "tree_id"
+      - "treeId"
     properties:
-      tree_id:
+      treeId:
         type: "integer"
         format: "int32"
       observers:
@@ -364,30 +365,31 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/PhenologyObservation"
-      observation_date:
-        $ref: "#/definitions/Timestamp"
+      observationDate:
+        description: "UTC date and time string"
+        type: "string"
         
   PhenologyObservation:
     type: "object"
     required:
-      - "type_id"
+      - "typeId"
       - "type"
-      - "object_id"
+      - "objectId"
       - "object"
-      - "result_id"
+      - "resultId"
       - "result"
     properties:
-      type_id:
+      typeId:
         type: "integer"
         format: "int32"
       type:
         type: "string"
-      object_id:
+      objectId:
         type: "integer"
         format: "int32"
       object:
         type: "string"
-      result_id:
+      resultId:
         type: "integer"
         format: "int32"
       result:
@@ -397,23 +399,23 @@ definitions:
     type: "object"
     required:
       - "id"
-      - "bluetooth_address"
+      - "bluetoothAddress"
     properties:
       id:
         type: "integer"
         format: "int32"
-      tree_id:
+      treeId:
         type: "integer"
         format: "int32"
-      bluetooth_address:
+      bluetoothAddress:
         type: "string"
         
   BeaconDataset:
     type: "object"
     required:
-      - "beacon_id"
+      - "beaconId"
     properties:
-      beacon_id:
+      beaconId:
         type: "integer"
         format: "int32"
       humidity:
@@ -422,8 +424,9 @@ definitions:
       temperature:
         type: "number"
         format: "float"
-      observation_date:
-        $ref: "#/definitions/Timestamp"
+      observationDate:
+        description: "UTC date and time string"
+        type: "string"
       
   TreeLocation:
     type: "object"
@@ -452,19 +455,6 @@ definitions:
       y:
         type: "number"
         format: "float"
-        
-  Timestamp:
-    type: "object"
-    required:
-      - "millis"
-    properties:
-      millis:
-        description: "UTC milliseconds from 1970"
-        type: "integer"
-        format: "int64"
-      dateString:
-        description: "UTC date and time string"
-        type: "string"
         
   # Error Responses
   PostError:

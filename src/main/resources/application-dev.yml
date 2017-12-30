@@ -19,6 +19,8 @@ spring:
     platform: POSTGRESQL
     testWhileIdle: true
     validationQuery: select 1
+    maxActive: 50
+    maxAge: 60000
   jackson:
     date-format: "yyyy-MM-dd'T'HH-mm-ss"
     time-zone: UTC

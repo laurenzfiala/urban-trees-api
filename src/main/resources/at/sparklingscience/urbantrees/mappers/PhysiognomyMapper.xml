@@ -10,7 +10,7 @@
 	    <result column="trunk_circumference" property="trunkCircumference" />
 	    <result column="crown_base" property="crownBase" />
 	    <result column="crown_width" property="crownWidth" />
-	    <result column="observe_dat" property="timestamp" />
+	    <result column="observe_dat" property="observationDate" />
     </resultMap>
 
     <select id="findPhysiognomyByTreeId" resultMap="PhysiognomyResultMap">

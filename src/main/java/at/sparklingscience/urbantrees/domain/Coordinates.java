@@ -12,12 +12,12 @@ public class Coordinates {
 	/**
 	 * X-Coordinate
 	 */
-	public float x;
+	private float x;
 	
 	/**
 	 * Y-Coordinate
 	 */
-	public float y;
+	private float y;
 	
 	public float getX() {
 		return x;

@@ -4,6 +4,8 @@
 
 <mapper namespace="at.sparklingscience.urbantrees.mapper.AuthMapper">
 
+    <cache/>
+
     <resultMap id="AuthResultMap" type="Integer">
         <result column="amount" property="value" />
     </resultMap>

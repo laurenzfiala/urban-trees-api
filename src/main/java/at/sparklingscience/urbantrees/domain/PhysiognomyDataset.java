@@ -1,6 +1,5 @@
 package at.sparklingscience.urbantrees.domain;
 
-import java.sql.Timestamp;
 import java.util.Date;
 
 /**
@@ -21,7 +20,7 @@ public class PhysiognomyDataset {
 	
 	private int crownWidth;
 	
-	private Date timestamp;
+	private Date observationDate;
 
 	public int getTreeId() {
 		return treeId;
@@ -63,12 +62,12 @@ public class PhysiognomyDataset {
 		this.crownWidth = crownWidth;
 	}
 
-	public Date getTimestamp() {
-		return timestamp;
+	public Date getObservationDate() {
+		return observationDate;
 	}
 
-	public void setTimestamp(Date timestamp) {
-		this.timestamp = timestamp;
+	public void setObservationDate(Date observationDate) {
+		this.observationDate = observationDate;
 	}
 	
 }

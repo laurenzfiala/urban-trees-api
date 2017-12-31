@@ -28,8 +28,10 @@ spring:
 
 # - MyBatis -
 mybatis:
-    mapperLocations: classpath*:**/mappers/*.xml
-    typeAliasesPackage: at.sparklingscience.urbantrees.domain
+  mapperLocations: classpath*:**/mappers/*.xml
+  typeAliasesPackage: at.sparklingscience.urbantrees.domain
+  configuration:
+    cacheEnabled: false
 
 # - Logging -
 logging:

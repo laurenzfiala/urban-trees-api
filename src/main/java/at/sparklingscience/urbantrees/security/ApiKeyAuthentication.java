@@ -16,6 +16,11 @@ import org.springframework.security.core.GrantedAuthority;
 public class ApiKeyAuthentication implements Authentication {
 	
 	/**
+	 * Serial. Change when updated.
+	 */
+	private static final long serialVersionUID = 20171230L;
+
+	/**
 	 * The {@link UUID} api key used to authenticate.
 	 * @see UUID
 	 */

@@ -5,6 +5,7 @@
 <mapper namespace="at.sparklingscience.urbantrees.mapper.PhysiognomyMapper">
 
     <resultMap id="PhysiognomyResultMap" type="at.sparklingscience.urbantrees.domain.PhysiognomyDataset">
+	    <result column="id" property="id" />
 	    <result column="tree_id" property="treeId" />
 	    <result column="tree_height" property="treeHeight" />
 	    <result column="trunk_circumference" property="trunkCircumference" />
@@ -15,6 +16,7 @@
 
     <select id="findPhysiognomyByTreeId" resultMap="PhysiognomyResultMap">
         select
+		    p.id,
 		    p.tree_id,
 		    p.tree_height,
 		    p.trunk_circumference,

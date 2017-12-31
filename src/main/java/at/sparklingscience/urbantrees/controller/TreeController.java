@@ -20,6 +20,7 @@ import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
 import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
+import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.PhysiognomyMapper;
@@ -47,9 +48,9 @@ public class TreeController {
 	private String dateFormatPattern;
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/{treeId:\\d+}")
-	public Tree getTree(@PathVariable String treeId) {
+	public Tree getTree(@PathVariable int treeId) {
 		
-		Tree tree = this.treeMapper.findTreeById(Integer.parseInt(treeId));
+		Tree tree = this.treeMapper.findTreeById(treeId);
 		if (tree == null) {
 			throw new NotFoundException("No tree found for given id.");
 		}
@@ -60,7 +61,7 @@ public class TreeController {
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/{treeId:\\d+}/physiognomy")
 	public List<PhysiognomyDataset> getTreePhysiognomy(
-			@PathVariable String treeId,
+			@PathVariable int treeId,
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
 		
@@ -68,7 +69,7 @@ public class TreeController {
 		
 		List<PhysiognomyDataset> datasets = 
 				this.physiognomyMapper.findPhysiognomyByTreeId(
-					Integer.parseInt(treeId),
+					treeId,
 					timespan.getStart(),
 					timespan.getEnd()
 					);
@@ -83,7 +84,11 @@ public class TreeController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/physiognomy")
-	public void putTreePhysiognomyDataset(@PathVariable String treeId, @RequestBody PhysiognomyDataset dataset) {
+	public void putTreePhysiognomyDataset(@PathVariable int treeId, @RequestBody PhysiognomyDataset dataset) {
+		
+		if (treeId != dataset.getTreeId()) {
+			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
+		}
 		
 		this.physiognomyMapper.insertPhysionomyDataset(dataset);
 		
@@ -91,7 +96,7 @@ public class TreeController {
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/{treeId:\\d+}/phenology")
 	public List<PhenologyDataset> getTreePhenology(
-			@PathVariable String treeId,
+			@PathVariable int treeId,
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
 		
@@ -99,7 +104,7 @@ public class TreeController {
 
 		List<PhenologyDataset> datasets = 
 				this.phenologyMapper.findPhenologyByTreeId(
-						Integer.parseInt(treeId),
+						treeId,
 						timespan.getStart(),
 						timespan.getEnd()
 						);
@@ -114,11 +119,17 @@ public class TreeController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/phenology")
-	public void putTreePhenologyDataset(@PathVariable String treeId, @RequestBody PhenologyDataset dataset) {
+	public void putTreePhenologyDataset(@PathVariable int treeId, @RequestBody PhenologyDataset dataset) {
+		
+		if (treeId != dataset.getTreeId()) {
+			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
+		}
 		
 		this.phenologyMapper.insertPhenology(dataset);
 		this.phenologyMapper.insertPhenologyObservation(dataset);
 		
 	}
+	
+
 
 }

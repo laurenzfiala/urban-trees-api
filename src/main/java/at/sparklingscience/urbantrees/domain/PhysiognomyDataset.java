@@ -10,17 +10,50 @@ import java.util.Date;
  */
 public class PhysiognomyDataset {
 
+	/**
+	 * The datasets' database identifier.
+	 */
+	private int id;	
+	
+	/**
+	 * The corresponding trees' identifier.
+	 */
 	private int treeId;
 	
+	/**
+	 * Height of the tree in cm.
+	 */
 	private int treeHeight;
 	
+	/**
+	 * Circumference of the base of the tree in cm.
+	 */
 	private int trunkCircumference;
 	
+	/**
+	 * Height of the bottom-end of the trees' crown.
+	 */
 	private int crownBase;
 	
+	/**
+	 * Diameter of the bottom-end of the trees' crown.
+	 */
 	private int crownWidth;
 	
+	/**
+	 * Date of observation.
+	 * This should be the actual date of observation,
+	 * not the date of entering into the system.
+	 */
 	private Date observationDate;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
 
 	public int getTreeId() {
 		return treeId;

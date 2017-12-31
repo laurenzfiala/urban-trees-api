@@ -1,0 +1,97 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.PhenologyMapper">
+
+    <resultMap id="PhenologyResultMap" type="at.sparklingscience.urbantrees.domain.PhenologyDataset">
+	    <result column="id" property="id" />
+	    <result column="tree_id" property="treeId" />
+	    <result column="observers" property="observers" />
+	    <result column="observe_dat" property="observationDate" />
+	    <collection property="observations"
+				    column="id"
+				    ofType="at.sparklingscience.urbantrees.domain.PhenologyDataset$PhenologyObservation"
+                    select="findPhenologyObservationsByPhenologyId">
+		    <result column="id" property="id" />
+		    <result column="type_id" property="typeId" />
+		    <result column="type" property="type" />
+		    <result column="object_id" property="objectId" />
+		    <result column="object" property="object" />
+		    <result column="result_id" property="resultId" />
+		    <result column="result" property="result" />
+	    </collection>
+    </resultMap>
+
+    <select id="findPhenologyByTreeId" resultMap="PhenologyResultMap">
+        select
+		    p.id,
+		    p.tree_id,
+		    p.observers,
+		    p.observe_dat
+		from
+		    tree_data.tree t,
+		    tree_data.phenology p
+		where
+		    t.id = #{treeId}
+		    and t.id = p.tree_id
+		    <if test="timespanMin != null">
+                and p.observe_dat &gt;= #{timespanMin}
+            </if>
+            <if test="timespanMax != null">
+                and p.observe_dat &lt;= #{timespanMax}
+            </if>
+        order by
+            p.observe_dat desc
+    </select>
+
+    <select id="findPhenologyObservationsByPhenologyId"
+            resultType="at.sparklingscience.urbantrees.domain.PhenologyDataset$PhenologyObservation">
+        select
+            po.id,
+		    pot.id as type_id,
+		    pot."type",
+		    poo.id as object_id,
+		    poo."name" as "object",
+		    por.id as result_id,
+		    por.description as "result"
+		from
+		    tree_data.phenology p,
+		    tree_data.phenology_observation po,
+		    tree_data.phenology_observation_type pot,
+		    tree_data.phenology_observation_object poo,
+		    tree_data.phenology_observation_result por
+		where
+		    p.id = #{id}
+		    and p.id = po.phenology_id
+		    and po.observation_object_id = poo.id
+		    and po.observation_result_id = por.id
+		    and poo.type_id = por.type_id
+		    and poo.type_id = pot.id
+    </select>
+    
+    <insert id="insertPhenology" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into
+            tree_data.phenology
+            (id, tree_id, observers, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+		values 
+		    (default, #{treeId}, #{observers}, #{observationDate}, now(), now(), user, user);
+	</insert>
+	
+    <insert id="insertPhenologyObservation">
+	    insert into
+            tree_data.phenology_observation
+            (phenology_id, observation_object_id, observation_result_id, cre_dat, mod_dat, cre_usr, mod_usr)
+        values 
+            <foreach collection="observations" item="observation" index="index" open="(" separator="),("  close=")">
+                #{id},
+                #{observation.objectId},
+                #{observation.resultId},
+                now(),
+                now(),
+                user,
+                user
+            </foreach>
+	</insert>
+	
+</mapper>

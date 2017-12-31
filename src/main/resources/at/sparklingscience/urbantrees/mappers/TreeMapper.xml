@@ -11,7 +11,7 @@
         <result column="plantation_year" property="plantationYear" />
         <result column="is_plantation_year_estimate" property="isPlantationYearEstimate" />
         <collection property="location" ofType="at.sparklingscience.urbantrees.domain.TreeLocation" >
-            <id property="id" column="location_id" />
+            <id column="location_id" property="id" />
             <result column="street" property="street" />
             <result column="city" property="city" />
             <collection property="coordinates" ofType="at.sparklingscience.urbantrees.domain.Coordinates" >
@@ -23,7 +23,7 @@
 
     <select id="findTreeById" resultMap="TreeResultMap">
         select 
-		    t.id as tree_id,
+		    t.id,
 		    l.id as location_id,
 		    l.coords_x,
 		    l.coords_y,

@@ -1,0 +1,74 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.BeaconMapper">
+
+    <resultMap id="BeaconResultMap" type="at.sparklingscience.urbantrees.domain.Beacon">
+	    <result column="id" property="id" />
+	    <result column="tree_id" property="treeId" />
+	    <result column="bluetooth_address" property="bluetoothAddress" />
+    </resultMap>
+
+    <resultMap id="BeaconDatasetResultMap" type="at.sparklingscience.urbantrees.domain.BeaconDataset">
+	    <result column="id" property="id" />
+	    <result column="beacon_id" property="beaconId" />
+	    <result column="humidity" property="humidity" />
+	    <result column="temperature" property="temperature" />
+	    <result column="observe_dat" property="observationDate" />
+    </resultMap>
+
+    <select id="findBeaconById" resultMap="BeaconResultMap">
+        select
+		    id,
+		    tree_id,
+		    bluetooth_address
+		from
+		    tree_data.beacon
+		where
+		    id = #{beaconId}
+    </select>
+
+    <select id="findBeaconByAddress" resultMap="BeaconResultMap">
+        select
+		    id,
+		    tree_id,
+		    bluetooth_address
+		from
+		    tree_data.beacon
+		where
+		    bluetooth_address = #{address}
+    </select>
+
+    <select id="findBeaconDataByBeaconId" resultMap="BeaconDatasetResultMap">
+        select
+		    d.id,
+		    d.beacon_id,
+		    d.humidity,
+		    d.temperature,
+		    d.observe_dat
+		from
+		    tree_data.beacon b,
+		    tree_data.beacon_data d
+		where
+		    b.id = #{beaconId}
+		    and b.id = d.beacon_id
+	        <if test="timespanMin != null">
+	            and p.observe_dat &gt;= #{timespanMin}
+	        </if>
+	        <if test="timespanMax != null">
+	            and p.observe_dat &lt;= #{timespanMax}
+	        </if>
+	    order by
+	        d.observe_dat desc
+    </select>
+    
+    <insert id="insertBeaconDataset">
+        insert into
+            tree_data.beacon_data
+            (id, beacon_id, humidity, temperature, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+		values 
+		    (default, #{beaconId}, #{humidity}, #{temperature}, #{observationDate}, now(), now(), user, user)
+	</insert>
+
+</mapper>

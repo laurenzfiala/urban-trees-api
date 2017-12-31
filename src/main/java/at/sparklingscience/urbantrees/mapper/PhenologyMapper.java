@@ -6,25 +6,27 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
+import at.sparklingscience.urbantrees.domain.PhenologyDataset;
 
 /**
  * Mybatis mapping interface.
- * For physiognomy operations.
+ * For phenology operations.
  * 
  * @author Laurenz Fiala
- * @since 2017/12/27
+ * @since 2017/12/30
  */
 @Mapper
-public interface PhysiognomyMapper {
+public interface PhenologyMapper {
 	
-	List<PhysiognomyDataset> findPhysiognomyByTreeId(
+	List<PhenologyDataset> findPhenologyByTreeId(
 			@Param("treeId") int treeId,
 			@Param("timespanMin") Date timespanMin,
 			@Param("timespanMax") Date timespanMax
 			);
 	
 	
-	void insertPhysionomyDataset(PhysiognomyDataset dataset);
+	void insertPhenology(PhenologyDataset dataset);
+	
+	void insertPhenologyObservation(PhenologyDataset dataset);
 	
 }

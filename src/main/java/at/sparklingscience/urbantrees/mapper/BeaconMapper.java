@@ -6,7 +6,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
+import at.sparklingscience.urbantrees.domain.Beacon;
+import at.sparklingscience.urbantrees.domain.BeaconDataset;
 
 /**
  * Mybatis mapping interface.
@@ -16,15 +17,18 @@ import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
  * @since 2017/12/27
  */
 @Mapper
-public interface PhysiognomyMapper {
+public interface BeaconMapper {
 	
-	List<PhysiognomyDataset> findPhysiognomyByTreeId(
-			@Param("treeId") int treeId,
+	Beacon findBeaconById(@Param("beaconId") int beaconId);
+	
+	Beacon findBeaconByAddress(@Param("address") String address);
+	
+	List<BeaconDataset> findBeaconDataByBeaconId(
+			@Param("beaconId") int beaconId,
 			@Param("timespanMin") Date timespanMin,
 			@Param("timespanMax") Date timespanMax
 			);
 	
-	
-	void insertPhysionomyDataset(PhysiognomyDataset dataset);
+	void insertBeaconDataset(BeaconDataset dataset);
 	
 }

@@ -5,7 +5,7 @@
 <mapper namespace="at.sparklingscience.urbantrees.mapper.TreeMapper">
 
     <resultMap id="TreeResultMap" type="at.sparklingscience.urbantrees.domain.Tree">
-        <id column="id" property="tree_id" />
+        <id column="id" property="id" />
         <result column="species" property="species" />
         <result column="genus" property="genus" />
         <result column="plantation_year" property="plantationYear" />

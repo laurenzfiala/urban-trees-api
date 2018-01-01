@@ -1,0 +1,17 @@
+[
+    {
+        "treeId": 9990,
+        "observers": "Test",
+        "observations": [
+            {
+                "typeId": 0,
+                "type": "Bark (Sample)",
+                "objectId": 0,
+                "object": "Bark 1 (Sample)",
+                "resultId": 0,
+                "result": "is brown"
+            }
+        ],
+        "observationDate": "2017-12-30T01-00-00"
+    }
+]

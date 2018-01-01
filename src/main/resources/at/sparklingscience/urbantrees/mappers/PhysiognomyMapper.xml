@@ -46,7 +46,7 @@
 	        crown_width, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
         values 
             (default, #{treeId}, #{treeHeight}, #{trunkCircumference}, #{crownBase},
-            #{crownWidth}, #{timestamp}, now(), now(), user, user)
+            #{crownWidth}, #{observationDate}, now(), now(), user, user)
 	</insert>
 
 </mapper>

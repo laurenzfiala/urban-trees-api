@@ -32,6 +32,7 @@ mybatis:
   typeAliasesPackage: at.sparklingscience.urbantrees.domain
   configuration:
     cacheEnabled: false
+    autoMappingBehavior: NONE
 
 # - Logging -
 logging:

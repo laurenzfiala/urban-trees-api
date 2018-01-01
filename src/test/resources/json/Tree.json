@@ -1,0 +1,16 @@
+{
+    "id": 9990,
+    "location": {
+        "id": 9990,
+        "coordinates": {
+            "x": 465.25,
+            "y": 564.52
+        },
+        "street": "Samplestreet 1",
+        "city": "Sample city"
+    },
+    "species": "Sample species",
+    "genus": "Sample type",
+    "plantationYear": 2017,
+    "plantationYearEstimate": true
+}

@@ -18,7 +18,6 @@ import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
-import at.sparklingscience.urbantrees.domain.PhenologyDataset;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.BeaconMapper;

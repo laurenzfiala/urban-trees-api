@@ -1,0 +1,1 @@
+curl http://localhost/beacon/18-75-22-BA-6A-68 -H "x-api-key: 8ec046bf-94cb-402b-b15c-880c317149ee"

@@ -19,6 +19,13 @@ public class Coordinates {
 	 */
 	private float y;
 	
+	public Coordinates() {}
+	
+	public Coordinates(float x, float y) {
+		this.setX(x);
+		this.setY(y);
+	}
+	
 	public float getX() {
 		return x;
 	}

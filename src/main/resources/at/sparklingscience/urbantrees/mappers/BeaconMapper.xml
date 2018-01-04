@@ -63,7 +63,7 @@
 	        d.observe_dat desc
     </select>
     
-    <insert id="insertBeaconDataset">
+    <insert id="insertBeaconDataset" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
             tree_data.beacon_data
             (id, beacon_id, humidity, temperature, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)

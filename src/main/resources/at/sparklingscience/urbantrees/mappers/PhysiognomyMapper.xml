@@ -39,7 +39,7 @@
             p.observe_dat desc
     </select>
     
-    <insert id="insertPhysionomyDataset">
+    <insert id="insertPhysiognomyDataset" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
             tree_data.physiognomy
 	        (id, tree_id, tree_height, trunk_circumference, crown_base, 

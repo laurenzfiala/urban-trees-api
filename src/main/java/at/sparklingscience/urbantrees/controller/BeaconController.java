@@ -82,13 +82,15 @@ public class BeaconController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{beaconId:\\d+}/data")
-	public void putTreePhenologyDataset(@PathVariable int beaconId, @RequestBody BeaconDataset dataset) {
+	public BeaconDataset postBeaconData(@PathVariable int beaconId, @RequestBody BeaconDataset dataset) {
 		
 		if (beaconId != dataset.getBeaconId()) {
 			throw new BadRequestException("Datasets' beacon id does not match the paths' beacon id.");
 		}
 		
 		this.beaconMapper.insertBeaconDataset(dataset);
+		
+		return dataset;
 		
 	}
 

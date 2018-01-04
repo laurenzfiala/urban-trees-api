@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -83,13 +84,15 @@ public class TreeController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/physiognomy")
-	public void putTreePhysiognomyDataset(@PathVariable int treeId, @RequestBody PhysiognomyDataset dataset) {
+	public PhysiognomyDataset postTreePhysiognomyDataset(@PathVariable int treeId, @RequestBody PhysiognomyDataset dataset) {
 		
 		if (treeId != dataset.getTreeId()) {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
 		}
 		
-		this.physiognomyMapper.insertPhysionomyDataset(dataset);
+		this.physiognomyMapper.insertPhysiognomyDataset(dataset);
+		
+		return dataset;
 		
 	}
 	
@@ -118,7 +121,7 @@ public class TreeController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/phenology")
-	public void putTreePhenologyDataset(@PathVariable int treeId, @RequestBody PhenologyDataset dataset) {
+	public PhenologyDataset postTreePhenologyDataset(@PathVariable int treeId, @RequestBody PhenologyDataset dataset) {
 		
 		if (treeId != dataset.getTreeId()) {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
@@ -126,6 +129,8 @@ public class TreeController {
 		
 		this.phenologyMapper.insertPhenology(dataset);
 		this.phenologyMapper.insertPhenologyObservation(dataset);
+		
+		return dataset;
 		
 	}
 	

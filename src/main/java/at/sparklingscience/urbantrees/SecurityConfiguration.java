@@ -33,7 +33,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	        	.authorizeRequests()
 	            .anyRequest().authenticated()
 	        .and()
-	        	.addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+	        .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
             .csrf().disable();
 
     }

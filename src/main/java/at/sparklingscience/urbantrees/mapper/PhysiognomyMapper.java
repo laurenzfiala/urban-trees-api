@@ -25,6 +25,6 @@ public interface PhysiognomyMapper {
 			);
 	
 	
-	void insertPhysionomyDataset(PhysiognomyDataset dataset);
+	void insertPhysiognomyDataset(PhysiognomyDataset dataset);
 	
 }

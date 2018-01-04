@@ -1,14 +1,7 @@
-protocol: http://
-host: localhost
-port: 80
-
-security:
-  apiKeyHeader: x-api-key
-  apiKey: 8ec046bf-94cb-402b-b15c-880c317149ee
-
 endpoints:
   tree: /tree/9990
   physiognomy: /tree/9990/physiognomy
   phenology: /tree/9990/phenology
-  beacon: /beacon/9990, /beacon/18-75-22-BA-6A-68
-  beaconDataset: /beacon/9990/data
+  beaconById: /beacon/9990
+  beaconByAddress: /beacon/18-75-22-BA-6A-68
+  beaconData: /beacon/9990/data

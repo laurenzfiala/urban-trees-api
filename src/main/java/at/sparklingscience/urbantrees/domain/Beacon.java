@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.domain;
 
+import org.springframework.util.ObjectUtils;
+
 /**
  * A beacon (usually on a tree).
  * 
@@ -23,6 +25,19 @@ public class Beacon {
 	 * the beacon is identified & authenticated.
 	 */
 	private String bluetoothAddress;
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || this.getClass() != obj.getClass()) {
+			return false;
+		}
+		
+		Beacon b = (Beacon) obj;
+		
+		return ObjectUtils.nullSafeEquals(this.getId(), b.getId())
+				&& ObjectUtils.nullSafeEquals(this.getTreeId(), b.getTreeId())
+				&& ObjectUtils.nullSafeEquals(this.getBluetoothAddress(), b.getBluetoothAddress());
+	}
 	
 	public int getId() {
 		return id;

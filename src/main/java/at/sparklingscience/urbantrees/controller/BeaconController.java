@@ -40,6 +40,8 @@ public class BeaconController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{beaconId:\\d+}")
 	public Beacon getBeacon(@PathVariable int beaconId) {
 		
+		LOGGER.debug("[[ GET ]] getBeacon - beaconId: {}", beaconId);
+		
 		Beacon beacon = this.beaconMapper.findBeaconById(beaconId);
 		if (beacon == null) {
 			throw new NotFoundException("No beacon found for given id.");
@@ -49,10 +51,12 @@ public class BeaconController {
 		
 	}
 	
-	@RequestMapping(method = RequestMethod.GET, path = "/{address:(?:[\\d\\w]{2}\\-){5}(?:[\\d\\w]{2})}")
-	public Beacon getBeaconByAddress(@PathVariable String address) {
+	@RequestMapping(method = RequestMethod.GET, path = "/{beaconAddress:(?:[\\d\\w]{2}\\-){5}(?:[\\d\\w]{2})}")
+	public Beacon getBeaconByAddress(@PathVariable String beaconAddress) {
 		
-		Beacon beacon = this.beaconMapper.findBeaconByAddress(address);
+		LOGGER.debug("[[ GET ]] getBeaconByAddress - beaconAddress: {}", beaconAddress);
+		
+		Beacon beacon = this.beaconMapper.findBeaconByAddress(beaconAddress);
 		if (beacon == null) {
 			throw new NotFoundException("No beacon found for given address.");
 		}
@@ -66,6 +70,8 @@ public class BeaconController {
 			@PathVariable int beaconId,
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
+		
+		LOGGER.debug("[[ GET ]] getBeaconData - beaconId: {}", beaconId);
 		
 		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
 
@@ -84,11 +90,15 @@ public class BeaconController {
 	@RequestMapping(method = RequestMethod.POST, path = "/{beaconId:\\d+}/data")
 	public BeaconDataset postBeaconData(@PathVariable int beaconId, @RequestBody BeaconDataset dataset) {
 		
+		LOGGER.info("[[ POST ]] postBeaconData - beaconId: {}", beaconId);
+		
 		if (beaconId != dataset.getBeaconId()) {
 			throw new BadRequestException("Datasets' beacon id does not match the paths' beacon id.");
 		}
 		
 		this.beaconMapper.insertBeaconDataset(dataset);
+		
+		LOGGER.info("[[ POST ]] postBeaconData |END| - beaconId: {}, inserted dataset id: {}", dataset.getId());
 		
 		return dataset;
 		

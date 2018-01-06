@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,6 +49,8 @@ public class TreeController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{treeId:\\d+}")
 	public Tree getTree(@PathVariable int treeId) {
 		
+		LOGGER.debug("[[ GET ]] getTree - treeId: {}", treeId);
+		
 		Tree tree = this.treeMapper.findTreeById(treeId);
 		if (tree == null) {
 			throw new NotFoundException("No tree found for given id.");
@@ -65,6 +66,8 @@ public class TreeController {
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
 		
+		LOGGER.debug("[[ GET ]] getTreePhysiognomy - treeId: {}", treeId);
+		
 		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
 		
 		List<PhysiognomyDataset> datasets = 
@@ -79,12 +82,14 @@ public class TreeController {
 		}
 		
 		return datasets;
-		
+			
 	}
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/physiognomy")
 	public PhysiognomyDataset postTreePhysiognomyDataset(@PathVariable int treeId, @RequestBody PhysiognomyDataset dataset) {
+		
+		LOGGER.info("[[ POST ]] postTreePhysiognomyDataset - treeId: {}", treeId);
 		
 		if (treeId != dataset.getTreeId()) {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
@@ -101,6 +106,8 @@ public class TreeController {
 			@PathVariable int treeId,
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
+		
+		LOGGER.debug("[[ GET ]] getTreePhenology - treeId: {}", treeId);
 		
 		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
 
@@ -123,12 +130,16 @@ public class TreeController {
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/phenology")
 	public PhenologyDataset postTreePhenologyDataset(@PathVariable int treeId, @RequestBody PhenologyDataset dataset) {
 		
+		LOGGER.info("[[ POST ]] postTreePhenologyDataset - treeId: {}", treeId);
+		
 		if (treeId != dataset.getTreeId()) {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
 		}
 		
 		this.phenologyMapper.insertPhenology(dataset);
 		this.phenologyMapper.insertPhenologyObservation(dataset);
+		
+		LOGGER.info("[[ POST ]] postTreePhenologyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
 		
 		return dataset;
 		

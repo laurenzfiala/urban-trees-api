@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+	<include resource="org/springframework/boot/logging/logback/defaults.xml" />
 
 	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
@@ -12,47 +12,48 @@
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<rollingPolicy
 			class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-			<fileNamePattern>logs/urban-trees-api_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<fileNamePattern>logs/urban-trees-api_%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
 			<maxFileSize>100MB</maxFileSize>
 			<totalSizeCap>20GB</totalSizeCap>
 		</rollingPolicy>
 		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+			<pattern>%d{HH:mm:ss.SSS} [%5level] %msg - %logger{50} [%thread]%n
+			</pattern>
 		</encoder>
-	</appender>-
+	</appender>
 
 	<springProfile name="dev">
-	
+
 		<logger name="org.springframework.security" level="DEBUG" />
 		<logger name="org.springframework.web" level="INFO" />
 		<logger name="org.springframework" level="WARN" />
 		<logger name="org.hibernate" level="OFF" />
 		<logger name="org.apache.tomcat" level="WARN" />
-	
+
 		<logger name="at.sparklingscience.urbantrees" level="TRACE" />
-	
+
 		<root level="DEBUG">
 			<appender-ref ref="CONSOLE" />
 			<appender-ref ref="FILE_ROLLING" />
 		</root>
-		
+
 	</springProfile>
-	
+
 	<springProfile name="prod">
-    
-        <logger name="org.springframework.security" level="INFO" />
-        <logger name="org.springframework.web" level="WARN" />
-        <logger name="org.springframework" level="WARN" />
-        <logger name="org.hibernate" level="OFF" />
-        <logger name="org.apache.tomcat" level="WARN" />
-    
-        <logger name="at.sparklingscience.urbantrees" level="INFO" />
-    
-        <root level="INFO">
-            <appender-ref ref="CONSOLE" />
-            <appender-ref ref="FILE_ROLLING" />
-        </root>
-        
-    </springProfile>
-	
+
+		<logger name="org.springframework.security" level="DEBUG" />
+		<logger name="org.springframework.web" level="INFO" />
+		<logger name="org.springframework" level="WARN" />
+		<logger name="org.hibernate" level="OFF" />
+		<logger name="org.apache.tomcat" level="WARN" />
+
+		<logger name="at.sparklingscience.urbantrees" level="DEBUG" />
+
+		<root level="DEBUG">
+			<appender-ref ref="FILE_ROLLING" />
+		</root>
+
+	</springProfile>
+
 </configuration>

@@ -22,21 +22,24 @@ spring:
     maxActive: 50
     maxAge: 60000
   jackson:
-    date-format: com.fasterxml.jackson.databind.util.ISO8601DateFormat
+    date-format: "yyyy-MM-dd'T'HH-mm-ss"
     time-zone: UTC
     
 
 # - MyBatis -
 mybatis:
-    mapperLocations: classpath*:**/mappers/*.xml
-    typeAliasesPackage: at.sparklingscience.urbantrees.domain
+  mapperLocations: classpath*:**/mappers/*.xml
+  typeAliasesPackage: at.sparklingscience.urbantrees.domain
+  configuration:
+    autoMappingBehavior: NONE
 
 # - Logging -
 logging:
   config: classpath:logback-spring.xml
-
+  
 # - Custom -
 at:
   sparklingscience:
     urbantrees:
       dateFormatPattern: "yyyy-MM-dd'T'HH-mm-ss"
+    

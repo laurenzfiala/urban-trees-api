@@ -12,7 +12,7 @@ public class UrbantreesApplication {
 	
 	public static void main(String[] args) {
 		
-		// Manually set the applications' timestamp to UTC for time conversion to work. TODO check if tbd in formatter
+		// Manually set the applications' timestamp to UTC for time conversion to work.
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 		
 		SpringApplication.run(UrbantreesApplication.class, args);

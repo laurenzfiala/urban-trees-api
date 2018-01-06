@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -22,11 +24,21 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
+	
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger LOGGER = LoggerFactory.getLogger(RestExceptionHandler.class);
+	
+	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
+		return new ResponseEntity<>(apiError, apiError.getStatus());
+	}
 
 	@Override
 	protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		final String error = "Malformed JSON request";
+		LOGGER.debug("handleHttpMessageNotReadable: {}", error, ex);
 		return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
 	}
 
@@ -34,15 +46,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleMissingPathVariable(MissingPathVariableException ex, HttpHeaders headers,
 			HttpStatus status, WebRequest request) {
 		final String error = "Missing path variable " + ex.getVariableName();
+		LOGGER.debug("handleMissingPathVariable: {}", error, ex);
 		return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
-	}
-	
-	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
-		return new ResponseEntity<>(apiError, apiError.getStatus());
 	}
 
 	@ExceptionHandler(NotFoundException.class)
 	protected ResponseEntity<Object> handleNotFound(NotFoundException ex) {
+		LOGGER.trace("handleNotFound: {}", ex.getMessage());
 		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
 		apiError.setMessage(ex.getMessage());
 		return buildResponseEntity(apiError);
@@ -50,6 +60,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	
 	@ExceptionHandler(InternalException.class)
 	protected ResponseEntity<Object> handleInternal(InternalException ex) {
+		LOGGER.warn("handleInternal: {}", ex.getMessage(), ex);
 		ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR);
 		apiError.setMessage(ex.getMessage());
 		return buildResponseEntity(apiError);
@@ -57,6 +68,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	
 	@ExceptionHandler(BadRequestException.class)
 	protected ResponseEntity<Object> handleBadRequest(BadRequestException ex) {
+		LOGGER.trace("handleBadRequest: {}", ex.getMessage());
 		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
 		apiError.setMessage(ex.getMessage());
 		return buildResponseEntity(apiError);

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>at.sparklingscience</groupId>
-	<artifactId>urbantrees</artifactId>
+	<artifactId>urbantrees-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
@@ -15,17 +15,7 @@
 		<developerConnection>scm:git:https://github.com/laurenzfiala/urban-trees-api.git</developerConnection>
 		<url>https://github.com/laurenzfiala/urban-trees-api</url>
 		<tag>HEAD</tag>
-    </scm>
-    
-    <distributionManagement>
-	    <repository>
-			<id>urban-trees-api</id>
-			<name>Urban Trees API</name>
-			<url>https://github.com/laurenzfiala/urban-trees-api.git</url>
-			<layout>default</layout>
-	    </repository>
-    </distributionManagement>
-	
+    </scm>	
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>

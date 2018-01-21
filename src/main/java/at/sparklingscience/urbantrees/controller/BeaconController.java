@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,7 @@ import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.BeaconMapper;
@@ -88,7 +90,9 @@ public class BeaconController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{beaconId:\\d+}/data")
-	public BeaconDataset postBeaconData(@PathVariable int beaconId, @RequestBody BeaconDataset dataset) {
+	public BeaconDataset postBeaconData(
+			@PathVariable int beaconId,
+			@Validated(ValidationGroups.Update.class) @RequestBody BeaconDataset dataset) {
 		
 		LOGGER.info("[[ POST ]] postBeaconData - beaconId: {}", beaconId);
 		

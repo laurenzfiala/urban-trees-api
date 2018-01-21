@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.exception;
 
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -8,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -71,6 +74,17 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		LOGGER.trace("handleBadRequest: {}", ex.getMessage());
 		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
 		apiError.setMessage(ex.getMessage());
+		return buildResponseEntity(apiError);
+	}
+	
+	@Override
+	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
+		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+		apiError.setMessage(ex.getBindingResult().getFieldErrors().stream()
+				.map(o -> o.getField() + ": " + o.getDefaultMessage())
+				.collect(Collectors.joining(", ")));
+		LOGGER.debug("handleMethodArgumentNotValid: {}, invalid arguments: {}", ex.getMessage(), apiError.getMessage());
 		return buildResponseEntity(apiError);
 	}
 

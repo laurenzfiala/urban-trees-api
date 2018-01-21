@@ -2,6 +2,16 @@ package at.sparklingscience.urbantrees.domain;
 
 import java.util.Date;
 
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
+import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange;
+import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange.Range;
+import at.sparklingscience.urbantrees.domain.validator.annotation.MaxFloat;
+import at.sparklingscience.urbantrees.domain.validator.annotation.MinFloat;
+
 /**
  * Single dataset for a {@link Beacon}.
  * 
@@ -13,22 +23,28 @@ public class BeaconDataset {
 	/**
 	 * The datasets' database identifier.
 	 */
+	@Min(value = 1, groups = {ValidationGroups.Read.class})
 	private int id;
 	
 	/**
 	 * Identifier of the associated beacon.
 	 * The given dataset originates from the beacon with this id.
 	 */
+	@Min(1)
 	private int beaconId;
 	
 	/**
 	 * Humidity value.
 	 */
+	@MinFloat(0f)
+	@MaxFloat(1f)
 	private float humidity;
 	
 	/**
 	 * Temperature value.
 	 */
+	@MinFloat(-100f)
+	@MaxFloat(100f)
 	private float temperature;
 	
 	/**
@@ -36,6 +52,7 @@ public class BeaconDataset {
 	 * This is actual date of check (possibly in the past,
 	 * e.g. from the devices' logger).
 	 */
+	@DateRange(Range.PAST_AND_PRESENT)
 	private Date observationDate;
 
 	public int getId() {

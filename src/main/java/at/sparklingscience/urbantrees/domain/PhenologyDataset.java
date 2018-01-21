@@ -3,6 +3,14 @@ package at.sparklingscience.urbantrees.domain;
 import java.util.Date;
 import java.util.List;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
+import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange;
+import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange.Range;
+
 /**
  * A single Phenology dataset.
  * 
@@ -19,42 +27,49 @@ public class PhenologyDataset {
 		/**
 		 * The datasets' database identifier.
 		 */
+		@Min(value = 1, groups = {ValidationGroups.Read.class})
 		private int id;
 		
 		/**
 		 * ID of the observation type.
 		 * @see #type
 		 */
+		@Min(1)
 		private int typeId;
 		
 		/**
 		 * Type of the observation (e.g. bark).
 		 * @see #typeId
 		 */
+		@NotNull
 		private String type;
 		
 		/**
 		 * ID of the observation object.
 		 * @see #object
 		 */
+		@Min(1)
 		private int objectId;
 		
 		/**
 		 * Name of the observation object (e.g. bark 1).
 		 * @see #objectId
 		 */
+		@NotNull
 		private String object;
 		
 		/**
 		 * ID of the observation result.
 		 * @see #result
 		 */
+		@Min(1)
 		private int resultId;
 		
 		/**
 		 * Description of the observation result (e.g. is brown).
 		 * @see #resultId
 		 */
+		@NotNull
 		private String result;
 		
 		public int getId() {
@@ -118,26 +133,32 @@ public class PhenologyDataset {
 	/**
 	 * Phenology identifier.
 	 */
+	@Min(value = 1, groups = {ValidationGroups.Read.class})
 	private int id;
 
 	/**
 	 * Tree identifier of the tree this dataset corresponds to.
 	 */
+	@Min(1)
 	private int treeId;
 	
 	/**
 	 * Names of people who observed.
 	 */
+	@NotNull
 	private String observers;
 	
 	/**
 	 * List of observations made.
 	 */
+	@Size(min = 1)
 	private List<PhenologyObservation> observations;
 	
 	/**
 	 * Date if observation.
 	 */
+	@NotNull
+	@DateRange(Range.PAST_AND_PRESENT)
 	private Date observationDate;
 	
 	public PhenologyDataset() {}

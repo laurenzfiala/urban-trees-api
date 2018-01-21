@@ -1,6 +1,11 @@
 package at.sparklingscience.urbantrees.domain;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.util.ObjectUtils;
+
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 
 /**
  * A beacon (usually on a tree).
@@ -13,17 +18,20 @@ public class Beacon {
 	/**
 	 * The beaons' database identifier.
 	 */
+	@Min(value = 1, groups = {ValidationGroups.Read.class})
 	private int id;
 	
 	/**
 	 * The {@link Tree} this beacon belongs/is attached to.
 	 */
+	@Min(1)
 	private int treeId;
 	
 	/**
 	 * The bluetooth identifier using which
 	 * the beacon is identified & authenticated.
 	 */
+	@NotNull
 	private String bluetoothAddress;
 	
 	@Override

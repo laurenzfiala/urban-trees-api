@@ -4,11 +4,11 @@
         "observers": "Test",
         "observations": [
             {
-                "typeId": 0,
+                "typeId": 9990,
                 "type": "Bark (Sample)",
-                "objectId": 0,
+                "objectId": 9990,
                 "object": "Bark 1 (Sample)",
-                "resultId": 0,
+                "resultId": 9990,
                 "result": "is brown"
             }
         ],

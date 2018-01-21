@@ -1,5 +1,10 @@
 package at.sparklingscience.urbantrees.domain;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
+
 /**
  * DAO.
  * Tree object with it's corresponding properties.
@@ -12,22 +17,26 @@ public class Tree {
 	/**
 	 * Database identifier.
 	 */
+	@Min(value = 1, groups = {ValidationGroups.Read.class})
 	private int id;
 	
 	/**
 	 * Location information for the tree.
 	 * @see TreeLocation
 	 */
+	@NotNull
 	private TreeLocation location;
 	
 	/**
 	 * Trees' species.
 	 */
+	@NotNull
 	private String species;
 	
 	/**
 	 * Trees' genus.
 	 */
+	@NotNull
 	private String genus;
 	
 	/**
@@ -35,6 +44,7 @@ public class Tree {
 	 * May be an estimated date, check {@link #isPlantationYearEstimate}.
 	 * @see #isPlantationYearEstimate
 	 */
+	@Min(1950)
 	private int plantationYear;
 	
 	/**

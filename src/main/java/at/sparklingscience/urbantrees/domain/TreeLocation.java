@@ -1,5 +1,10 @@
 package at.sparklingscience.urbantrees.domain;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
+
 /**
  * DAO.
  * Describes the location of a tree, including its coordinates, city and street.
@@ -12,22 +17,26 @@ public class TreeLocation {
 	/**
 	 * Database identifier (autoincrement).
 	 */
+	@Min(value = 1, groups = {ValidationGroups.Read.class})
 	private int id;
 	
 	/**
 	 * Trees' cooridinates.
 	 * @see Coordinates
 	 */
+	@NotNull
 	private Coordinates coordinates;
 	
 	/**
 	 * Street this tree is closest to.
 	 */
+	@NotNull
 	private String street;
 	
 	/**
 	 * City this tree is situated.
 	 */
+	@NotNull
 	private String city;
 
 	public int getId() {

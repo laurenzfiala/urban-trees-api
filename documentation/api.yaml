@@ -6,7 +6,7 @@
 swagger: "2.0"
 info:
   description: ""
-  version: "0.0.1"
+  version: "0.0.2"
   title: "Urban Trees API"
   termsOfService: ""
   contact:
@@ -163,7 +163,7 @@ paths:
       tags:
       - "tree"
       - "observation"
-      summary: "Store a single physiognomy dataset"
+      summary: "Store a single phenology dataset"
       description: ""
       consumes:
       - "application/json"
@@ -203,7 +203,7 @@ paths:
         in: "path"
         description: "Beacon identifier"
         required: true
-        pattern: "\d+"
+        pattern: "\\d+"
         type: "integer"
         format: "int32"
       responses:

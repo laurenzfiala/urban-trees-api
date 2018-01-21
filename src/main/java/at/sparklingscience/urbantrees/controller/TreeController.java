@@ -6,7 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +21,7 @@ import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
 import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
@@ -87,7 +90,9 @@ public class TreeController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/physiognomy")
-	public PhysiognomyDataset postTreePhysiognomyDataset(@PathVariable int treeId, @RequestBody PhysiognomyDataset dataset) {
+	public PhysiognomyDataset postTreePhysiognomyDataset(
+			@PathVariable int treeId,
+			@Validated(ValidationGroups.Update.class) @RequestBody PhysiognomyDataset dataset) {
 		
 		LOGGER.info("[[ POST ]] postTreePhysiognomyDataset - treeId: {}", treeId);
 		
@@ -95,7 +100,14 @@ public class TreeController {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
 		}
 		
-		this.physiognomyMapper.insertPhysiognomyDataset(dataset);
+		try {
+			this.physiognomyMapper.insertPhysiognomyDataset(dataset);
+		} catch (DuplicateKeyException ex) {
+			LOGGER.debug("User tried to enter duplicate key: {}", ex.getMessage(), ex);
+			throw new BadRequestException("There is already an observation with given observationDate.");
+		}
+		
+		LOGGER.info("[[ POST ]] postTreePhysiognomyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
 		
 		return dataset;
 		
@@ -128,7 +140,9 @@ public class TreeController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/phenology")
-	public PhenologyDataset postTreePhenologyDataset(@PathVariable int treeId, @RequestBody PhenologyDataset dataset) {
+	public PhenologyDataset postTreePhenologyDataset(
+			@PathVariable int treeId,
+			@Validated(ValidationGroups.Update.class) @RequestBody PhenologyDataset dataset) {
 		
 		LOGGER.info("[[ POST ]] postTreePhenologyDataset - treeId: {}", treeId);
 		
@@ -136,8 +150,13 @@ public class TreeController {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
 		}
 		
-		this.phenologyMapper.insertPhenology(dataset);
-		this.phenologyMapper.insertPhenologyObservation(dataset);
+		try {
+			this.phenologyMapper.insertPhenology(dataset);
+			this.phenologyMapper.insertPhenologyObservation(dataset);
+		} catch (DuplicateKeyException ex) {
+			LOGGER.debug("User tried to enter duplicate key: {}", ex.getMessage(), ex);
+			throw new BadRequestException("There is already an observation with given observationDate.");
+		}
 		
 		LOGGER.info("[[ POST ]] postTreePhenologyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
 		

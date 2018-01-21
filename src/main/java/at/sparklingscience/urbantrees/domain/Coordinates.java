@@ -1,5 +1,8 @@
 package at.sparklingscience.urbantrees.domain;
 
+import at.sparklingscience.urbantrees.domain.validator.annotation.MaxFloat;
+import at.sparklingscience.urbantrees.domain.validator.annotation.MinFloat;
+
 /**
  * DAO.
  * Describes a location via x and y coordinates.
@@ -12,11 +15,15 @@ public class Coordinates {
 	/**
 	 * X-Coordinate
 	 */
+	@MinFloat(0f)
+	@MaxFloat(360f)
 	private float x;
 	
 	/**
 	 * Y-Coordinate
 	 */
+	@MinFloat(0f)
+	@MaxFloat(180f)
 	private float y;
 	
 	public Coordinates() {}

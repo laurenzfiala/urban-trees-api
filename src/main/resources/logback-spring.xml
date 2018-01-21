@@ -55,5 +55,9 @@
 		</root>
 
 	</springProfile>
+	
+	<root level="DEBUG">
+        <appender-ref ref="CONSOLE" />
+    </root>
 
 </configuration>

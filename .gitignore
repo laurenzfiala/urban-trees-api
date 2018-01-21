@@ -1,5 +1,7 @@
 target/
 logs/
+/pom.xml.releaseBackup
+/release.properties
 !.mvn/wrapper/maven-wrapper.jar
 
 ### STS ###

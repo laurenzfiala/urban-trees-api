@@ -6,7 +6,7 @@
 swagger: "2.0"
 info:
   description: ""
-  version: "0.0.2"
+  version: "0.0.5"
   title: "Urban Trees API"
   termsOfService: ""
   contact:
@@ -31,6 +31,26 @@ schemes:
 #
 
 paths:
+  /tree:
+    get:
+      tags:
+      - "tree"
+      summary: "Return information about all trees"
+      description: ""
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Successful"
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/Tree"
+        400:
+          description: "Invalid tree id"
+      security:
+      - api_key: []
+
   /tree/{treeId}:
     get:
       tags:
@@ -190,6 +210,57 @@ paths:
       security:
       - api_key: []
 
+  /tree/{treeId}/phenology/spec:
+    get:
+      tags:
+      - "spec"
+      summary: "Return all observation types and objects which can be observed."
+      description: ""
+      produces:
+      - "application/json"
+      parameters:
+      - name: "treeId"
+        in: "path"
+        description: "ID of associated tree"
+        required: true
+        type: "integer"
+        format: "int32"
+      responses:
+          200:
+            description: "Successful"
+            schema:
+              type: array
+              items:
+                $ref: "#/definitions/PhenologyObservationType"
+      security:
+      - api_key: []
+
+  /ui/phenology/observation/result/{resultId}/img:
+    get:
+      tags:
+      - "ui"
+      summary: "Return image data for observation results."
+      description: ""
+      produces:
+      - "application/json"
+      parameters:
+      - name: "resultId"
+        in: "path"
+        description: "Observation result identifier"
+        required: true
+        pattern: "\\d+"
+        type: "integer"
+        format: "int32"
+      responses:
+        200:
+          description: "Successful"
+          schema:
+            $ref: "#/definitions/UiImage"
+        400:
+          description: "Invalid beacon id"
+      security:
+      - api_key: []
+
   /beacon/{beaconId}:
     get:
       tags:
@@ -333,7 +404,9 @@ definitions:
     required:
       - "id"
       - "location"
+      - "speciesId"
       - "species"
+      - "genusId"
       - "genus"
     properties:
       id:
@@ -341,8 +414,14 @@ definitions:
         format: "int32"
       location:
         $ref: "#/definitions/TreeLocation"
+      speciesId:
+        type: "integer"
+        format: "int32"
       species:
         type: "string"
+      genusId:
+        type: "integer"
+        format: "int32"
       genus:
         type: "string"
       plantationYear:
@@ -394,32 +473,83 @@ definitions:
       observationDate:
         description: "UTC date and time string"
         type: "string"
-        
+
   PhenologyObservation:
     type: "object"
     required:
-      - "typeId"
-      - "type"
-      - "objectId"
       - "object"
-      - "resultId"
       - "result"
     properties:
-      typeId:
-        type: "integer"
-        format: "int32"
       type:
         type: "string"
-      objectId:
-        type: "integer"
-        format: "int32"
       object:
         type: "string"
-      resultId:
-        type: "integer"
-        format: "int32"
       result:
         type: "string"
+
+  PhenologyObservationType:
+    type: "object"
+    required:
+      - "id"
+      - "name"
+      - "objects"
+      - "results"
+    properties:
+      id:
+        type: "integer"
+        format: "int32"
+      name:
+        type: "string"
+      objects:
+        type: array
+        items:
+          $ref: "#/definitions/PhenologyObservationObject"
+      results:
+        type: array
+        items:
+          $ref: "#/definitions/PhenologyObservationResult"
+
+  PhenologyObservationObject:
+    type: "object"
+    required:
+      - "id"
+      - "name"
+    properties:
+      id:
+        type: "integer"
+        format: "int32"
+      name:
+        type: "string"
+
+  PhenologyObservationResult:
+    type: "object"
+    required:
+      - "id"
+      - "value"
+    properties:
+      id:
+        type: "integer"
+        format: "int32"
+      value:
+        type: "integer"
+        format: "int32"
+      description:
+        type: "string"
+
+  UiImage:
+    type: "object"
+    required:
+      - "types"
+      - "objects"
+    properties:
+      types:
+        type: array
+        items:
+          $ref: "#/definitions/PhenologyObservationType"
+      objects:
+        type: array
+        items:
+          $ref: "#/definitions/PhenologyObservationObject"
   
   Beacon:
     type: "object"

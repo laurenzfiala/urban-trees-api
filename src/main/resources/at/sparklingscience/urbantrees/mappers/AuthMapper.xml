@@ -7,7 +7,7 @@
     <cache/>
 
     <resultMap id="AuthResultMap" type="Integer">
-        <result column="amount" property="value" />
+        <result column="amount" 	property="value" />
     </resultMap>
 
     <select id="hasValidApiKey" resultMap="AuthResultMap">

@@ -34,8 +34,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	            .anyRequest().authenticated()
 	        .and()
 	        .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
-            .csrf().disable();
+            .csrf().disable()
+            .cors();
 
     }
-
+    
 }

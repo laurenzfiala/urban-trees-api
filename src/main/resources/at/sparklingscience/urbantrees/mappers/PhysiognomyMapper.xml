@@ -5,13 +5,13 @@
 <mapper namespace="at.sparklingscience.urbantrees.mapper.PhysiognomyMapper">
 
     <resultMap id="PhysiognomyResultMap" type="at.sparklingscience.urbantrees.domain.PhysiognomyDataset">
-	    <result column="id" property="id" />
-	    <result column="tree_id" property="treeId" />
-	    <result column="tree_height" property="treeHeight" />
-	    <result column="trunk_circumference" property="trunkCircumference" />
-	    <result column="crown_base" property="crownBase" />
-	    <result column="crown_width" property="crownWidth" />
-	    <result column="observe_dat" property="observationDate" />
+	    <result column="id" 					property="id" />
+	    <result column="tree_id" 				property="treeId" />
+	    <result column="tree_height" 			property="treeHeight" />
+	    <result column="trunk_circumference" 	property="trunkCircumference" />
+	    <result column="crown_base" 			property="crownBase" />
+	    <result column="crown_width" 			property="crownWidth" />
+	    <result column="observe_dat" 			property="observationDate" />
     </resultMap>
 
     <select id="findPhysiognomyByTreeId" resultMap="PhysiognomyResultMap">

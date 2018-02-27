@@ -1,0 +1,51 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.UiMapper">
+
+    <cache/>
+
+    <resultMap id="PhenologyObservationResultImageMap" type="at.sparklingscience.urbantrees.domain.ui.ObservationResultImage">
+        <id column="result_id" 				property="observationResultId" />
+        <result column="tree_species_id"	property="treeSpeciesId" />
+        <result column="img_data" 			property="rawImageData" />
+        <result column="alt_text" 			property="alternativeText" />
+    </resultMap>
+
+    <resultMap id="AnnouncementMapper" type="at.sparklingscience.urbantrees.domain.ui.Announcement">
+        <id column="id" 				property="id" />
+        <result column="title" 			property="title" />
+        <result column="description" 	property="description" />
+        <result column="severity" 		property="severity" />
+    </resultMap>
+
+    <select id="findImageForPhenologyObservationResult" resultMap="PhenologyObservationResultImageMap">
+        select
+        	result_id,
+        	tree_species_id,
+			img_data,
+			alt_text
+		from
+			ui.phenology_observation_result_img
+		where
+			result_id = #{resultId}
+			and tree_species_id = #{treeSpeciesId}
+    </select>
+
+    <select id="getCurrentAnnouncements" resultMap="AnnouncementMapper" flushCache="true">
+        select
+			id,
+			title,
+			description,
+			severity
+		from
+			ui.announcement
+		where
+			display_from_dat &lt;= now()
+			and display_to_dat &gt;= now()
+		order by
+			severity desc
+    </select>
+    
+</mapper>

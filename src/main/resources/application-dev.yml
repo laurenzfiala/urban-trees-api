@@ -14,8 +14,8 @@ spring:
   # Database
   datasource:
     url: jdbc:postgresql://localhost:5432/urban_trees
-    username: ${db.user}
-    password: ${db.password}
+    username: postgres
+    password: admin
     platform: POSTGRESQL
     testWhileIdle: true
     validationQuery: select 1

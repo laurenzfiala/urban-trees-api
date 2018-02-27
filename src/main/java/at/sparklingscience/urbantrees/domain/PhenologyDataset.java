@@ -20,117 +20,6 @@ import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange.Rang
 public class PhenologyDataset {
 	
 	/**
-	 * Single phenology observation with type, object and the result.
-	 */
-	public static class PhenologyObservation {
-		
-		/**
-		 * The datasets' database identifier.
-		 */
-		@Min(value = 1, groups = {ValidationGroups.Read.class})
-		private int id;
-		
-		/**
-		 * ID of the observation type.
-		 * @see #type
-		 */
-		@Min(1)
-		private int typeId;
-		
-		/**
-		 * Type of the observation (e.g. bark).
-		 * @see #typeId
-		 */
-		@NotNull
-		private String type;
-		
-		/**
-		 * ID of the observation object.
-		 * @see #object
-		 */
-		@Min(1)
-		private int objectId;
-		
-		/**
-		 * Name of the observation object (e.g. bark 1).
-		 * @see #objectId
-		 */
-		@NotNull
-		private String object;
-		
-		/**
-		 * ID of the observation result.
-		 * @see #result
-		 */
-		@Min(1)
-		private int resultId;
-		
-		/**
-		 * Description of the observation result (e.g. is brown).
-		 * @see #resultId
-		 */
-		@NotNull
-		private String result;
-		
-		public int getId() {
-			return id;
-		}
-
-		public void setId(int id) {
-			this.id = id;
-		}
-
-		public int getTypeId() {
-			return typeId;
-		}
-
-		public void setTypeId(int typeId) {
-			this.typeId = typeId;
-		}
-
-		public String getType() {
-			return type;
-		}
-
-		public void setType(String type) {
-			this.type = type;
-		}
-
-		public int getObjectId() {
-			return objectId;
-		}
-
-		public void setObjectId(int objectId) {
-			this.objectId = objectId;
-		}
-
-		public String getObject() {
-			return object;
-		}
-
-		public void setObject(String object) {
-			this.object = object;
-		}
-
-		public int getResultId() {
-			return resultId;
-		}
-
-		public void setResultId(int resultId) {
-			this.resultId = resultId;
-		}
-
-		public String getResult() {
-			return result;
-		}
-
-		public void setResult(String result) {
-			this.result = result;
-		}
-		
-	}
-	
-	/**
 	 * Phenology identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
@@ -151,8 +40,13 @@ public class PhenologyDataset {
 	/**
 	 * List of observations made.
 	 */
-	@Size(min = 1)
+	@Size(min = 1, groups = {ValidationGroups.Update.class})
 	private List<PhenologyObservation> observations;
+	
+	/**
+	 * User remark.
+	 */
+	private String remark;
 	
 	/**
 	 * Date if observation.
@@ -201,6 +95,14 @@ public class PhenologyDataset {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public String getRemark() {
+		return remark;
+	}
+
+	public void setRemark(String remark) {
+		this.remark = remark;
 	}
 	
 }

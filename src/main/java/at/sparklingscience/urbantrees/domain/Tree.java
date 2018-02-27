@@ -28,10 +28,22 @@ public class Tree {
 	private TreeLocation location;
 	
 	/**
+	 * Trees' species id.
+	 */
+	@Min(1)
+	private String speciesId;
+	
+	/**
 	 * Trees' species.
 	 */
 	@NotNull
 	private String species;
+	
+	/**
+	 * Trees' genus id.
+	 */
+	@Min(1)
+	private String genusId;
 	
 	/**
 	 * Trees' genus.
@@ -68,6 +80,14 @@ public class Tree {
 	public void setLocation(TreeLocation location) {
 		this.location = location;
 	}
+	
+	public String getSpeciesId() {
+		return speciesId;
+	}
+	
+	public void setSpeciesId(String speciesId) {
+		this.speciesId = speciesId;
+	}
 
 	public String getSpecies() {
 		return species;
@@ -75,6 +95,14 @@ public class Tree {
 
 	public void setSpecies(String species) {
 		this.species = species;
+	}
+	
+	public String getGenusId() {
+		return genusId;
+	}
+	
+	public void setGenusId(String genusId) {
+		this.genusId = genusId;
 	}
 
 	public String getGenus() {

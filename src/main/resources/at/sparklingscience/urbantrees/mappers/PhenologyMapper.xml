@@ -5,23 +5,42 @@
 <mapper namespace="at.sparklingscience.urbantrees.mapper.PhenologyMapper">
 
     <resultMap id="PhenologyResultMap" type="at.sparklingscience.urbantrees.domain.PhenologyDataset">
-	    <result column="id" property="id" />
-	    <result column="tree_id" property="treeId" />
-	    <result column="observers" property="observers" />
-	    <result column="observe_dat" property="observationDate" />
-	    <collection property="observations"
-				    column="id"
+	    <id column="id" 				property="id" />
+	    <result column="tree_id" 		property="treeId" />
+	    <result column="observers" 		property="observers" />
+	    <result column="observe_dat" 	property="observationDate" />
+	    <result column="remark" 		property="remark" />
+	    
+	    <collection column="id"
+				    property="observations"
 				    select="findPhenologyObservationsByPhenologyId" />
     </resultMap>
 
-    <resultMap id="PhenologyObservationMap" type="at.sparklingscience.urbantrees.domain.PhenologyDataset$PhenologyObservation">
-	    <id column="id" property="id" />
-        <result column="type_id" property="typeId" />
-        <result column="type" property="type" />
-        <result column="object_id" property="objectId" />
-        <result column="object" property="object" />
-        <result column="result_id" property="resultId" />
-        <result column="result" property="result" />
+    <resultMap id="PhenologyObservationMap" type="at.sparklingscience.urbantrees.domain.PhenologyObservation">
+	    <id column="id" 				property="id" />
+	    
+		<association property="object" 	resultMap="PhenologyObservationObjectMap"/>
+		<association property="result" 	resultMap="PhenologyObservationResultMap" />
+    </resultMap>
+    
+    <resultMap id="PhenologyObservationTypeMap" type="at.sparklingscience.urbantrees.domain.PhenologyObservationType">
+	    <id column="type_id" 			property="id"/>
+		<result column="type" 			property="name"/>
+		
+		<collection property="objects" 	resultMap="PhenologyObservationObjectMap"/>
+		<collection property="results" 	resultMap="PhenologyObservationResultMap"/>
+    </resultMap>
+    
+    <resultMap id="PhenologyObservationObjectMap" type="at.sparklingscience.urbantrees.domain.PhenologyObservationObject">
+	    <id column="object_id" 			property="id"/>
+		<result column="type_id" 		property="typeId"/>
+		<result column="object" 		property="name"/>
+    </resultMap>
+    
+    <resultMap id="PhenologyObservationResultMap" type="at.sparklingscience.urbantrees.domain.PhenologyObservationResult">
+	    <id column="result_id" 					property="id"/>
+		<result column="result_value" 			property="value"/>
+		<result column="result_description" 	property="description"/>
     </resultMap>
 
     <select id="findPhenologyByTreeId" resultMap="PhenologyResultMap">
@@ -29,7 +48,8 @@
 		    p.id,
 		    p.tree_id,
 		    p.observers,
-		    p.observe_dat
+		    p.observe_dat,
+		    p.remark
 		from
 		    tree_data.tree t,
 		    tree_data.phenology p
@@ -51,11 +71,12 @@
         select
             po.id,
 		    pot.id as type_id,
-		    pot."type",
+		    pot."name" as "type",
 		    poo.id as object_id,
 		    poo."name" as "object",
 		    por.id as result_id,
-		    por.description as "result"
+		    por.value as result_value,
+		    por.description as result_description
 		from
 		    tree_data.phenology p,
 		    tree_data.phenology_observation po,
@@ -74,9 +95,9 @@
     <insert id="insertPhenology" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
             tree_data.phenology
-            (id, tree_id, observers, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+            (id, tree_id, observers, observe_dat, user_remark, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
-		    (default, #{treeId}, #{observers}, #{observationDate}, now(), now(), user, user);
+		    (default, #{treeId}, #{observers}, #{observationDate}, #{remark}, now(), now(), user, user);
 	</insert>
 	
     <insert id="insertPhenologyObservation">
@@ -86,13 +107,39 @@
         values 
             <foreach collection="observations" item="observation" index="index" open="(" separator="),("  close=")">
                 #{id},
-                #{observation.objectId},
-                #{observation.resultId},
+                #{observation.object.id},
+                #{observation.result.id},
                 now(),
                 now(),
                 user,
                 user
             </foreach>
 	</insert>
+	
+    <select id="getObservationTypesForTreeSpeciesId"
+            resultMap="PhenologyObservationTypeMap">
+        select 
+			t.id as type_id,
+			t."name" as "type",
+			o.id as object_id,
+			o."name" as "object",
+			r.id as result_id,
+			r.value as result_value,
+			r.description as result_description
+		from
+			tree_data.phenology_observation_type t,
+			tree_data.phenology_observation_object o,
+			tree_data.phenology_observation_result r,
+			tree_data.phenology_observation_type_species ts
+		where
+			t.id = o.type_id
+			and t.id = r.type_id
+			and t.id = ts.type_id
+			and ts.species_id = #{treeSpeciesId}
+		order by
+			t.id,
+			o.id,
+			r.id
+    </select>
 	
 </mapper>

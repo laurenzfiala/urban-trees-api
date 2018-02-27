@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import at.sparklingscience.urbantrees.domain.Tree;
@@ -14,6 +16,10 @@ import at.sparklingscience.urbantrees.domain.Tree;
 @Mapper
 public interface TreeMapper {
 	
+	List<Tree> getAllTrees();
+	
 	Tree findTreeById(int id);
+	
+	int getSpeciesIdForTreeId(int treeId);
 	
 }

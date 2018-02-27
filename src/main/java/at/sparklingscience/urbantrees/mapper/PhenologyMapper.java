@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
+import at.sparklingscience.urbantrees.domain.PhenologyObservationType;
 
 /**
  * Mybatis mapping interface.
@@ -28,5 +29,7 @@ public interface PhenologyMapper {
 	void insertPhenology(PhenologyDataset dataset);
 	
 	void insertPhenologyObservation(PhenologyDataset dataset);
+	
+	List<PhenologyObservationType> getObservationTypesForTreeSpeciesId(int treeSpeciesId);
 	
 }

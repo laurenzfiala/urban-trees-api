@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
+import at.sparklingscience.urbantrees.domain.PhenologyObservationType;
 import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
@@ -48,6 +49,14 @@ public class TreeController {
 	
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
+	
+	@RequestMapping(method = RequestMethod.GET, path = "")
+	public List<Tree> getAllTrees() {
+		
+		LOGGER.debug("[[ GET ]] getAllTrees");
+		return this.treeMapper.getAllTrees();
+		
+	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/{treeId:\\d+}")
 	public Tree getTree(@PathVariable int treeId) {
@@ -138,6 +147,17 @@ public class TreeController {
 		
 	}
 	
+	@RequestMapping(method = RequestMethod.GET, path = "/{treeId:\\d+}/phenology/spec")
+	public List<PhenologyObservationType> getPhenologyObservationSpecForTreeId(@PathVariable int treeId) {
+		
+		LOGGER.debug("[[ GET ]] getPhenologyObservationSpecByTreeId - treeId: {}", treeId);
+		
+		return this.phenologyMapper.getObservationTypesForTreeSpeciesId(
+					this.treeMapper.getSpeciesIdForTreeId(treeId)
+				);
+		
+	}
+	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/phenology")
 	public PhenologyDataset postTreePhenologyDataset(
@@ -163,7 +183,5 @@ public class TreeController {
 		return dataset;
 		
 	}
-	
-
 
 }

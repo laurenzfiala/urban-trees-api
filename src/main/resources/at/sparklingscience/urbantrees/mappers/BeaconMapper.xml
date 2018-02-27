@@ -5,17 +5,17 @@
 <mapper namespace="at.sparklingscience.urbantrees.mapper.BeaconMapper">
 
     <resultMap id="BeaconResultMap" type="at.sparklingscience.urbantrees.domain.Beacon">
-	    <result column="id" property="id" />
-	    <result column="tree_id" property="treeId" />
-	    <result column="bluetooth_address" property="bluetoothAddress" />
+	    <result column="id" 				property="id" />
+	    <result column="tree_id" 			property="treeId" />
+	    <result column="bluetooth_address" 	property="bluetoothAddress" />
     </resultMap>
 
     <resultMap id="BeaconDatasetResultMap" type="at.sparklingscience.urbantrees.domain.BeaconDataset">
-	    <result column="id" property="id" />
-	    <result column="beacon_id" property="beaconId" />
-	    <result column="humidity" property="humidity" />
-	    <result column="temperature" property="temperature" />
-	    <result column="observe_dat" property="observationDate" />
+	    <result column="id" 				property="id" />
+	    <result column="beacon_id" 			property="beaconId" />
+	    <result column="humidity" 			property="humidity" />
+	    <result column="temperature" 		property="temperature" />
+	    <result column="observe_dat" 		property="observationDate" />
     </resultMap>
 
     <select id="findBeaconById" resultMap="BeaconResultMap">

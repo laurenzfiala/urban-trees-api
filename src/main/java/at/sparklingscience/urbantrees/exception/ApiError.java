@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
  * @author Laurenz Fiala
  * @since 2017/12/26
  */
-class ApiError {
+public class ApiError {
 
 	/**
 	 * Error status name.
@@ -20,11 +20,18 @@ class ApiError {
 	 * Timestamp of the error event.
 	 */
 	private Date timestamp;
-   
+	
 	/**
 	 * Basic error description for the enduser.
 	 */
 	private String message;
+   
+	/**
+	 * Converted to an errorCode, since we don't want
+	 * the enum names in the response.
+	 * @see ClientError
+	 */
+	private int clientErrorCode;
 
 	private ApiError() {
 		timestamp = new Date();
@@ -69,6 +76,14 @@ class ApiError {
 	
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public int getClientErrorCode() {
+		return clientErrorCode;
+	}
+
+	public void setClientErrorCodeFromClientError(ClientError clientError) {
+		this.clientErrorCode = clientError.getErrorCode();
 	}
 	   
 }

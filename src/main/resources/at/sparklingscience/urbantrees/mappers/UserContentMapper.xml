@@ -1,0 +1,15 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.UserContentMapper">
+
+	<insert id="insertPhenologyImage">
+		insert into
+			user_data.phenology_img
+			(phenology_id, img_data, img_type, cre_dat, mod_dat, cre_usr, mod_usr)
+		values
+			(#{phenologyId}, #{imgData}, #{imgType}, now(), now(), user, user)
+	</insert>
+
+</mapper>

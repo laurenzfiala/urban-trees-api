@@ -17,5 +17,9 @@ public class InternalException extends GenericException {
 	public InternalException(String message) {
 		super(message);
 	}
+	
+	public InternalException(String message, ClientError clientError) {
+		super(message, clientError);
+	}
 
 }

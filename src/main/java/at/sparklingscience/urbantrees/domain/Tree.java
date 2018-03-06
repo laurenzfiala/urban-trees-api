@@ -12,7 +12,7 @@ import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
  * @author Laurenz Fiala
  * @since 2017/12/25
  */
-public class Tree {
+public class Tree implements Comparable<Tree> {
 
 	/**
 	 * Database identifier.
@@ -58,6 +58,17 @@ public class Tree {
 	 */
 	@Min(1950)
 	private int plantationYear;
+	
+	@Override
+	public int compareTo(Tree o) {
+		int diff = o.getId() - this.getId();
+		if (diff > 0) {
+			return 1;
+		} else if (diff < 0) {
+			return -1;
+		}
+		return 0;
+	}
 	
 	/**
 	 * Whether {@link #plantationYear} is estimated or known.

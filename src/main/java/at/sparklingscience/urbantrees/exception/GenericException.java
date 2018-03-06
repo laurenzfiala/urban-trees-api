@@ -19,8 +19,18 @@ public abstract class GenericException extends RuntimeException {
 	 */
 	private String message;
 	
+	/**
+	 * @see ClientError
+	 */
+	private ClientError clientError;
+	
 	public GenericException(String message) {
-		this.message = message;
+		this(message, null);
+	}
+	
+	public GenericException(String message, ClientError clientError) {
+		this.setMessage(message);
+		this.setClientError(clientError);
 	}
 
 	public String getMessage() {
@@ -29,6 +39,14 @@ public abstract class GenericException extends RuntimeException {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public ClientError getClientError() {
+		return clientError;
+	}
+
+	public void setClientError(ClientError clientError) {
+		this.clientError = clientError;
 	}
 
 }

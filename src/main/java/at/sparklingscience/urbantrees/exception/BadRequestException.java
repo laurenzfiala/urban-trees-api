@@ -13,9 +13,13 @@ public class BadRequestException extends GenericException {
 	 * Serial of this exception. Should be updated on each change.
 	 */
 	private static final long serialVersionUID = 20171228L;
-
+	
 	public BadRequestException(String message) {
 		super(message);
+	}
+
+	public BadRequestException(String message, ClientError clientError) {
+		super(message, clientError);
 	}
 
 }

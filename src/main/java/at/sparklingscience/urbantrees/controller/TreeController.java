@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.controller;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -24,6 +26,7 @@ import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
+import at.sparklingscience.urbantrees.exception.ClientError;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.PhysiognomyMapper;
@@ -55,6 +58,41 @@ public class TreeController {
 		
 		LOGGER.debug("[[ GET ]] getAllTrees");
 		return this.treeMapper.getAllTrees();
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/find")
+	public List<Tree> findTrees(@RequestParam(name = "search") String searchString) {
+		
+		LOGGER.debug("[[ GET ]] findTrees");
+		
+		Integer searchInt = null;
+		try {
+			searchInt = Integer.valueOf(searchString);
+		} catch (NumberFormatException e) {}
+		
+		List<Tree> trees = this.treeMapper.findTrees(searchInt, searchString);
+		
+		if (searchInt == null) {
+			return trees;
+		}
+		
+		final int searchIntFinal = searchInt;
+		Collections.sort(trees, Collections.reverseOrder((Tree o1, Tree o2) -> {
+			
+			final int id1 = o1.getId();
+			final int id2 = o2.getId();
+			if (id1 == id2) {
+				return 0;
+			} else if (id1 == searchIntFinal) {
+				return 1;
+			} else {
+				return o1.compareTo(o2);
+			}
+			
+		}));
+		
+		return trees;
 		
 	}
 	
@@ -113,7 +151,7 @@ public class TreeController {
 			this.physiognomyMapper.insertPhysiognomyDataset(dataset);
 		} catch (DuplicateKeyException ex) {
 			LOGGER.debug("User tried to enter duplicate key: {}", ex.getMessage(), ex);
-			throw new BadRequestException("There is already an observation with given observationDate.");
+			throw new BadRequestException("There is already an observation with given observationDate.", ClientError.PHENOLOGY_DUPLICATE);
 		}
 		
 		LOGGER.info("[[ POST ]] postTreePhysiognomyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
@@ -175,7 +213,7 @@ public class TreeController {
 			this.phenologyMapper.insertPhenologyObservation(dataset);
 		} catch (DuplicateKeyException ex) {
 			LOGGER.debug("User tried to enter duplicate key: {}", ex.getMessage(), ex);
-			throw new BadRequestException("There is already an observation with given observationDate.");
+			throw new BadRequestException("There is already an observation with given observationDate.", ClientError.PHENOLOGY_DUPLICATE);
 		}
 		
 		LOGGER.info("[[ POST ]] postTreePhenologyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());

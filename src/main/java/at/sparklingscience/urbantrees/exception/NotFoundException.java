@@ -13,9 +13,13 @@ public class NotFoundException extends GenericException {
 	 * Serial of this exception. Should be updated on each change.
 	 */
 	private static final long serialVersionUID = 20171226L;
-
+	
 	public NotFoundException(String message) {
 		super(message);
+	}
+
+	public NotFoundException(String message, ClientError clientError) {
+		super(message, clientError);
 	}
 
 }

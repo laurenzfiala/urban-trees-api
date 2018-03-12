@@ -36,7 +36,7 @@ mybatis:
   mapperLocations: classpath*:**/mappers/*.xml
   typeAliasesPackage: at.sparklingscience.urbantrees.domain
   configuration:
-    cacheEnabled: false
+    #cacheEnabled: false
     autoMappingBehavior: NONE
 
 # - Logging -

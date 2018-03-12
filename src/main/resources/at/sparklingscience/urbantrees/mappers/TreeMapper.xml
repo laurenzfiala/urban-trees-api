@@ -14,13 +14,14 @@
         <result column="is_plantation_year_estimate" 	property="isPlantationYearEstimate" />
         
         <association property="location" javaType="at.sparklingscience.urbantrees.domain.TreeLocation" >
-            <id column="location_id" 		property="id" />
-            <result column="street" 		property="street" />
-            <result column="city" 			property="city" />
+            <id column="location_id" 				property="id" />
+            <result column="street" 				property="street" />
+            <result column="city" 					property="city" />
             
             <association property="coordinates" javaType="at.sparklingscience.urbantrees.domain.Coordinates" >
-	            <result column="coords_x" 	property="x" />
-	            <result column="coords_y" 	property="y" />
+	            <result column="coords_x" 			property="x" />
+	            <result column="coords_y" 			property="y" />
+	            <result column="coords_projection" 	property="projection" />
             </association>
         </association>
     </resultMap>
@@ -31,6 +32,7 @@
 		    l.id as location_id,
 		    l.coords_x,
 		    l.coords_y,
+		    l.coords_projection,
 		    l.street,
 		    c.name as city,
 		    s.id as species_id,
@@ -52,45 +54,7 @@
 		    and t.species_id = s.id
 		    and s.genus_id = g.id
 		    and t.id = a.tree_id
-    </select>
-
-    <select id="findTrees" resultMap="TreeResultMap">
-    	<bind name="likeSearchString" value="'%' + searchString + '%'" />
-        select 
-		    t.id,
-		    l.id as location_id,
-		    l.coords_x,
-		    l.coords_y,
-		    l.street,
-		    c.name as city,
-		    s.id as species_id,
-		    s.species,
-		    g.id as genus_id,
-		    g.genus,
-		    a.plantation_year,
-		    a.is_plantation_year_estimate
-		from 
-		    tree_data.tree t,
-		    tree_data.tree_location l,
-		    tree_data.city c,
-		    tree_data.tree_species s,
-		    tree_data.tree_genus g,
-		    tree_data.tree_age a
-		where
-		    t.location_id = l.id
-		    and l.city_id = c.id
-		    and t.species_id = s.id
-		    and s.genus_id = g.id
-		    and t.id = a.tree_id
-		    and (
-		    	g.genus like #{likeSearchString}
-		    	or s.species like #{likeSearchString}
-		    	or l.street like #{likeSearchString}
-		    	or c."name" like #{likeSearchString}
-		    	<if test="searchInt != null">
-                	or t.id = #{searchInt}
-           		</if>
-			);
+	    order by t.id
     </select>
 
     <select id="findTreeById" resultMap="TreeResultMap">
@@ -99,6 +63,7 @@
 		    l.id as location_id,
 		    l.coords_x,
 		    l.coords_y,
+		    l.coords_projection,
 		    l.street,
 		    c.name as city,
 		    s.id as species_id,

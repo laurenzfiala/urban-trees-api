@@ -9,6 +9,8 @@ package at.sparklingscience.urbantrees.domain.ui;
  */
 public class ObservationResultImage extends Image {
 
+	private static final long serialVersionUID = 20180306L;
+
 	/**
 	 * ID of the associated observation result.
 	 */

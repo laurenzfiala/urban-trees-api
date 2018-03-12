@@ -19,8 +19,6 @@ public interface TreeMapper {
 	
 	List<Tree> getAllTrees();
 	
-	List<Tree> findTrees(@Param("searchInt") Integer searchInt, @Param("searchString") String searchString);
-	
 	Tree findTreeById(int id);
 	
 	int getSpeciesIdForTreeId(int treeId);

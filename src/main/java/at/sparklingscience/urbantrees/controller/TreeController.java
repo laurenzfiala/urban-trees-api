@@ -1,7 +1,5 @@
 package at.sparklingscience.urbantrees.controller;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -27,6 +25,7 @@ import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.ClientError;
+import at.sparklingscience.urbantrees.exception.InternalException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.PhysiognomyMapper;
@@ -58,41 +57,6 @@ public class TreeController {
 		
 		LOGGER.debug("[[ GET ]] getAllTrees");
 		return this.treeMapper.getAllTrees();
-		
-	}
-	
-	@RequestMapping(method = RequestMethod.GET, path = "/find")
-	public List<Tree> findTrees(@RequestParam(name = "search") String searchString) {
-		
-		LOGGER.debug("[[ GET ]] findTrees");
-		
-		Integer searchInt = null;
-		try {
-			searchInt = Integer.valueOf(searchString);
-		} catch (NumberFormatException e) {}
-		
-		List<Tree> trees = this.treeMapper.findTrees(searchInt, searchString);
-		
-		if (searchInt == null) {
-			return trees;
-		}
-		
-		final int searchIntFinal = searchInt;
-		Collections.sort(trees, Collections.reverseOrder((Tree o1, Tree o2) -> {
-			
-			final int id1 = o1.getId();
-			final int id2 = o2.getId();
-			if (id1 == id2) {
-				return 0;
-			} else if (id1 == searchIntFinal) {
-				return 1;
-			} else {
-				return o1.compareTo(o2);
-			}
-			
-		}));
-		
-		return trees;
 		
 	}
 	
@@ -185,14 +149,18 @@ public class TreeController {
 		
 	}
 	
-	@RequestMapping(method = RequestMethod.GET, path = "/{treeId:\\d+}/phenology/spec")
-	public List<PhenologyObservationType> getPhenologyObservationSpecForTreeId(@PathVariable int treeId) {
+	@RequestMapping(method = RequestMethod.GET, path = "/{speciesId:\\d+}/phenology/spec")
+	public List<PhenologyObservationType> getPhenologyObservationSpecForSpeciesId(@PathVariable int speciesId) {
 		
-		LOGGER.debug("[[ GET ]] getPhenologyObservationSpecByTreeId - treeId: {}", treeId);
+		LOGGER.debug("[[ GET ]] getPhenologyObservationSpecForSpeciesId - speciesId: {}", speciesId);
 		
-		return this.phenologyMapper.getObservationTypesForTreeSpeciesId(
-					this.treeMapper.getSpeciesIdForTreeId(treeId)
-				);
+		final List<PhenologyObservationType> spec = this.phenologyMapper.getObservationTypesForTreeSpeciesId(speciesId);
+		
+		if (spec == null) {
+			throw new InternalException("Could not find the phenology observation specification for species id " + speciesId + ".");
+		}
+		
+		return spec;
 		
 	}
 	

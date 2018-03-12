@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.domain.ui;
 
+import java.io.Serializable;
+
 import javax.validation.constraints.Min;
 
 /**
@@ -9,8 +11,10 @@ import javax.validation.constraints.Min;
  * @author Laurenz Fiala
  * @since 2018/02/22
  */
-public class Announcement {
+public class Announcement implements Serializable {
 	
+	private static final long serialVersionUID = 20180307L;
+
 	/**
 	 * Incrementing ID of the announcement.
 	 */

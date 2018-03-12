@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.domain.ui;
 
+import java.io.Serializable;
+
 import javax.validation.constraints.NotNull;
 
 import org.springframework.util.Base64Utils;
@@ -12,8 +14,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * @author Laurenz Fiala
  * @since 2018/02/04
  */
-public class Image {
+public class Image implements Serializable {
 	
+	private static final long serialVersionUID = 20180306L;
+
 	/**
 	 * Stored as bytea in the database.
 	 * Contains the image file data.

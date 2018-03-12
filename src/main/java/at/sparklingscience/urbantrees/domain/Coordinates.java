@@ -1,7 +1,9 @@
 package at.sparklingscience.urbantrees.domain;
 
-import at.sparklingscience.urbantrees.domain.validator.annotation.MaxFloat;
-import at.sparklingscience.urbantrees.domain.validator.annotation.MinFloat;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 
 /**
  * DAO.
@@ -15,35 +17,48 @@ public class Coordinates {
 	/**
 	 * X-Coordinate
 	 */
-	@MinFloat(0f)
-	@MaxFloat(360f)
-	private float x;
+	@Min(0)
+	private double x;
 	
 	/**
 	 * Y-Coordinate
 	 */
-	@MinFloat(0f)
-	@MaxFloat(180f)
-	private float y;
+	@Min(0)
+	private double y;
+	
+	/**
+	 * Y-Coordinate
+	 */
+	@NotNull(groups = ValidationGroups.Read.class)
+	private String projection;
 	
 	public Coordinates() {}
 	
-	public Coordinates(float x, float y) {
+	public Coordinates(double x, double y, String projection) {
 		this.setX(x);
 		this.setY(y);
+		this.setProjection(projection);
 	}
 	
-	public float getX() {
+	public double getX() {
 		return x;
 	}
-	public void setX(float x) {
+	public void setX(double x) {
 		this.x = x;
 	}
-	public float getY() {
+	public double getY() {
 		return y;
 	}
-	public void setY(float y) {
+	public void setY(double y) {
 		this.y = y;
+	}
+
+	public String getProjection() {
+		return projection;
+	}
+
+	public void setProjection(String projection) {
+		this.projection = projection;
 	}
 		
 }

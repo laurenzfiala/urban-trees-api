@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import at.sparklingscience.urbantrees.domain.ui.Announcement;
 import at.sparklingscience.urbantrees.domain.ui.Image;
+import at.sparklingscience.urbantrees.domain.ui.Statistics;
 
 /**
  * Mybatis mapping interface.
@@ -32,8 +33,14 @@ public interface UiMapper {
 	/**
 	 * Gets all current announcements to show ordered by
 	 * severity.
-	 * @return 
+	 * @return list of current annoucements
 	 */
 	List<Announcement> getCurrentAnnouncements();
+	
+	/**
+	 * Gets statistics on the system.
+	 * @return {@link Statistics}
+	 */
+	Statistics getStatistics();
 	
 }

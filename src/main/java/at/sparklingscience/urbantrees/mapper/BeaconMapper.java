@@ -8,6 +8,8 @@ import org.apache.ibatis.annotations.Param;
 
 import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
+import at.sparklingscience.urbantrees.domain.BeaconLog;
+import at.sparklingscience.urbantrees.domain.BeaconSettings;
 
 /**
  * Mybatis mapping interface.
@@ -29,6 +31,23 @@ public interface BeaconMapper {
 			@Param("timespanMax") Date timespanMax
 			);
 	
-	void insertBeaconDataset(BeaconDataset dataset);
+	void insertBeaconDatasets(
+			@Param("beaconId") int beaconId,
+			@Param("datasets") List<BeaconDataset> datasets
+			);
+	
+	BeaconSettings findLatestBeaconSettingsByBeaconId(
+			@Param("beaconId") int beaconId
+			);
+	
+	void insertBeaconSettings(
+			@Param("beaconId") int beaconId,
+			@Param("settings") BeaconSettings settings
+			);
+			
+	void insertBeaconLogs(
+			@Param("beaconId") int beaconId,
+			@Param("logs") List<BeaconLog> logs
+			);
 	
 }

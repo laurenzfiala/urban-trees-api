@@ -1,6 +1,6 @@
 # - Server -
 server:
-  port: 8080
+  port: 8443
   tomcat:
     accesslog:
       enabled: false
@@ -8,14 +8,19 @@ server:
     include-stacktrace: never
     whitelabel:
       enabled: false
+  ssl:
+    key-store-type: PKCS12
+    key-store: classpath:keystore.p12
+    key-store-password: 6AW72VbaJ3am8nHyRAi4G12WfLexdW18
+    key-alias: 1
 
 # - Spring -
 spring:
   # Database
   datasource:
     url: jdbc:postgresql://localhost:5432/urban_trees
-    username: ${db.user}
-    password: ${db.password}
+    username: api-daemon
+    password: Y34kpqV1^>6=Z]fY%(
     platform: POSTGRESQL
     testWhileIdle: true
     validationQuery: select 1
@@ -29,6 +34,8 @@ spring:
     multipart:
       max-file-size: 5MB
       max-request-size: 5MB
+  security:
+    require-ssl: false
     
 
 # - MyBatis -

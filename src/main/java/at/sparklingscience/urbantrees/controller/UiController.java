@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import at.sparklingscience.urbantrees.domain.ui.Announcement;
 import at.sparklingscience.urbantrees.domain.ui.Image;
+import at.sparklingscience.urbantrees.domain.ui.Statistics;
 import at.sparklingscience.urbantrees.mapper.UiMapper;
 
 /**
@@ -55,7 +56,19 @@ public class UiController {
 		
 		LOGGER.trace("[[ GET ]] getCurrentAnnouncements");
 		
-	    return this.uiMapper.getCurrentAnnouncements();
+		return this.uiMapper.getCurrentAnnouncements();
+		
+	}
+	
+	/*
+	 * TODO API def
+	 */
+	@RequestMapping(method = RequestMethod.GET, path = "/statistics")
+	public Statistics getStatistics() {
+		
+		LOGGER.trace("[[ GET ]] getStatistics");
+		
+	    return this.uiMapper.getStatistics();
 	
 	}
 

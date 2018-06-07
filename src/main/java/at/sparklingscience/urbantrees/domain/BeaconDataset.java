@@ -2,9 +2,8 @@ package at.sparklingscience.urbantrees.domain;
 
 import java.util.Date;
 
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange;
@@ -27,10 +26,9 @@ public class BeaconDataset {
 	private int id;
 	
 	/**
-	 * Identifier of the associated beacon.
-	 * The given dataset originates from the beacon with this id.
+	 * ID of associated {@link Beacon}.
 	 */
-	@Min(1)
+	@Min(value = 1, groups = {ValidationGroups.Read.class})
 	private int beaconId;
 	
 	/**
@@ -38,20 +36,28 @@ public class BeaconDataset {
 	 */
 	@MinFloat(0f)
 	@MaxFloat(1f)
-	private float humidity;
+	private double humidity;
 	
 	/**
 	 * Temperature value.
 	 */
 	@MinFloat(-100f)
 	@MaxFloat(100f)
-	private float temperature;
+	private double temperature;
+	
+	/**
+	 * Dew point value.
+	 */
+	@MinFloat(-100f)
+	@MaxFloat(100f)
+	private double dewPoint;
 	
 	/**
 	 * Date of observation.
 	 * This is actual date of check (possibly in the past,
 	 * e.g. from the devices' logger).
 	 */
+	@NotNull
 	@DateRange(Range.PAST_AND_PRESENT)
 	private Date observationDate;
 
@@ -63,27 +69,19 @@ public class BeaconDataset {
 		this.id = id;
 	}
 
-	public int getBeaconId() {
-		return beaconId;
-	}
-
-	public void setBeaconId(int beaconId) {
-		this.beaconId = beaconId;
-	}
-
-	public float getHumidity() {
+	public double getHumidity() {
 		return humidity;
 	}
 
-	public void setHumidity(float humidity) {
+	public void setHumidity(double humidity) {
 		this.humidity = humidity;
 	}
 
-	public float getTemperature() {
+	public double getTemperature() {
 		return temperature;
 	}
 
-	public void setTemperature(float temperature) {
+	public void setTemperature(double temperature) {
 		this.temperature = temperature;
 	}
 
@@ -93,6 +91,14 @@ public class BeaconDataset {
 
 	public void setObservationDate(Date observationDate) {
 		this.observationDate = observationDate;
+	}
+
+	public double getDewPoint() {
+		return dewPoint;
+	}
+
+	public void setDewPoint(double dewPoint) {
+		this.dewPoint = dewPoint;
 	}
 
 }

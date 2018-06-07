@@ -90,7 +90,6 @@ public class BeaconTests {
 		
 		BeaconDataset test = new BeaconDataset();
 		test.setId(9990);
-		test.setBeaconId(9990);
 		test.setHumidity(0.4f);
 		test.setTemperature(17.2f);
 		test.setObservationDate(new SimpleDateFormat(this.dateFormatPattern).parse("2017-01-01T00-00-00"));

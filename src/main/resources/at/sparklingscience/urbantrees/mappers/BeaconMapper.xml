@@ -18,6 +18,26 @@
 	    <result column="observe_dat" 		property="observationDate" />
     </resultMap>
 
+    <resultMap id="BeaconSettingsResultMap" type="at.sparklingscience.urbantrees.domain.BeaconSettings">
+	    <result column="id" 						property="id" />
+	    <result column="beacon_id" 					property="beaconId" />
+	    <result column="device_name" 				property="deviceName" />
+	    <result column="firmware_version_code" 		property="firmwareVersionCode" />
+	    <result column="transmit_power_db" 			property="transmitPowerDb" />
+	    <result column="battery_level" 				property="batteryLevel" />
+	    <result column="temperature_units" 			property="temperatureUnits" />
+	    <result column="memory_capacity" 			property="memoryCapacity" />
+	    <result column="ref_time" 					property="refTime" />
+	    <result column="device_id" 					property="deviceId" />
+	    <result column="phys_button_enabled" 		property="physicalButtonEnabled" />
+	    <result column="temperature_calibration" 	property="temperatureCalibration" />
+	    <result column="humidity_calibration" 		property="humidityCalibration" />
+	    <result column="logging_interval_min" 		property="loggingIntervalMin" />
+	    <result column="sensor_interval_sec" 		property="sensorIntervalSec" />
+	    <result column="adv_freq_ms" 				property="advertisingFrequencyMs" />
+	    <result column="pin" 						property="pin" />
+    </resultMap>
+
     <select id="findBeaconById" resultMap="BeaconResultMap">
         select
 		    id,
@@ -63,12 +83,127 @@
 	        d.observe_dat desc
     </select>
     
-    <insert id="insertBeaconDataset" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    <insert id="insertBeaconDatasets" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
             tree_data.beacon_data
-            (id, beacon_id, humidity, temperature, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+            (id, beacon_id, humidity, temperature, dew_point, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
-		    (default, #{beaconId}, #{humidity}, #{temperature}, #{observationDate}, now(), now(), user, user)
+		    <foreach collection="datasets" item="dataset" index="index" open="(" separator="),("  close=")">
+		    	default,
+		    	#{beaconId},
+		    	#{dataset.humidity},
+		    	#{dataset.temperature},
+		    	#{dataset.dewPoint},
+		    	#{dataset.observationDate},
+		    	now(),
+		    	now(),
+		    	user,
+		    	user
+	       </foreach>
+	</insert>
+    
+    <insert id="insertBeaconSettings" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into
+            tree_data.beacon_data
+            (
+	            id,
+				beacon_id,
+				device_name,
+				firmware_version_code,
+				transmit_power_db,
+				battery_level,
+				temperature_units,
+				memory_capacity,
+				ref_time,
+				device_id,
+				phys_button_enabled,
+				temperature_calibration,
+				humidity_calibration,
+				logging_interval_min,
+				sensor_interval_sec,
+				adv_freq_ms,
+				pin
+			)
+		values 
+		    <foreach collection="datasets" item="dataset" index="index" open="(" separator="),("  close=")">
+		    	default,
+				#{beaconId},
+				#{settings.deviceName},
+				#{settings.firmwareVersionCode},
+				#{settings.transmitPowerDb},
+				#{settings.batteryLevel},
+				#{settings.temperatureUnits},
+				#{settings.memoryCapacity},
+				#{settings.refTime},
+				#{settings.deviceId},
+				#{settings.physicalButtonEnabled},
+				#{settings.temperatureCalibration},
+				#{settings.humidityCalibration},
+				#{settings.loggingIntervalMin},
+				#{settings.sensorIntervalSec},
+				#{settings.advertisingFrequencyMs},
+				#{settings.pin},
+		    	now(),
+		    	now(),
+		    	user,
+		    	user
+	       </foreach>
+	</insert>
+
+    <select id="findLatestBeaconSettingsByBeaconId" resultMap="BeaconSettingsResultMap">
+        select
+			id,
+			beacon_id,
+			device_name,
+			firmware_version_code,
+			transmit_power_db,
+			battery_level,
+			temperature_units,
+			memory_capacity,
+			ref_time,
+			device_id,
+			phys_button_enabled,
+			temperature_calibration,
+			humidity_calibration,
+			logging_interval_min,
+			sensor_interval_sec,
+			adv_freq_ms,
+			pin
+		from
+			tree_data.beacon_settings
+		where
+			beacon_id = #{beaconId}
+		order by
+			check_dat desc
+		limit 1
+    </select>
+    
+    <insert id="insertBeaconLogs" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into
+            tree_data.beacon_data
+            (
+	            id,
+				beacon_id,
+				severity,
+				"type",
+				message,
+				event_dat,
+				settings_id,
+				cre_dat,
+				cre_usr
+			)
+		values 
+		    <foreach collection="logs" item="log" index="index" open="(" separator="),("  close=")">
+		    	default,
+				#{beaconId},
+				#{log.severity},
+				#{log.type},
+				#{log.message},
+				#{log.eventDate},
+				#{log.settingsId},
+		    	now(),
+		    	user
+	       </foreach>
 	</insert>
 
 </mapper>

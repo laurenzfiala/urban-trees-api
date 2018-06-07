@@ -189,5 +189,22 @@ public class TreeController {
 		return dataset;
 		
 	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/cities")
+	public List<String> getCities() {
+		
+		LOGGER.info("[[ GET ]] getCities");
+		
+		final List<String> cities = this.treeMapper.getCities();
+		
+		if (cities == null) {
+			throw new InternalException("Could not find cities.");
+		}
+		
+		LOGGER.info("[[ GET ]] getCities |END|");
+		
+		return cities;
+		
+	}
 
 }

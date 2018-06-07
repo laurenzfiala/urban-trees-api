@@ -19,11 +19,18 @@ import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
+import at.sparklingscience.urbantrees.domain.BeaconLog;
+import at.sparklingscience.urbantrees.domain.BeaconSettings;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.BeaconMapper;
 
+/**
+ * 
+ * TODO this whole class needs api doc
+ *
+ */
 @RestController
 @RequestMapping("/beacon")
 public class BeaconController {
@@ -90,21 +97,71 @@ public class BeaconController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/{beaconId:\\d+}/data")
-	public BeaconDataset postBeaconData(
+	public List<BeaconDataset> postBeaconData(
 			@PathVariable int beaconId,
-			@Validated(ValidationGroups.Update.class) @RequestBody BeaconDataset dataset) {
+			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconDataset> datasets) {
 		
 		LOGGER.info("[[ POST ]] postBeaconData - beaconId: {}", beaconId);
 		
-		if (beaconId != dataset.getBeaconId()) {
-			throw new BadRequestException("Datasets' beacon id does not match the paths' beacon id.");
+		if (datasets == null) {
+			throw new BadRequestException("Beacon datasets are null, can't continue with postBeaconData for beaconId: " + beaconId);
 		}
 		
-		this.beaconMapper.insertBeaconDataset(dataset);
+		this.beaconMapper.insertBeaconDatasets(beaconId, datasets);
 		
-		LOGGER.info("[[ POST ]] postBeaconData |END| - beaconId: {}, inserted dataset id: {}", dataset.getId());
+		LOGGER.info("[[ POST ]] postBeaconData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
 		
-		return dataset;
+		return datasets;
+		
+	}
+	
+	@Transactional
+	@RequestMapping(method = RequestMethod.GET, path = "/{beaconId:\\d+}/settings")
+	public BeaconSettings getLatestBeaconSettings(@PathVariable int beaconId) {
+		
+		LOGGER.info("[[ GET ]] getLatestBeaconSettings - beaconId: {}", beaconId);
+		
+		final BeaconSettings latestSettings = this.beaconMapper.findLatestBeaconSettingsByBeaconId(beaconId);
+		
+		LOGGER.info("[[ GET ]] getLatestBeaconSettings |END| - beaconId: {}, settings id: {}", beaconId, latestSettings.getId());
+		
+		return latestSettings;
+		
+	}
+	
+	@Transactional
+	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/settings")
+	public void putBeaconSettings(
+			@PathVariable int beaconId,
+			@Validated(ValidationGroups.Update.class) @RequestBody BeaconSettings settings) {
+		
+		LOGGER.info("[[ PUT ]] putBeaconSettings - beaconId: {}", beaconId);
+		
+		if (settings == null) {
+			throw new BadRequestException("Beacon settings are null, can't continue with putBeaconSettings for beaconId: " + beaconId);
+		}
+		
+		this.beaconMapper.insertBeaconSettings(beaconId, settings);
+		
+		LOGGER.info("[[ PUT ]] putBeaconSettings |END| - beaconId: {}, inserted settings", beaconId);
+		
+	}
+	
+	@Transactional
+	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/logs")
+	public void putBeaconLogs(
+			@PathVariable int beaconId,
+			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconLog> logs) {
+		
+		LOGGER.info("[[ PUT ]] putBeaconLogs - beaconId: {}", beaconId);
+		
+		if (logs == null) {
+			throw new BadRequestException("Beacon logs are null, can't continue with putBeaconSettings for beaconId: " + beaconId);
+		}
+		
+		this.beaconMapper.insertBeaconLogs(beaconId, logs);
+		
+		LOGGER.info("[[ PUT ]] putBeaconLogs |END| - beaconId: {}, inserted settings", beaconId);
 		
 	}
 

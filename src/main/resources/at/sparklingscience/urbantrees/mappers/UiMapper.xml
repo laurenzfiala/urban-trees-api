@@ -24,6 +24,22 @@
         <result column="severity" 		property="severity" />
     </resultMap>
 
+    <resultMap id="StatisticsMapper" type="at.sparklingscience.urbantrees.domain.ui.Statistics">
+        <result column="cities" 					property="cityAmount" />
+        <result column="tree" 						property="treeAmount" />
+        <result column="tree_species" 				property="treeSpeciesAmount" />
+        <result column="phenology" 					property="phenologyObservationAmount" />
+        <result column="phenology_observation" 		property="phenologyObservationObjectAmount" />
+        <result column="beacon" 					property="beaconAmount" />
+        <result column="beacon_data" 				property="beaconDatasetAmount" />
+        <result column="beacon_data_temp_min" 		property="beaconTempMinimum" />
+        <result column="beacon_data_temp_avg" 		property="beaconTempAverage" />
+        <result column="beacon_data_temp_max" 		property="beaconTempMaximum" />
+        <result column="beacon_data_humidity_min" 	property="beaconHumidityMinimum" />
+        <result column="beacon_data_humidity_avg" 	property="beaconHumidityAverage" />
+        <result column="beacon_data_humidity_max" 	property="beaconHumidityMaximum" />
+    </resultMap>
+
     <select id="findImageForPhenologyObservationResult" resultMap="PhenologyObservationResultImageMap">
         select
         	result_id,
@@ -50,6 +66,99 @@
 			and display_to_dat &gt;= now()
 		order by
 			severity desc
+    </select>
+
+    <select id="getStatistics" resultMap="StatisticsMapper">
+        select
+		(
+			select
+				count(0)
+			from
+				tree_data.city
+		)
+		as cities,
+		(
+			select
+				count(0)
+			from
+			tree_data.tree
+		)
+		as tree,
+		(
+			select
+				count(0)
+			from
+				tree_data.tree_species
+		)
+		as tree_species,
+		(
+			select
+				count(0)
+			from
+				tree_data.phenology
+		)
+		as phenology,
+		(
+			select
+				count(0)
+			from
+				tree_data.phenology_observation
+		)
+		as phenology_observation,
+		(
+			select
+				count(0)
+			from
+				tree_data.beacon
+		) as beacon,
+		(
+			select
+				count(0)
+			from
+				tree_data.beacon_data
+		) as beacon_data,
+		(
+			select
+				min(temperature)
+			from
+				tree_data.beacon_data
+		)
+		as beacon_data_temp_min,
+		(
+			select
+				min(temperature)
+			from
+				tree_data.beacon_data
+		)
+		as beacon_data_temp_avg,
+		(
+			select
+				max(temperature)
+			from
+				tree_data.beacon_data
+		)
+		as beacon_data_temp_max,
+		(
+			select
+				min(humidity)
+			from
+				tree_data.beacon_data
+		)
+		as beacon_data_humidity_min,
+		(
+			select
+				avg(humidity)
+			from
+				tree_data.beacon_data
+		)
+		as beacon_data_humidity_avg,
+		(
+			select
+				max(humidity)
+			from
+				tree_data.beacon_data
+		)
+		as beacon_data_humidity_max
     </select>
     
 </mapper>

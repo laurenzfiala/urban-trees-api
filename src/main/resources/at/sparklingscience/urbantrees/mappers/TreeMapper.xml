@@ -99,4 +99,11 @@
 			and s.id = t.species_id
     </select>
     
+    <select id="getCities" resultType="java.lang.String">
+        select
+        	name
+       	from
+       		tree_data.city
+    </select>
+    
 </mapper>

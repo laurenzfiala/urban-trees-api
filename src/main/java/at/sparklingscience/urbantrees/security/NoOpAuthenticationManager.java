@@ -4,6 +4,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 
+import at.sparklingscience.urbantrees.security.apikey.ApiKeyFilter;
+
 /**
  * {@link AuthenticationManager} which does nothing. This is needed
  * for the custom security filter implemented in {@link ApiKeyFilter}.

@@ -10,6 +10,15 @@
         <result column="amount" 	property="value" />
     </resultMap>
 
+    <resultMap id="UserMap" type="at.sparklingscience.urbantrees.security.user.User">
+        <result column="id" 						property="id" />
+        <result column="username" 					property="username" />
+        <result column="password" 					property="password" />
+        <result column="is_active" 					property="isActive" />
+        <result column="is_credentials_non_expired" property="isCredentialsNonExpired" />
+        <result column="last_login_dat" 			property="lastLoginDate" />
+    </resultMap>
+
     <select id="hasValidApiKey" resultMap="AuthResultMap">
         select 
 		    count(0) as amount
@@ -17,6 +26,48 @@
 		    access_data.api_key
 		where
 		    api_key = #{apiKey}
+    </select>
+
+    <select id="findUserByUsername" resultMap="UserMap">
+        select
+			id,
+			username,
+			password,
+			is_active,
+			is_credentials_non_expired,
+			last_login_dat
+		from
+			access_data."user"
+		where
+			username = #{username}
+    </select>
+    
+    <insert id="insertUser" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into
+            access_data.user
+            (id, username, password, is_active, is_credentials_non_expired, last_login_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+		values 
+		    (
+		    	default,
+		    	#{user.username},
+		    	#{user.password},
+		    	default,
+		    	default,
+		    	null,
+		    	now(),
+		    	now(),
+		    	user,
+		    	user
+	       )
+	</insert>
+	
+	<select id="findSetting" resultType="java.lang.String">
+        select
+			value
+		from
+			access_data.settings
+		where
+			key = #{key}
     </select>
     
 </mapper>

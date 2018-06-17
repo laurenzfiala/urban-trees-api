@@ -6,15 +6,18 @@
 
     <resultMap id="BeaconResultMap" type="at.sparklingscience.urbantrees.domain.Beacon">
 	    <result column="id" 				property="id" />
+	    <result column="device_id" 			property="deviceId" />
 	    <result column="tree_id" 			property="treeId" />
 	    <result column="bluetooth_address" 	property="bluetoothAddress" />
+	    <result column="status" 			property="status" />
     </resultMap>
 
     <resultMap id="BeaconDatasetResultMap" type="at.sparklingscience.urbantrees.domain.BeaconDataset">
 	    <result column="id" 				property="id" />
 	    <result column="beacon_id" 			property="beaconId" />
-	    <result column="humidity" 			property="humidity" />
 	    <result column="temperature" 		property="temperature" />
+	    <result column="humidity" 			property="humidity" />
+	    <result column="dew_point" 			property="dewPoint" />
 	    <result column="observe_dat" 		property="observationDate" />
     </resultMap>
 
@@ -41,8 +44,10 @@
     <select id="findBeaconById" resultMap="BeaconResultMap">
         select
 		    id,
+			device_id,
 		    tree_id,
-		    bluetooth_address
+		    bluetooth_address,
+		    status
 		from
 		    tree_data.beacon
 		where
@@ -52,8 +57,10 @@
     <select id="findBeaconByAddress" resultMap="BeaconResultMap">
         select
 		    id,
+			device_id,
 		    tree_id,
-		    bluetooth_address
+		    bluetooth_address,
+		    status
 		from
 		    tree_data.beacon
 		where
@@ -64,8 +71,9 @@
         select
 		    d.id,
 		    d.beacon_id,
-		    d.humidity,
 		    d.temperature,
+		    d.humidity,
+		    d.dew_point,
 		    d.observe_dat
 		from
 		    tree_data.beacon b,
@@ -80,7 +88,7 @@
 	            and p.observe_dat &lt;= #{timespanMax}
 	        </if>
 	    order by
-	        d.observe_dat desc
+	        d.observe_dat asc
     </select>
     
     <insert id="insertBeaconDatasets" useGeneratedKeys="true" keyColumn="id" keyProperty="id">

@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.domain;
 
+import java.util.List;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -58,6 +60,11 @@ public class Tree implements Comparable<Tree> {
 	 */
 	@Min(1950)
 	private int plantationYear;
+	
+	/**
+	 * Beacons attached to this tree.
+	 */
+	private List<Beacon> beacons;
 	
 	@Override
 	public int compareTo(Tree o) {
@@ -138,6 +145,14 @@ public class Tree implements Comparable<Tree> {
 
 	public void setPlantationYearEstimate(boolean isPlantationYearEstimate) {
 		this.isPlantationYearEstimate = isPlantationYearEstimate;
+	}
+
+	public List<Beacon> getBeacons() {
+		return beacons;
+	}
+
+	public void setBeacons(List<Beacon> beacons) {
+		this.beacons = beacons;
 	}
 	
 }

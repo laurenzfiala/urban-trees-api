@@ -20,7 +20,7 @@ public interface TreeMapper {
 	
 	Tree findTreeById(int id);
 	
-	int getSpeciesIdForTreeId(int treeId);
+	int findSpeciesIdForTreeId(int treeId);
 	
 	List<String> getCities();
 	

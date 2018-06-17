@@ -6,7 +6,9 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.http.HttpRequest;
 
-import at.sparklingscience.urbantrees.security.ApiKeyFilter;
+import at.sparklingscience.urbantrees.security.AuthSettings;
+import at.sparklingscience.urbantrees.security.apikey.ApiKeyFilter;
+import at.sparklingscience.urbantrees.security.user.User;
 
 /**
  * Mybatis mapping interface.
@@ -21,8 +23,29 @@ public interface AuthMapper {
 	/**
 	 * Whether the given api key is a valid entry in the database.
 	 * @param apiKey api key from {@link HttpRequest}, see {@link ApiKeyFilter}.
-	 * @return true if api key exists in the db; false otherwise.
+	 * @return Amount of matching api keys.
 	 */
 	Integer hasValidApiKey(@Param("apiKey") UUID apiKey);
+	
+	/**
+	 * Find a user by their username.
+	 * @param username The username to find.
+	 * @return The user found, or null.
+	 */
+	User findUserByUsername(@Param("username") String username);
+	
+	/**
+	 * Insert a new user to the database.
+	 * @param user Populated user DTO.
+	 * @return The new user with populated ID.
+	 */
+	void insertUser(@Param("user") User user);
+	
+	/**
+	 * Find a single auth setting by key.
+	 * @param key Settings' key.
+	 * @return The settings' value.
+	 */
+	String findSetting(@Param("key") AuthSettings key);
 	
 }

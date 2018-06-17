@@ -24,6 +24,10 @@
 	            <result column="coords_projection" 	property="projection" />
             </association>
         </association>
+        
+        <collection column="id"
+				    property="beacons"
+				    select="findBeaconsByTreeId" />
     </resultMap>
 
     <select id="getAllTrees" resultMap="TreeResultMap">
@@ -87,8 +91,21 @@
 		    and s.genus_id = g.id
 		    and t.id = a.tree_id
     </select>
+
+    <select id="findBeaconsByTreeId" resultMap="at.sparklingscience.urbantrees.mapper.BeaconMapper.BeaconResultMap">
+        select 
+		    id,
+			device_id,
+		    tree_id,
+		    bluetooth_address,
+		    status
+   		from 
+		    tree_data.beacon
+		where
+		    tree_id = #{id}
+    </select>
     
-    <select id="getSpeciesIdForTreeId" resultType="java.lang.Integer">
+    <select id="findSpeciesIdForTreeId" resultType="java.lang.Integer">
         select
 			s.id
 		from

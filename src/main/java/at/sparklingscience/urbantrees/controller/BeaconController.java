@@ -122,6 +122,9 @@ public class BeaconController {
 		LOGGER.info("[[ GET ]] getLatestBeaconSettings - beaconId: {}", beaconId);
 		
 		final BeaconSettings latestSettings = this.beaconMapper.findLatestBeaconSettingsByBeaconId(beaconId);
+		if (latestSettings == null) {
+			throw new NotFoundException("Could not find beacon settings for beacon " + beaconId);
+		}
 		
 		LOGGER.info("[[ GET ]] getLatestBeaconSettings |END| - beaconId: {}, settings id: {}", beaconId, latestSettings.getId());
 		

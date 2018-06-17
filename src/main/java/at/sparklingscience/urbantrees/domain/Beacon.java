@@ -22,6 +22,13 @@ public class Beacon {
 	private int id;
 	
 	/**
+	 * The device id given to the beacon.
+	 * This consists of City-abbreviation & ascending number.
+	 */
+	@NotNull
+	private String deviceId;
+	
+	/**
 	 * The {@link Tree} this beacon belongs/is attached to.
 	 */
 	@Min(1)
@@ -33,6 +40,12 @@ public class Beacon {
 	 */
 	@NotNull
 	private String bluetoothAddress;
+	
+	/**
+	 * Beacons' status.
+	 */
+	@NotNull
+	private BeaconStatus status;
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -50,20 +63,41 @@ public class Beacon {
 	public int getId() {
 		return id;
 	}
+	
 	public void setId(int id) {
 		this.id = id;
 	}
+	
 	public int getTreeId() {
 		return treeId;
 	}
+	
 	public void setTreeId(int treeId) {
 		this.treeId = treeId;
 	}
+	
 	public String getBluetoothAddress() {
 		return bluetoothAddress;
 	}
+	
 	public void setBluetoothAddress(String bluetoothAddress) {
 		this.bluetoothAddress = bluetoothAddress;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
+
+	public BeaconStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(BeaconStatus status) {
+		this.status = status;
 	}
 	
 }

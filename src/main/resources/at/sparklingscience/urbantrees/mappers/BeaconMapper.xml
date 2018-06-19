@@ -94,10 +94,9 @@
     <insert id="insertBeaconDatasets" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
             tree_data.beacon_data
-            (id, beacon_id, humidity, temperature, dew_point, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+            (beacon_id, humidity, temperature, dew_point, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
 		    <foreach collection="datasets" item="dataset" index="index" open="(" separator="),("  close=")">
-		    	default,
 		    	#{beaconId},
 		    	#{dataset.humidity},
 		    	#{dataset.temperature},
@@ -108,6 +107,7 @@
 		    	user,
 		    	user
 	       </foreach>
+	       on conflict do nothing
 	</insert>
     
     <insert id="insertBeaconSettings" useGeneratedKeys="true" keyColumn="id" keyProperty="id">

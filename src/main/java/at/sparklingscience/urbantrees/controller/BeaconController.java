@@ -60,7 +60,7 @@ public class BeaconController {
 		
 	}
 	
-	@RequestMapping(method = RequestMethod.GET, path = "/{beaconAddress:(?:[\\d\\w]{2}\\-){5}(?:[\\d\\w]{2})}")
+	@RequestMapping(method = RequestMethod.GET, path = "/{beaconAddress:(?:[\\d\\w]{2}\\:){5}(?:[\\d\\w]{2})}")
 	public Beacon getBeaconByAddress(@PathVariable String beaconAddress) {
 		
 		LOGGER.debug("[[ GET ]] getBeaconByAddress - beaconAddress: {}", beaconAddress);
@@ -96,8 +96,8 @@ public class BeaconController {
 	}
 	
 	@Transactional
-	@RequestMapping(method = RequestMethod.POST, path = "/{beaconId:\\d+}/data")
-	public List<BeaconDataset> postBeaconData(
+	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/data")
+	public void putBeaconData(
 			@PathVariable int beaconId,
 			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconDataset> datasets) {
 		
@@ -110,8 +110,6 @@ public class BeaconController {
 		this.beaconMapper.insertBeaconDatasets(beaconId, datasets);
 		
 		LOGGER.info("[[ POST ]] postBeaconData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
-		
-		return datasets;
 		
 	}
 	

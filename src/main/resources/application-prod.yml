@@ -11,16 +11,16 @@ server:
   ssl:
     key-store-type: PKCS12
     key-store: classpath:keystore.p12
-    key-store-password: 6AW72VbaJ3am8nHyRAi4G12WfLexdW18
+    key-store-password: ${keystore.password}
     key-alias: 1
 
 # - Spring -
 spring:
   # Database
   datasource:
-    url: jdbc:postgresql://localhost:5432/urban_trees
-    username: api-daemon
-    password: Y34kpqV1^>6=Z]fY%(
+    url: jdbc:postgresql://localhost:20000/urban_trees
+    username: ${db.username}
+    password: ${db.password}
     platform: POSTGRESQL
     testWhileIdle: true
     validationQuery: select 1

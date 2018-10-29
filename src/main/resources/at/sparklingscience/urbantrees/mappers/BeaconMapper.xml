@@ -39,7 +39,21 @@
 	    <result column="sensor_interval_sec" 		property="sensorIntervalSec" />
 	    <result column="adv_freq_ms" 				property="advertisingFrequencyMs" />
 	    <result column="pin" 						property="pin" />
+	    <result column="check_dat" 					property="checkDate" />
     </resultMap>
+
+    <select id="findAllBeaconsByStatus" resultMap="BeaconResultMap">
+        select
+		    id,
+			device_id,
+		    tree_id,
+		    bluetooth_address,
+		    status
+		from
+		    tree_data.beacon
+	    where
+		    status = #{status}
+    </select>
 
     <select id="findBeaconById" resultMap="BeaconResultMap">
         select
@@ -130,7 +144,8 @@
 				logging_interval_min,
 				sensor_interval_sec,
 				adv_freq_ms,
-				pin
+				pin,
+				check_dat
 			)
 		values 
 		    <foreach collection="datasets" item="dataset" index="index" open="(" separator="),("  close=")">
@@ -151,7 +166,7 @@
 				#{settings.sensorIntervalSec},
 				#{settings.advertisingFrequencyMs},
 				#{settings.pin},
-		    	now(),
+		    	#{settings.checkDate},
 		    	now(),
 		    	user,
 		    	user
@@ -176,7 +191,8 @@
 			logging_interval_min,
 			sensor_interval_sec,
 			adv_freq_ms,
-			pin
+			pin,
+			check_dat
 		from
 			tree_data.beacon_settings
 		where

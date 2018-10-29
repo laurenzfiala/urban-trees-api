@@ -3,6 +3,9 @@ package at.sparklingscience.urbantrees.security.jwt;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -82,13 +85,47 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			Authentication auth) throws IOException, ServletException {
 
 		LOGGER.trace("Successful authentication, creating token for user {}.", auth.getPrincipal());
-		final String token = Jwts.builder().setSubject(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername())
+		
+		final String username = ((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername();
+		
+		
+		final String token = Jwts.builder().setSubject(username)
 				.setExpiration(new Date(System.currentTimeMillis() + SecurityConfiguration.JWT_EXPIRATION_TIME))
-				.signWith(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG, this.authMapper.findSetting(AuthSettings.JWT_SECRET).getBytes())
+				.addClaims(this.getUserClaims(username))
+				.signWith(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG, this.getJWTSecret())
 				.compact();
+		
 		res.addHeader("Access-Control-Expose-Headers", SecurityConfiguration.HEADER_KEY);
 		res.addHeader(SecurityConfiguration.HEADER_KEY, SecurityConfiguration.JWT_TOKEN_PREFIX + token);
 
+	}
+	
+	/**
+	 * Fetches the users' roles and returns them to be added
+	 * to the JWT token as additional claims.
+	 * @param username the users' auth username
+	 */
+	private Map<String, Object> getUserClaims(final String username) {
+		
+		Map<String, Object> userClaims = new HashMap<>(1);
+		userClaims.put(
+				SecurityConfiguration.JWT_CLAIMS_ROLES_KEY,
+				this.authMapper.findRolesForUser(username).stream().collect(Collectors.joining(","))
+				);
+		
+		return userClaims;
+		
+	}
+	
+	/**
+	 * Fetches the JWT secret from the database, used for
+	 * signing the JWT tokens.
+	 * DB-call is cached by mybatis.
+	 */
+	private byte[] getJWTSecret() {
+		
+		return this.authMapper.findSetting(AuthSettings.JWT_SECRET).getBytes();
+		
 	}
 
 }

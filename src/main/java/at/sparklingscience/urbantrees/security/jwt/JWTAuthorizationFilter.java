@@ -21,6 +21,7 @@ import at.sparklingscience.urbantrees.security.AuthSettings;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureException;
 
 /**
  * JWT authorization filter to authorize a user.
@@ -82,13 +83,16 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     				.setSigningKey(this.authMapper.findSetting(AuthSettings.JWT_SECRET).getBytes())
     				.parseClaimsJws(token.replace(SecurityConfiguration.JWT_TOKEN_PREFIX, ""))
     				.getBody();
+    	} catch (SignatureException e) {
+    		LOGGER.warn("Users' auth token is untrusted {}", e.getMessage(), e);
+    		return null;
     	} catch (ExpiredJwtException e) {
-    		LOGGER.trace("Users' auth token has expired", e);
+    		LOGGER.trace("Users' auth token has expired: {}", e.getMessage(), e);
     		return null;
     	}
     	
         String user = jwtClaims.getSubject();
-
+        
         if (user != null) {
         	LOGGER.trace("Setting username/password auth token for user {}.", user);
             return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());

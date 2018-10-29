@@ -34,7 +34,7 @@ public class AuthenticationTests {
 	@Commit
 	public void registerUser() throws ClientProtocolException, IOException {
 		
-		this.authenticationService.registerUser("test", "Test-2018");
+		this.authenticationService.registerUser("test", "test");
 		
 	}
 

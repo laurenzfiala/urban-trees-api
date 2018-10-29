@@ -21,6 +21,7 @@ import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
 import at.sparklingscience.urbantrees.domain.BeaconLog;
 import at.sparklingscience.urbantrees.domain.BeaconSettings;
+import at.sparklingscience.urbantrees.domain.BeaconStatus;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
@@ -45,6 +46,20 @@ public class BeaconController {
 	
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/all/status/{beaconStatus}")
+	public List<Beacon> getAllBeaconsByStatus(@PathVariable String beaconStatus) {
+		
+		LOGGER.debug("[[ GET ]] getAllBeaconsByStatus - status: {}", beaconStatus);
+		
+		List<Beacon> beacons = this.beaconMapper.findAllBeaconsByStatus(BeaconStatus.valueOf(beaconStatus));
+		if (beacons == null) {
+			throw new NotFoundException("No beacon with status " + beaconStatus + " found.");
+		}
+		
+		return beacons;
+		
+	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/{beaconId:\\d+}")
 	public Beacon getBeacon(@PathVariable int beaconId) {

@@ -10,6 +10,7 @@ import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
 import at.sparklingscience.urbantrees.domain.BeaconLog;
 import at.sparklingscience.urbantrees.domain.BeaconSettings;
+import at.sparklingscience.urbantrees.domain.BeaconStatus;
 
 /**
  * Mybatis mapping interface.
@@ -20,6 +21,8 @@ import at.sparklingscience.urbantrees.domain.BeaconSettings;
  */
 @Mapper
 public interface BeaconMapper {
+	
+	List<Beacon> findAllBeaconsByStatus(@Param("status") BeaconStatus status);
 	
 	Beacon findBeaconById(@Param("beaconId") int beaconId);
 	

@@ -1,5 +1,6 @@
 package at.sparklingscience.urbantrees.mapper;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -40,6 +41,21 @@ public interface AuthMapper {
 	 * @return The new user with populated ID.
 	 */
 	void insertUser(@Param("user") User user);
+	
+	/**
+	 * Update the password of a user
+	 * @return Number of affected users (can only be 0 or 1)
+	 */
+	int updateUserPassword(@Param("username") String username,
+						   @Param("oldPassword") String oldPassword,
+						   @Param("newPassword") String newPassword);
+	
+	/**
+	 * Find all roles assigned to the given user.
+	 * @param username username from the auth data
+	 * @return list of roles/authorities
+	 */
+	List<String> findRolesForUser(@Param("username") String username);
 	
 	/**
 	 * Find a single auth setting by key.

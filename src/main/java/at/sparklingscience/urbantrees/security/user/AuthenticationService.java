@@ -34,7 +34,7 @@ public class AuthenticationService {
 		return this.authMapper.findUserByUsername(username);
 		
 	}
-
+	
 	/**
 	 * Inserts a new user into the database.
 	 * @param username Username to register.
@@ -53,6 +53,26 @@ public class AuthenticationService {
 		this.authMapper.insertUser(newUser);
 		
 		return newUser;
+		
+	}
+
+	/**
+	 * Update a users' password to newPassword
+	 * if oldPassword matches the previously stored password.
+	 * @param username Username of user to update
+	 * @param oldPassword Previous password
+	 * @param newPassword New password to be stored
+	 * @return true if the password change was successful, false otherwise
+	 */
+	@Transactional
+	public boolean changePassword(final String username, final String oldPassword, final String newPassword) {
+		
+		final String hashedOldPassword = this.bCryptPasswordEncoder.encode(oldPassword);
+		final String hashedNewPassword = this.bCryptPasswordEncoder.encode(newPassword);
+		
+		final int updatedRows = this.authMapper.updateUserPassword(username, hashedOldPassword, hashedNewPassword);
+		
+		return updatedRows == 1;
 		
 	}
 	

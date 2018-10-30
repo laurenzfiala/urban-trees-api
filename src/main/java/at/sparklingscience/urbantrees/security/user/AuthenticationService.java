@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.security.user;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,11 @@ import at.sparklingscience.urbantrees.mapper.AuthMapper;
  */
 @Service
 public class AuthenticationService {
+	
+	/**
+	 * Logger for this class.
+	 */
+	private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
 	
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -67,12 +74,22 @@ public class AuthenticationService {
 	@Transactional
 	public boolean changePassword(final String username, final String oldPassword, final String newPassword) {
 		
-		final String hashedOldPassword = this.bCryptPasswordEncoder.encode(oldPassword);
+		final User user = this.authMapper.findUserByUsername(username);
+		if (user == null) {
+			LOGGER.error("Given user not found by username. Please investigate, username should be handled internally.");
+			return false;
+		}
+		
+		final boolean oldPasswordMatches = this.bCryptPasswordEncoder.matches(oldPassword, user.getPassword());
 		final String hashedNewPassword = this.bCryptPasswordEncoder.encode(newPassword);
 		
-		final int updatedRows = this.authMapper.updateUserPassword(username, hashedOldPassword, hashedNewPassword);
+		if (oldPasswordMatches) {
+			final int updatedRows = this.authMapper.updateUserPassword(username, hashedNewPassword);
+			return updatedRows == 1;
+		}
 		
-		return updatedRows == 1;
+		LOGGER.info("Given old password did not match database. Password not updated.");
+		return false;
 		
 	}
 	

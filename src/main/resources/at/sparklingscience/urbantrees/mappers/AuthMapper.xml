@@ -65,10 +65,9 @@
         update
 			access_data."user"
 		set
-			password = #{username}
+			password = #{newPassword}
 		where
-			username = #{newPassword}
-			and password = #{oldPassword}
+			username = #{username}
 	</update>
 	
 	<select id="findRolesForUser" resultType="java.lang.String">

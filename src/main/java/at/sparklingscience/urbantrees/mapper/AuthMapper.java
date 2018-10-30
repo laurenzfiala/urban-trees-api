@@ -44,10 +44,11 @@ public interface AuthMapper {
 	
 	/**
 	 * Update the password of a user
+	 * @param username Username to change password of.
+	 * @param newPassword New password to set.
 	 * @return Number of affected users (can only be 0 or 1)
 	 */
 	int updateUserPassword(@Param("username") String username,
-						   @Param("oldPassword") String oldPassword,
 						   @Param("newPassword") String newPassword);
 	
 	/**

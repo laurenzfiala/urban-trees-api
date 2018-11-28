@@ -30,6 +30,7 @@ public interface BeaconMapper {
 	
 	List<BeaconDataset> findBeaconDataByBeaconId(
 			@Param("beaconId") int beaconId,
+			@Param("maxDatapoints") int maxDatapoints,
 			@Param("timespanMin") Date timespanMin,
 			@Param("timespanMax") Date timespanMax
 			);

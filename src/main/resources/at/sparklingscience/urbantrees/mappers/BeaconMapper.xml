@@ -82,27 +82,39 @@
     </select>
 
     <select id="findBeaconDataByBeaconId" resultMap="BeaconDatasetResultMap">
+        with help as 
+        (
+	        select
+			    d.id,
+			    d.beacon_id,
+			    d.temperature,
+			    d.humidity,
+			    d.dew_point,
+			    d.observe_dat
+			from
+			    tree_data.beacon b,
+			    tree_data.beacon_data d
+			where
+			    b.id = #{beaconId}
+			    and b.id = d.beacon_id
+		        <if test="timespanMin != null">
+		            and d.observe_dat &gt;= #{timespanMin}
+		        </if>
+		        <if test="timespanMax != null">
+		            and d.observe_dat &lt;= #{timespanMax}
+		        </if>
+		    order by
+		        d.observe_dat desc
+	        <if test="timespanMax != -1">
+	            limit #{maxDatapoints}
+	        </if>
+        )
         select
-		    d.id,
-		    d.beacon_id,
-		    d.temperature,
-		    d.humidity,
-		    d.dew_point,
-		    d.observe_dat
-		from
-		    tree_data.beacon b,
-		    tree_data.beacon_data d
-		where
-		    b.id = #{beaconId}
-		    and b.id = d.beacon_id
-	        <if test="timespanMin != null">
-	            and p.observe_dat &gt;= #{timespanMin}
-	        </if>
-	        <if test="timespanMax != null">
-	            and p.observe_dat &lt;= #{timespanMax}
-	        </if>
-	    order by
-	        d.observe_dat asc
+        	*
+       	from
+       		help
+    	order by
+    		observe_dat asc;
     </select>
     
     <insert id="insertBeaconDatasets" useGeneratedKeys="true" keyColumn="id" keyProperty="id">

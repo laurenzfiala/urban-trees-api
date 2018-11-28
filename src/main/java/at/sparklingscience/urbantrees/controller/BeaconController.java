@@ -92,16 +92,22 @@ public class BeaconController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{beaconId:\\d+}/data")
 	public List<BeaconDataset> getBeaconData(
 			@PathVariable int beaconId,
+			@RequestParam(required = false) Integer maxDatapoints,
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
 		
 		LOGGER.debug("[[ GET ]] getBeaconData - beaconId: {}", beaconId);
+		
+		if (maxDatapoints == null) {
+			maxDatapoints = -1; // infinite
+		}
 		
 		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
 
 		List<BeaconDataset> datasets = 
 				this.beaconMapper.findBeaconDataByBeaconId(
 						beaconId,
+						maxDatapoints,
 						timespan.getStart(),
 						timespan.getEnd()
 						);

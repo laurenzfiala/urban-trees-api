@@ -36,6 +36,13 @@ public interface AuthMapper {
 	User findUserByUsername(@Param("username") String username);
 	
 	/**
+	 * Find all granted roles for the specified user.
+	 * @param id id of the user to look for
+	 * @return collection of roles granted to the given user
+	 */
+	List<String> findRolesByUserId(@Param("id") int id);
+	
+	/**
 	 * Insert a new user to the database.
 	 * @param user Populated user DTO.
 	 * @return The new user with populated ID.

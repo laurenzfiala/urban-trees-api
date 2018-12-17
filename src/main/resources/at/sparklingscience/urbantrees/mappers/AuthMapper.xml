@@ -11,12 +11,18 @@
     </resultMap>
 
     <resultMap id="UserMap" type="at.sparklingscience.urbantrees.security.user.User">
-        <result column="id" 						property="id" />
+        <id column="id" 							property="id" />
         <result column="username" 					property="username" />
         <result column="password" 					property="password" />
         <result column="is_active" 					property="isActive" />
         <result column="is_credentials_non_expired" property="isCredentialsNonExpired" />
         <result column="last_login_dat" 			property="lastLoginDate" />
+        
+        <association
+	        property="roles"
+	        column="id"
+	        javaType="java.util.ArrayList"
+	        select="findRolesByUserId" />
     </resultMap>
 
     <select id="hasValidApiKey" resultMap="AuthResultMap">
@@ -30,16 +36,16 @@
 
     <select id="findUserByUsername" resultMap="UserMap">
         select
-			id,
-			username,
-			password,
-			is_active,
-			is_credentials_non_expired,
-			last_login_dat
+			u.id,
+			u.username,
+			u.password,
+			u.is_active,
+			u.is_credentials_non_expired,
+			u.last_login_dat
 		from
-			access_data."user"
+			access_data."user" u
 		where
-			username = #{username}
+			u.username = #{username}
     </select>
     
     <insert id="insertUser" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
@@ -69,6 +75,17 @@
 		where
 			username = #{username}
 	</update>
+	
+	<select id="findRolesByUserId" resultType="java.lang.String">
+        select
+			r."name"
+		from
+			access_data.user_role ur,
+			access_data."role" r
+		where
+			ur.user_id = #{id}
+			and ur.role_id = r.id
+    </select>
 	
 	<select id="findRolesForUser" resultType="java.lang.String">
         select

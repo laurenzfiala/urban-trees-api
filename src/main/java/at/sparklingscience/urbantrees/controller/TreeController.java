@@ -18,10 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.controller.util.Timespan;
+import at.sparklingscience.urbantrees.domain.City;
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
 import at.sparklingscience.urbantrees.domain.PhenologyObservationType;
 import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
+import at.sparklingscience.urbantrees.domain.TreeSpecies;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.ClientError;
@@ -191,11 +193,11 @@ public class TreeController {
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/cities")
-	public List<String> getCities() {
+	public List<City> getCities() {
 		
 		LOGGER.info("[[ GET ]] getCities");
 		
-		final List<String> cities = this.treeMapper.getCities();
+		final List<City> cities = this.treeMapper.getCities();
 		
 		if (cities == null) {
 			throw new InternalException("Could not find cities.");
@@ -204,6 +206,23 @@ public class TreeController {
 		LOGGER.info("[[ GET ]] getCities |END|");
 		
 		return cities;
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/species")
+	public List<TreeSpecies> getSpecies() {
+		
+		LOGGER.info("[[ GET ]] getSpecies");
+		
+		final List<TreeSpecies> species = this.treeMapper.getSpecies();
+		
+		if (species == null) {
+			throw new InternalException("Could not find tree species.");
+		}
+		
+		LOGGER.info("[[ GET ]] getSpecies |END|");
+		
+		return species;
 		
 	}
 

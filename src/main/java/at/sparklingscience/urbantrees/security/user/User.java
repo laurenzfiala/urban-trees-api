@@ -2,6 +2,7 @@ package at.sparklingscience.urbantrees.security.user;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -16,7 +17,7 @@ import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
  */
 public class User implements Serializable {
 
-	private static final long serialVersionUID = 20180610L;
+	private static final long serialVersionUID = 20181205L;
 
 	/**
 	 * Users' unique identifier.
@@ -53,6 +54,12 @@ public class User implements Serializable {
 	 */
 	@NotNull(groups = {ValidationGroups.Read.class})
 	private Date lastLoginDate;
+	
+	/**
+	 * All roles assigned to this user.
+	 */
+	@NotNull(groups = {ValidationGroups.Read.class})
+	private List<String> roles;
 	
 	public int getId() {
 		return id;
@@ -100,6 +107,14 @@ public class User implements Serializable {
 
 	public void setCredentialsNonExpired(boolean isCredentialsNonExpired) {
 		this.isCredentialsNonExpired = isCredentialsNonExpired;
+	}
+	
+	public List<String> getRoles() {
+		return roles;
+	}
+
+	public void setRoles(List<String> roles) {
+		this.roles = roles;
 	}
 	
 }

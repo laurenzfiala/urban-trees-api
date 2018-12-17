@@ -73,7 +73,13 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			LOGGER.trace("Got user info for user {}", creds.getUsername());
 			
 			return authenticationManager
-					.authenticate(new UsernamePasswordAuthenticationToken(creds.getUsername(), creds.getPassword(), new ArrayList<>()));
+					.authenticate(
+							new UsernamePasswordAuthenticationToken(
+									creds.getUsername(),
+									creds.getPassword(),
+									new ArrayList<>()
+									)
+							);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

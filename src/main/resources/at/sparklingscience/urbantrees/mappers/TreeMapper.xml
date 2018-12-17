@@ -30,6 +30,17 @@
 				    select="findBeaconsByTreeId" />
     </resultMap>
 
+    <resultMap id="CityResultMap" type="at.sparklingscience.urbantrees.domain.City">
+        <id column="id"								property="id" />
+        <result column="name"						property="name" />
+    </resultMap>
+
+    <resultMap id="SpeciesResultMap" type="at.sparklingscience.urbantrees.domain.TreeSpecies">
+        <id column="id"								property="id" />
+        <result column="genus_id"					property="genusId" />
+        <result column="species"					property="name" />
+    </resultMap>
+
     <select id="getAllTrees" resultMap="TreeResultMap">
         select 
 		    t.id,
@@ -116,11 +127,29 @@
 			and s.id = t.species_id
     </select>
     
-    <select id="getCities" resultType="java.lang.String">
+    <select id="getCities" resultMap="CityResultMap">
         select
+        	id,
         	name
        	from
        		tree_data.city
+    </select>
+    
+    <insert id="insertCity" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into
+            tree_data.city
+            (id, name, cre_dat, mod_dat, cre_usr, mod_usr)
+		values 
+		    (default, #{city.name}, now(), now(), #{user}, #{user});
+	</insert>
+    
+    <select id="getSpecies" resultMap="SpeciesResultMap">
+        select
+        	id,
+        	genus_id,
+        	species
+       	from
+       		tree_data.tree_species
     </select>
     
 </mapper>

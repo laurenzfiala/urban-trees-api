@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import at.sparklingscience.urbantrees.controller.AdminController;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.apikey.ApiKeyFilter;
 import at.sparklingscience.urbantrees.security.jwt.JWTAuthenticationFilter;
@@ -58,6 +59,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	 */
 	public static final SignatureAlgorithm	JWT_AUTHENTICATION_SIG_ALG 		= SignatureAlgorithm.HS512;
 	
+	/**
+	 * Role which is granted the privilege to access functionality of {@link AdminController}.
+	 * "ROLE_" is automatically prepended by spring.
+	 */
+	public static final String ADMIN_ACCESS_ROLE = "ADMIN";
+	
 	@Autowired
 	private UserDetailsService userDetailsService;
 	
@@ -80,6 +87,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    			"/ui/**",
 		    			"/beacon/**/data"
     			).permitAll()
+		    	.antMatchers(
+		    			"/admin/**"
+    			).hasRole(ADMIN_ACCESS_ROLE)
 		    	.anyRequest().authenticated()
 	    	.and()
 		    	.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

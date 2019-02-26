@@ -33,9 +33,26 @@ public interface UiMapper {
 	/**
 	 * Gets all current announcements to show ordered by
 	 * severity.
-	 * @return list of current annoucements
+	 * @return list of current announcements
 	 */
 	List<Announcement> getCurrentAnnouncements();
+	
+	/**
+	 * Gets all announcements ordered by 
+	 * @return list of announcements
+	 */
+	List<Announcement> getAllAnnouncements();
+	
+	/**
+	 * Insert a single announcment into the db.
+	 */
+	void insertAnnouncement(@Param("a") Announcement announcement,
+							@Param("user") String user);
+	
+	/**
+	 * Delete a single announcement form the db.
+	 */
+	void deleteAnnouncement(@Param("aId") int announcementId);
 	
 	/**
 	 * Gets statistics on the system.

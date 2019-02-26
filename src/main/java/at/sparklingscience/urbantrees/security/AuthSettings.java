@@ -8,7 +8,9 @@ package at.sparklingscience.urbantrees.security;
  */
 public enum AuthSettings {
 
-	JWT_SECRET;
+	JWT_SECRET,
+	MAX_LOGIN_ATTEMPTS,
+	TIMEOUT_LOGIN_ATTEMPTS_SEC;
 	
 	@Override
 	public String toString() {

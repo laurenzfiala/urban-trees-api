@@ -32,7 +32,7 @@ public class BeaconSettings {
 	/**
 	 * Device name.
 	 */
-	private String deviceName;
+	private String deviceName = "";
 	
 	/**
 	 * Version id of the current beacons firmware.
@@ -53,7 +53,7 @@ public class BeaconSettings {
 	 * Temperature units used by the beacon.
 	 * Either C or F.
 	 */
-	private String temperatureUnits;
+	private String temperatureUnits = "";
 	
 	/**
 	 * Amount of logs which can be stored
@@ -112,8 +112,8 @@ public class BeaconSettings {
 	 */
 	@NotNull
 	@DateRange(Range.PAST_AND_PRESENT)
-	private Date checkDate;
-
+	private Date checkDate = new Date();
+	
 	public int getId() {
 		return id;
 	}

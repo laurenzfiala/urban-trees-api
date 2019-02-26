@@ -1,0 +1,102 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.UserMapper">
+
+	<resultMap id="UserAchievementsResultMap" type="at.sparklingscience.urbantrees.domain.UserAchievements">
+		<id column="user_id" />
+        <result column="xp"			property="xp" />
+        <result column="last_xp"	property="lastXp" />
+        
+        <collection
+        	column="{userId=user_id}"
+	        property="xpHistory"
+	        select="findXpHistoryByUserId" />
+    </resultMap>
+    
+    <resultMap id="XpResultMap" type="at.sparklingscience.urbantrees.domain.UserXp">
+        <result column="xp"			property="xp" />
+        <result column="action"		property="action" />
+        <result column="cre_dat"	property="date" />
+    </resultMap>
+
+	<insert id="insertPhenologyImage">
+		insert into
+			user_data.phenology_img
+			(phenology_id, img_data, img_type, cre_dat, mod_dat, cre_usr, mod_usr)
+		values
+			(#{phenologyId}, #{imgData}, #{imgType}, now(), now(), user, user)
+	</insert>
+	
+	<select id="findAchievementsForUserId" resultMap="UserAchievementsResultMap">
+		with help as (
+			select
+				l.xp
+			from
+				access_data."user" u,
+				user_data."level" l
+			where
+				u.id = #{userId}
+				and u.id = l.user_id
+			order by
+				l.id desc
+			limit 2
+		)
+		select
+			#{userId} user_id,
+			max(xp) xp,
+			min(xp) last_xp
+		from
+			help
+	</select>
+	
+	<select id="findXpHistoryByUserId" resultMap="XpResultMap">
+		select
+			l.xp,
+			l."action",
+			l.cre_dat
+		from
+			user_data."level" l
+		where
+			l.user_id = #{userId}
+		order by
+			l.id desc
+	</select>
+	
+	<insert id="insertIncreaseLevel">
+		insert into
+			user_data."level"
+			(user_id, xp, "action", cre_dat, cre_usr)
+		select
+			l.user_id,
+			l.xp + #{xp},
+			#{action},
+			now(),
+			user
+		from
+			access_data."user" u,
+			user_data."level" l
+		where
+			u.id = #{userId}
+			and u.id = l.user_id
+		order by
+			l.id desc
+		limit 1
+	</insert>
+	
+	<insert id="insertLevel">
+		insert into
+			user_data."level"
+			(user_id, xp, "action", cre_dat, cre_usr)
+		values
+			(
+				#{userId},
+				#{xp},
+				#{action},
+				now(),
+				user
+			)
+	</insert>
+
+</mapper>

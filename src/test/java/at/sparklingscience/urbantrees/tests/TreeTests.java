@@ -21,6 +21,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import at.sparklingscience.urbantrees.domain.City;
 import at.sparklingscience.urbantrees.domain.Coordinates;
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
 import at.sparklingscience.urbantrees.domain.PhenologyObservation;
@@ -28,7 +29,9 @@ import at.sparklingscience.urbantrees.domain.PhenologyObservationObject;
 import at.sparklingscience.urbantrees.domain.PhenologyObservationResult;
 import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
+import at.sparklingscience.urbantrees.domain.TreeGenus;
 import at.sparklingscience.urbantrees.domain.TreeLocation;
+import at.sparklingscience.urbantrees.domain.TreeSpecies;
 
 /**
  * Tests for the beacon REST endpoint.
@@ -69,10 +72,9 @@ public class TreeTests {
 		testLocation.setId(9990);
 		testLocation.setCoordinates(new Coordinates(465.25f, 564.52f, "EPSG:900913"));
 		testLocation.setStreet("Samplestreet 1");
-		testLocation.setCity("Sample city");
+		testLocation.setCity(new City(1, "Sample city"));
 		test.setLocation(testLocation);
-		test.setSpecies("Sample species");
-		test.setGenus("Sample genus");
+		test.setSpecies(new TreeSpecies(0, "Sample species", new TreeGenus(0, "Sample Genus")));
 		test.setPlantationYear(2017);
 		test.setPlantationYearEstimate(true);
 

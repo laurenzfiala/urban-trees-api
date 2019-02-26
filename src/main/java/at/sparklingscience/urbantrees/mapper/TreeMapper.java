@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 
 import at.sparklingscience.urbantrees.domain.City;
 import at.sparklingscience.urbantrees.domain.Tree;
+import at.sparklingscience.urbantrees.domain.TreeLocation;
 import at.sparklingscience.urbantrees.domain.TreeSpecies;
 
 /**
@@ -20,6 +21,14 @@ import at.sparklingscience.urbantrees.domain.TreeSpecies;
 public interface TreeMapper {
 	
 	List<Tree> getAllTrees();
+
+	void insertTreeLocation(@Param("location") TreeLocation location, @Param("user") String user);
+
+	void insertTreeAge(@Param("tree") Tree tree, @Param("user") String user);
+	
+	void insertTree(@Param("tree") Tree tree, @Param("user") String user);
+	
+	void updateTree(@Param("tree") Tree tree, @Param("user") String user);
 	
 	Tree findTreeById(int id);
 	

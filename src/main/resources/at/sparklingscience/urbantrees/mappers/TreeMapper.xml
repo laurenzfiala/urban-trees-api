@@ -6,28 +6,39 @@
 
     <resultMap id="TreeResultMap" type="at.sparklingscience.urbantrees.domain.Tree">
         <id column="id" 								property="id" />
-        <result column="species_id" 					property="speciesId" />
-        <result column="species" 						property="species" />
-        <result column="genus_id" 						property="genusId" />
-        <result column="genus" 							property="genus" />
         <result column="plantation_year" 				property="plantationYear" />
         <result column="is_plantation_year_estimate" 	property="isPlantationYearEstimate" />
         
         <association property="location" javaType="at.sparklingscience.urbantrees.domain.TreeLocation" >
-            <id column="location_id" 				property="id" />
-            <result column="street" 				property="street" />
-            <result column="city" 					property="city" />
+            <id column="location_id" 					property="id" />
+            <result column="street" 					property="street" />
             
             <association property="coordinates" javaType="at.sparklingscience.urbantrees.domain.Coordinates" >
-	            <result column="coords_x" 			property="x" />
-	            <result column="coords_y" 			property="y" />
-	            <result column="coords_projection" 	property="projection" />
+	            <result column="coords_x" 				property="x" />
+	            <result column="coords_y" 				property="y" />
+	            <result column="coords_projection" 		property="projection" />
+            </association>
+            
+            <association property="city" javaType="at.sparklingscience.urbantrees.domain.City" >
+	            <result column="city_id" 				property="id" />
+	            <result column="city_name" 				property="name" />
+            </association>
+        </association>
+        
+        <association property="species" javaType="at.sparklingscience.urbantrees.domain.TreeSpecies" >
+            <id column="species_id" 				property="id" />
+            <result column="species" 				property="name" />
+            
+            <association property="genus" javaType="at.sparklingscience.urbantrees.domain.TreeGenus" >
+	            <id column="genus_id" 				property="id" />
+	            <result column="genus" 				property="name" />
             </association>
         </association>
         
         <collection column="id"
 				    property="beacons"
 				    select="findBeaconsByTreeId" />
+        
     </resultMap>
 
     <resultMap id="CityResultMap" type="at.sparklingscience.urbantrees.domain.City">
@@ -36,9 +47,13 @@
     </resultMap>
 
     <resultMap id="SpeciesResultMap" type="at.sparklingscience.urbantrees.domain.TreeSpecies">
-        <id column="id"								property="id" />
-        <result column="genus_id"					property="genusId" />
+        <id column="species_id"						property="id" />
         <result column="species"					property="name" />
+        
+        <association property="genus" javaType="at.sparklingscience.urbantrees.domain.TreeGenus" >
+	        <id column="genus_id" 				property="id" />
+	        <result column="genus" 				property="name" />
+        </association>
     </resultMap>
 
     <select id="getAllTrees" resultMap="TreeResultMap">
@@ -49,7 +64,8 @@
 		    l.coords_y,
 		    l.coords_projection,
 		    l.street,
-		    c.name as city,
+		    c.id as city_id,
+		    c.name as city_name,
 		    s.id as species_id,
 		    s.species,
 		    g.id as genus_id,
@@ -71,7 +87,85 @@
 		    and t.id = a.tree_id
 	    order by t.id
     </select>
-
+    
+    <insert id="insertTreeLocation" useGeneratedKeys="true" keyColumn="id" keyProperty="location.id">
+        insert into
+            tree_data.tree_location
+            (id, coords_x, coords_y, coords_projection, street, city_id, cre_dat, mod_dat, cre_usr, mod_usr)
+		values 
+		    (
+			    default,
+			    #{location.coordinates.x},
+			    #{location.coordinates.y},
+			    #{location.coordinates.projection},
+			    #{location.street},
+			    #{location.city.id},
+			    now(),
+			    now(),
+			    #{user},
+			    #{user}
+		    )
+	</insert>
+	
+	<insert id="insertTreeAge">
+		insert into
+            tree_data.tree_age
+            (
+            	id,
+				tree_id,
+				plantation_year,
+				is_plantation_year_estimate,
+				observe_dat,
+				cre_dat,
+				mod_dat,
+				cre_usr,
+				mod_usr
+			)
+		values 
+		    (
+		    	default,
+		    	#{tree.id},
+		    	#{tree.plantationYear},
+		    	true,
+		    	now(),
+		    	now(),
+		    	now(),
+		    	#{user},
+		    	#{user}
+	    	)
+	</insert>
+    
+    <insert id="insertTree" useGeneratedKeys="true" keyColumn="id" keyProperty="tree.id">
+        insert into
+            tree_data.tree
+            (id, location_id, species_id, cre_dat, mod_dat, cre_usr, mod_usr)
+		values 
+		    (default, #{tree.location.id}, #{tree.species.id}, now(), now(), #{user}, #{user})
+	</insert>
+	
+	<update id="updateTree" parameterType="at.sparklingscience.urbantrees.domain.Tree">
+        update
+            tree_data.tree
+        set
+        	species_id = #{tree.species.id},
+        	mod_dat = now(),
+        	mod_usr = #{user}
+       	where
+       		id = #{tree.id};
+        	
+       	update
+            tree_data.tree_location
+        set
+        	coords_x = #{tree.location.coordinates.x},
+        	coords_y = #{tree.location.coordinates.y},
+        	street = #{tree.location.street},
+        	city_id = #{tree.location.city.id},
+        	mod_dat = now(),
+        	mod_usr = #{user}
+       	where
+       		id = #{tree.location.id}
+	</update>
+	
     <select id="findTreeById" resultMap="TreeResultMap">
         select 
 		    t.id,
@@ -80,7 +174,8 @@
 		    l.coords_y,
 		    l.coords_projection,
 		    l.street,
-		    c.name as city,
+		    c.id as city_id,
+		    c.name as city_name,
 		    s.id as species_id,
 		    s.species,
 		    g.id as genus_id,
@@ -110,10 +205,13 @@
 		    tree_id,
 		    bluetooth_address,
 		    status
-   		from 
-		    tree_data.beacon
+		from 
+			tree_data.beacon
 		where
-		    tree_id = #{id}
+		   tree_id = #{id}
+	       and status != 'DELETED'
+	    order by
+	       id
     </select>
     
     <select id="findSpeciesIdForTreeId" resultType="java.lang.Integer">
@@ -135,21 +233,25 @@
        		tree_data.city
     </select>
     
-    <insert id="insertCity" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    <insert id="insertCity" useGeneratedKeys="true" keyColumn="id" keyProperty="city.id">
         insert into
             tree_data.city
             (id, name, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
-		    (default, #{city.name}, now(), now(), #{user}, #{user});
+		    (default, #{city.name}, now(), now(), #{user}, #{user})
 	</insert>
     
     <select id="getSpecies" resultMap="SpeciesResultMap">
         select
-        	id,
-        	genus_id,
-        	species
+        	s.id "species_id",
+        	s.species "species",
+        	g.id "genus_id",
+        	g.genus "genus"
        	from
-       		tree_data.tree_species
+       		tree_data.tree_species s,
+       		tree_data.tree_genus g
+     	where
+     		s.genus_id = g.id
     </select>
     
 </mapper>

@@ -18,10 +18,12 @@
     </resultMap>
 
     <resultMap id="AnnouncementMapper" type="at.sparklingscience.urbantrees.domain.ui.Announcement">
-        <id column="id" 				property="id" />
-        <result column="title" 			property="title" />
-        <result column="description" 	property="description" />
-        <result column="severity" 		property="severity" />
+        <id column="id" 					property="id" />
+        <result column="title" 				property="title" />
+        <result column="description" 		property="description" />
+        <result column="severity" 			property="severity" />
+        <result column="display_from_dat" 	property="displayFromDate" />
+        <result column="display_to_dat"		property="displayToDate" />
     </resultMap>
 
     <resultMap id="StatisticsMapper" type="at.sparklingscience.urbantrees.domain.ui.Statistics">
@@ -58,7 +60,9 @@
 			id,
 			title,
 			description,
-			severity
+			severity,
+			display_from_dat,
+			display_to_dat
 		from
 			ui.announcement
 		where
@@ -67,6 +71,45 @@
 		order by
 			severity desc
     </select>
+    
+    <select id="getAllAnnouncements" resultMap="AnnouncementMapper" flushCache="true">
+        select
+			id,
+			title,
+			description,
+			severity,
+			display_from_dat,
+			display_to_dat
+		from
+			ui.announcement
+		order by
+			mod_dat desc
+    </select>
+    
+    <insert id="insertAnnouncement">
+        insert into
+	ui.announcement
+		(title, description, severity, display_from_dat, display_to_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+	values
+		(
+			#{a.title},
+			#{a.description},
+			#{a.severity},
+			#{a.displayFromDate},
+			#{a.displayToDate},
+			now(),
+			now(),
+			#{user},
+			#{user}
+		)
+    </insert>
+    
+    <delete id="deleteAnnouncement">
+    	delete from
+			ui.announcement
+		where
+			id = #{aId}
+    </delete>
 
     <select id="getStatistics" resultMap="StatisticsMapper">
         select

@@ -1,8 +1,13 @@
 package at.sparklingscience.urbantrees.domain.ui;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 
 /**
  * Announcement to show in the UI for
@@ -18,17 +23,21 @@ public class Announcement implements Serializable {
 	/**
 	 * Incrementing ID of the announcement.
 	 */
-	@Min(1)
+	@Min(value = 1, groups = {ValidationGroups.Read.class})
 	private int id;
 	
 	/**
 	 * Announcement title.
 	 */
+	@NotNull
+	@NotEmpty
 	private String title;
 	
 	/**
 	 * Announcement description.
 	 */
+	@NotNull
+	@NotEmpty
 	private String description;
 	
 	/**
@@ -36,6 +45,18 @@ public class Announcement implements Serializable {
 	 * important messages and are used for ordering.
 	 */
 	private short severity;
+	
+	/**
+	 * Date from which on to display the announcement.
+	 */
+	@NotNull
+	private Date displayFromDate;
+	
+	/**
+	 * Date up to which to display the announcement.
+	 */
+	@NotNull
+	private Date displayToDate;
 
 	public int getId() {
 		return id;
@@ -67,6 +88,22 @@ public class Announcement implements Serializable {
 
 	public void setSeverity(short severity) {
 		this.severity = severity;
+	}
+
+	public Date getDisplayFromDate() {
+		return displayFromDate;
+	}
+
+	public void setDisplayFromDate(Date displayFromDate) {
+		this.displayFromDate = displayFromDate;
+	}
+
+	public Date getDisplayToDate() {
+		return displayToDate;
+	}
+
+	public void setDisplayToDate(Date displayToDate) {
+		this.displayToDate = displayToDate;
 	}
 
 }

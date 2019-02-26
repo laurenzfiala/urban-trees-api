@@ -37,7 +37,7 @@ public class TreeLocation {
 	 * City this tree is situated.
 	 */
 	@NotNull
-	private String city;
+	private City city;
 
 	public int getId() {
 		return id;
@@ -63,11 +63,11 @@ public class TreeLocation {
 		this.street = street;
 	}
 
-	public String getCity() {
+	public City getCity() {
 		return city;
 	}
 
-	public void setCity(String city) {
+	public void setCity(City city) {
 		this.city = city;
 	}
 	

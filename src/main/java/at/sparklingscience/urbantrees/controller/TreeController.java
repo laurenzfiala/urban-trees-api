@@ -1,5 +1,6 @@
 package at.sparklingscience.urbantrees.controller;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +26,7 @@ import at.sparklingscience.urbantrees.domain.PhenologyObservationType;
 import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.TreeSpecies;
+import at.sparklingscience.urbantrees.domain.UserLevelAction;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.ClientError;
@@ -32,6 +35,7 @@ import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.PhysiognomyMapper;
 import at.sparklingscience.urbantrees.mapper.TreeMapper;
+import at.sparklingscience.urbantrees.service.UserService;
 
 @RestController
 @RequestMapping("/tree")
@@ -41,6 +45,9 @@ public class TreeController {
 	 * Logger for this class.
 	 */
 	private static final Logger LOGGER = LoggerFactory.getLogger(TreeController.class);
+	
+	@Autowired
+	private UserService userService;
 	
 	@Autowired
 	private TreeMapper treeMapper;
@@ -55,7 +62,7 @@ public class TreeController {
 	private String dateFormatPattern;
 	
 	@RequestMapping(method = RequestMethod.GET, path = "")
-	public List<Tree> getAllTrees() {
+	public List<Tree> getAllTrees(Principal principal) {
 		
 		LOGGER.debug("[[ GET ]] getAllTrees");
 		return this.treeMapper.getAllTrees();
@@ -170,7 +177,8 @@ public class TreeController {
 	@RequestMapping(method = RequestMethod.POST, path = "/{treeId:\\d+}/phenology")
 	public PhenologyDataset postTreePhenologyDataset(
 			@PathVariable int treeId,
-			@Validated(ValidationGroups.Update.class) @RequestBody PhenologyDataset dataset) {
+			@Validated(ValidationGroups.Update.class) @RequestBody PhenologyDataset dataset,
+			Authentication auth) {
 		
 		LOGGER.info("[[ POST ]] postTreePhenologyDataset - treeId: {}", treeId);
 		
@@ -187,6 +195,8 @@ public class TreeController {
 		}
 		
 		LOGGER.info("[[ POST ]] postTreePhenologyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
+		
+		this.userService.increaseXp(UserLevelAction.PHENOLOGY_OBSERVATION, auth);
 		
 		return dataset;
 		

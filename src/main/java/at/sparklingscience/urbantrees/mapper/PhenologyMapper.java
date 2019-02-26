@@ -32,4 +32,6 @@ public interface PhenologyMapper {
 	
 	List<PhenologyObservationType> getObservationTypesForTreeSpeciesId(int treeSpeciesId);
 	
+	List<PhenologyObservationType> getAllObservationTypes();
+	
 }

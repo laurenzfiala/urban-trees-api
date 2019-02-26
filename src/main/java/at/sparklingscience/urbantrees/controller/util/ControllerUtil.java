@@ -7,8 +7,10 @@ import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
 
 import at.sparklingscience.urbantrees.exception.BadRequestException;
+import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
 
 /**
  * Contains utility methods for the controllers.
@@ -53,5 +55,18 @@ public class ControllerUtil {
 		}
 
 	}
+	
+	/**
+	 * Check if the given principal (user) is logged in anonymously.
+	 * @param authentication DI authentication object from controller method.
+	 * @return true if the given user is anonymously logged-in; false otherwise.
+	 */
+	public static boolean isUserAnonymous(Authentication authentication) {
+		return authentication == null || !(authentication instanceof AuthenticationToken);
+	}
 
+	public static AuthenticationToken getAuthToken(Authentication authentication) {
+		return (AuthenticationToken) authentication;
+	}
+	
 }

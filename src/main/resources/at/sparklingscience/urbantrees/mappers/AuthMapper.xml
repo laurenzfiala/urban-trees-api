@@ -4,25 +4,45 @@
 
 <mapper namespace="at.sparklingscience.urbantrees.mapper.AuthMapper">
 
-    <cache/>
-
     <resultMap id="AuthResultMap" type="Integer">
         <result column="amount" 	property="value" />
     </resultMap>
 
-    <resultMap id="UserMap" type="at.sparklingscience.urbantrees.security.user.User">
+    <resultMap id="UserMap" type="at.sparklingscience.urbantrees.domain.User">
         <id column="id" 							property="id" />
         <result column="username" 					property="username" />
         <result column="password" 					property="password" />
         <result column="is_active" 					property="isActive" />
         <result column="is_credentials_non_expired" property="isCredentialsNonExpired" />
+        <result column="failed_login_attempts"		property="failedloginAttempts" />
+        <result column="last_login_attempt_dat" 	property="lastLoginAttemptDate" />
+        <result column="last_login_dat" 			property="lastLoginDate" />
+        <result column="secure_login_key" 			property="secureLoginKey" />
+        
+        <collection
+	        column="id"
+	        property="roles"
+	        select="findRolesByUserId" />
+    </resultMap>
+    
+    <resultMap id="UserLightMap" type="at.sparklingscience.urbantrees.domain.UserLight">
+        <id column="id" 							property="id" />
+        <result column="username" 					property="username" />
+        <result column="is_active" 					property="isActive" />
+        <result column="is_credentials_non_expired" property="isCredentialsNonExpired" />
+        <result column="failed_login_attempts"		property="failedloginAttempts" />
+        <result column="last_login_attempt_dat" 	property="lastLoginAttemptDate" />
         <result column="last_login_dat" 			property="lastLoginDate" />
         
-        <association
-	        property="roles"
+        <collection
 	        column="id"
-	        javaType="java.util.ArrayList"
+	        property="roles"
 	        select="findRolesByUserId" />
+    </resultMap>
+    
+    <resultMap id="RoleMap" type="at.sparklingscience.urbantrees.domain.Role">
+        <id column="id" 							property="id" />
+        <result column="name"						property="name" />
     </resultMap>
 
     <select id="hasValidApiKey" resultMap="AuthResultMap">
@@ -33,7 +53,41 @@
 		where
 		    api_key = #{apiKey}
     </select>
-
+    
+    <select id="findUserByLoginKey" resultMap="UserMap">
+        select 
+		    u.id,
+			u.username,
+			u.password,
+			u.is_active,
+			u.is_credentials_non_expired,
+			u.failed_login_attempts,
+			u.last_login_attempt_dat,
+			u.last_login_dat,
+			u.secure_login_key
+		from 
+		    access_data."user" u
+		where
+		    u.secure_login_key = #{token}
+    </select>
+    
+    <select id="findUserById" resultMap="UserMap">
+        select
+			u.id,
+			u.username,
+			u.password,
+			u.is_active,
+			u.is_credentials_non_expired,
+			u.failed_login_attempts,
+			u.last_login_attempt_dat,
+			u.last_login_dat,
+			u.secure_login_key
+		from
+			access_data."user" u
+		where
+			u.id = #{userId}
+    </select>
+    
     <select id="findUserByUsername" resultMap="UserMap">
         select
 			u.id,
@@ -41,43 +95,135 @@
 			u.password,
 			u.is_active,
 			u.is_credentials_non_expired,
-			u.last_login_dat
+			u.failed_login_attempts,
+			u.last_login_attempt_dat,
+			u.last_login_dat,
+			u.secure_login_key
 		from
 			access_data."user" u
 		where
 			u.username = #{username}
     </select>
     
-    <insert id="insertUser" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    <insert id="insertUser" useGeneratedKeys="true" keyColumn="id" keyProperty="user.id">
         insert into
             access_data.user
-            (id, username, password, is_active, is_credentials_non_expired, last_login_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+            (id, username, password, is_credentials_non_expired, last_login_dat, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
 		    (
 		    	default,
 		    	#{user.username},
 		    	#{user.password},
-		    	default,
-		    	default,
+		    	false,
 		    	null,
 		    	now(),
 		    	now(),
 		    	user,
 		    	user
-	       )
+	       );
 	</insert>
+	
+	<insert id="insertUserRoles">
+        insert into
+            access_data.user_role
+            (user_id, role_id, cre_dat, mod_dat, cre_usr, mod_usr)
+		values
+			<foreach collection="roles" item="role" index="index" open="(" separator="),("  close=")">
+                #{userId},
+		    	#{role.id},
+		    	now(),
+		    	now(),
+		    	user,
+		    	user
+            </foreach>
+	</insert>
+	
+	<delete id="deleteUserRoles">
+        delete from
+			access_data.user_role
+		where
+			user_id = #{userId}
+			and role_id in
+			<foreach collection="roles" item="role" index="index" open="(" separator=","  close=")">
+		    	#{role.id}
+            </foreach>
+    </delete>
+	
+	<delete id="deleteUser">
+        delete from
+			access_data.user_role
+		where
+			user_id = #{userId};
+		
+		delete from
+			user_data.level
+		where
+			user_id = #{userId};
+		
+		delete from
+			access_data."user"
+		where
+			id = #{userId}
+    </delete>
+	
+	<update id="updateLastLoginAttemptDatByUsername">
+        update
+			access_data."user"
+		set
+			last_login_attempt_dat = now()
+		where
+			username = #{username}
+	</update>
+	
+	<update id="updateLastLoginDat">
+        update
+			access_data."user"
+		set
+			last_login_dat = now()
+		where
+			id = #{userId}
+	</update>
+    
+    <update id="increaseFailedLoginAttemptsByUsername">
+        update
+			access_data."user"
+		set
+			failed_login_attempts = failed_login_attempts + 1
+		where
+			username = #{username}
+	</update>
+	
+    <update id="resetFailedLoginAttempts">
+        update
+			access_data."user"
+		set
+			failed_login_attempts = 0
+		where
+			id = #{userId}
+	</update>
     
     <update id="updateUserPassword">
         update
 			access_data."user"
 		set
+			is_credentials_non_expired = true,
 			password = #{newPassword}
 		where
-			username = #{username}
+			id = #{userId}
 	</update>
 	
-	<select id="findRolesByUserId" resultType="java.lang.String">
+    <update id="updateUsername">
+        update
+			access_data."user"
+		set
+			username = #{newUsername}
+		where
+			id = #{userId}
+	</update>
+	
+	<select id="findRolesByUserId" resultMap="RoleMap">
         select
+        	r.id,
 			r."name"
 		from
 			access_data.user_role ur,
@@ -85,20 +231,6 @@
 		where
 			ur.user_id = #{id}
 			and ur.role_id = r.id
-    </select>
-	
-	<select id="findRolesForUser" resultType="java.lang.String">
-        select
-			r."name"
-		from
-			access_data."user" u,
-			access_data.user_role ur,
-			access_data."role" r
-		where
-			u.username = #{username}
-			and ur.role_id = r.id
-			and u.id = ur.user_id
-			and r.is_active = true
     </select>
 	
 	<select id="findSetting" resultType="java.lang.String">
@@ -109,5 +241,67 @@
 		where
 			key = #{key}
     </select>
-	
+    
+    <select id="findAllUsersLight" resultMap="UserLightMap">
+        select
+			u.id,
+			u.username,
+			u.password,
+			u.is_active,
+			u.is_credentials_non_expired,
+			u.failed_login_attempts,
+			u.last_login_attempt_dat,
+			u.last_login_dat
+		from
+			access_data."user" u
+		order by
+			id
+    </select>
+    
+    <update id="updateCredentialsNonExpired">
+        update
+			access_data."user"
+		set
+			is_credentials_non_expired = #{nonExpired}
+		where
+			id = #{userId}
+    </update>
+    
+    <update id="updateActive">
+        update
+			access_data."user"
+		set
+			is_active = #{active}
+		where
+			id = #{userId}
+    </update>
+    
+    <select id="findUserLoginKey" resultType="java.lang.String">
+        select
+			secure_login_key
+		from
+			access_data."user"
+		where
+			id = #{userId}
+    </select>
+    
+    <update id="updateUserLoginKey">
+        update
+			access_data."user"
+		set
+			secure_login_key = #{token}
+		where
+			id = #{userId}
+    </update>
+    
+    <select id="findAllUserRoles" resultMap="RoleMap">
+        select
+			id,
+			"name"
+		from
+			access_data."role"
+		where
+			is_active = true
+    </select>
+    
 </mapper>

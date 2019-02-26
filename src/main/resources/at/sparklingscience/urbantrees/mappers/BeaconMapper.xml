@@ -10,8 +10,9 @@
 	    <result column="tree_id" 			property="treeId" />
 	    <result column="bluetooth_address" 	property="bluetoothAddress" />
 	    <result column="status" 			property="status" />
+	    <result column="pin" 				property="pin" />
     </resultMap>
-
+    
     <resultMap id="BeaconDatasetResultMap" type="at.sparklingscience.urbantrees.domain.BeaconDataset">
 	    <result column="id" 				property="id" />
 	    <result column="beacon_id" 			property="beaconId" />
@@ -42,6 +43,19 @@
 	    <result column="check_dat" 					property="checkDate" />
     </resultMap>
 
+	<select id="findAllBeaconsActive" resultMap="BeaconResultMap">
+        select
+		    id,
+			device_id,
+		    tree_id,
+		    bluetooth_address,
+		    status
+		from
+		    tree_data.beacon
+	    where
+	    	status != 'DELETED'
+    </select>
+    
     <select id="findAllBeaconsByStatus" resultMap="BeaconResultMap">
         select
 		    id,
@@ -66,6 +80,7 @@
 		    tree_data.beacon
 		where
 		    id = #{beaconId}
+		    and status != 'DELETED'
     </select>
 
     <select id="findBeaconByAddress" resultMap="BeaconResultMap">
@@ -79,6 +94,7 @@
 		    tree_data.beacon
 		where
 		    bluetooth_address = #{address}
+		    and status != 'DELETED'
     </select>
 
     <select id="findBeaconDataByBeaconId" resultMap="BeaconDatasetResultMap">
@@ -114,7 +130,7 @@
        	from
        		help
     	order by
-    		observe_dat asc;
+    		observe_dat asc
     </select>
     
     <insert id="insertBeaconDatasets" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
@@ -136,9 +152,9 @@
 	       on conflict do nothing
 	</insert>
     
-    <insert id="insertBeaconSettings" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    <insert id="insertBeaconSettings" useGeneratedKeys="true" keyColumn="id" keyProperty="settings.id">
         insert into
-            tree_data.beacon_data
+            tree_data.beacon_settings
             (
 	            id,
 				beacon_id,
@@ -157,10 +173,12 @@
 				sensor_interval_sec,
 				adv_freq_ms,
 				pin,
-				check_dat
+				check_dat,
+				cre_dat,
+				cre_usr
 			)
 		values 
-		    <foreach collection="datasets" item="dataset" index="index" open="(" separator="),("  close=")">
+		    (
 		    	default,
 				#{beaconId},
 				#{settings.deviceName},
@@ -180,9 +198,13 @@
 				#{settings.pin},
 		    	#{settings.checkDate},
 		    	now(),
-		    	user,
-		    	user
-	       </foreach>
+		    	<if test="user == null">
+		    		user
+		    	</if>
+		    	<if test="user != null">
+		    		#{user}
+		    	</if>
+	    	)
 	</insert>
 
     <select id="findLatestBeaconSettingsByBeaconId" resultMap="BeaconSettingsResultMap">
@@ -214,9 +236,37 @@
 		limit 1
     </select>
     
+    <insert id="insertBeaconLog" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+        insert into
+            tree_data.beacon_log
+            (
+	            id,
+				beacon_id,
+				severity,
+				"type",
+				message,
+				event_dat,
+				settings_id,
+				cre_dat,
+				cre_usr
+			)
+		values 
+		    (
+		    	default,
+				#{beaconId},
+				#{log.severity},
+				#{log.type},
+				#{log.message},
+				#{log.eventDate},
+				#{log.settingsId},
+		    	now(),
+		    	user
+	       )
+	</insert>
+    
     <insert id="insertBeaconLogs" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
-            tree_data.beacon_data
+            tree_data.beacon_log
             (
 	            id,
 				beacon_id,
@@ -241,5 +291,42 @@
 		    	user
 	       </foreach>
 	</insert>
+	
+    <insert id="insertBeacon" useGeneratedKeys="true" keyColumn="id" keyProperty="beacon.id">
+        insert into
+            tree_data.beacon
+            (
+	            id,
+				device_id,
+				tree_id,
+				bluetooth_address,
+				status,
+				cre_dat,
+				mod_dat,
+				cre_usr,
+				mod_usr
+			)
+		values 
+		    (
+		    	default,
+		    	#{beacon.deviceId},
+		    	#{beacon.treeId},
+		    	#{beacon.bluetoothAddress},
+		    	#{beacon.status},
+		    	now(),
+		    	now(),
+		    	#{user},
+		    	#{user}
+		    )
+	</insert>
+	
+    <delete id="updateBeaconStatus">
+        update
+			tree_data.beacon
+		set
+			status = #{status}
+		where
+			id = #{id}
+	</delete>
 
 </mapper>

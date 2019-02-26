@@ -27,6 +27,14 @@ public class City implements Comparable<City> {
 	@NotNull
 	@NotEmpty
 	private String name;
+	
+	public City() {
+	}
+	
+	public City(int id, String name) {
+		this.id = id;
+		this.name = name;
+	}
 
 	@Override
 	public int compareTo(City o) {

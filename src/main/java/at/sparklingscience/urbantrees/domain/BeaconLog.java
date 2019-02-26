@@ -35,7 +35,7 @@ public class BeaconLog {
 	/**
 	 * Brief message type.
 	 */
-	private String type;
+	private BeaconLogType type;
 	
 	/**
 	 * More precise message describing the event.
@@ -52,6 +52,44 @@ public class BeaconLog {
 	 * at the time of logging this event.
 	 */
 	private Integer settingsId;
+
+	/**
+	 * Default Constructor.
+	 */
+	public BeaconLog() {
+	}
+	
+	/**
+	 * Constructor for manual log messages inserts.
+	 */
+	public BeaconLog(
+			int beaconId,	
+			BeaconLogSeverity severity,
+			BeaconLogType type,
+			String message,
+			Date eventDate) {
+		this(0, beaconId, severity, type, message, eventDate, null);
+	}
+	
+	/**
+	 * Default constructor for all members.
+	 */
+	public BeaconLog(
+			int id,
+			int beaconId,	
+			BeaconLogSeverity severity,
+			BeaconLogType type,
+			String message,
+			Date eventDate,
+			Integer settingsId) {
+		this.id = id;
+		this.beaconId = beaconId;
+		this.severity = severity;
+		this.type = type;
+		this.message = message;
+		this.eventDate = eventDate;
+		this.settingsId = settingsId;
+	}
 
 	public int getId() {
 		return id;
@@ -77,11 +115,11 @@ public class BeaconLog {
 		this.severity = severity;
 	}
 
-	public String getType() {
+	public BeaconLogType getType() {
 		return type;
 	}
 
-	public void setType(String type) {
+	public void setType(BeaconLogType type) {
 		this.type = type;
 	}
 

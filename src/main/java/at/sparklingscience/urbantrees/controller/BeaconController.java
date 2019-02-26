@@ -1,11 +1,13 @@
 package at.sparklingscience.urbantrees.controller;
 
+import java.security.Principal;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,10 +24,12 @@ import at.sparklingscience.urbantrees.domain.BeaconDataset;
 import at.sparklingscience.urbantrees.domain.BeaconLog;
 import at.sparklingscience.urbantrees.domain.BeaconSettings;
 import at.sparklingscience.urbantrees.domain.BeaconStatus;
+import at.sparklingscience.urbantrees.domain.UserLevelAction;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.BeaconMapper;
+import at.sparklingscience.urbantrees.service.UserService;
 
 /**
  * 
@@ -42,17 +46,38 @@ public class BeaconController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BeaconController.class);
 	
 	@Autowired
+	private UserService userService;
+	
+	@Autowired
 	private BeaconMapper beaconMapper;
 	
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
 	
-	@RequestMapping(method = RequestMethod.GET, path = "/all/status/{beaconStatus}")
+	@RequestMapping(method = RequestMethod.GET)
+	public List<Beacon> getAllBeaconsActive() {
+		
+		LOGGER.debug("[[ GET ]] getAllBeaconsActive");
+		
+		List<Beacon> beacons = this.beaconMapper.findAllBeaconsActive();
+		if (beacons == null) {
+			throw new NotFoundException("No beacon found.");
+		}
+		
+		LOGGER.debug("[[ GET ]] getAllBeaconsActive |END|");
+		
+		return beacons;
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/status/{beaconStatus}")
 	public List<Beacon> getAllBeaconsByStatus(@PathVariable String beaconStatus) {
 		
-		LOGGER.debug("[[ GET ]] getAllBeaconsByStatus - status: {}", beaconStatus);
+		final BeaconStatus status = BeaconStatus.valueOf(beaconStatus);
 		
-		List<Beacon> beacons = this.beaconMapper.findAllBeaconsByStatus(BeaconStatus.valueOf(beaconStatus));
+		LOGGER.debug("[[ GET ]] getAllBeaconsByStatus - status: {}", status);
+		
+		List<Beacon> beacons = this.beaconMapper.findAllBeaconsByStatus(status);		
 		if (beacons == null) {
 			throw new NotFoundException("No beacon with status " + beaconStatus + " found.");
 		}
@@ -120,7 +145,8 @@ public class BeaconController {
 	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/data")
 	public void putBeaconData(
 			@PathVariable int beaconId,
-			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconDataset> datasets) {
+			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconDataset> datasets,
+			Authentication auth) {
 		
 		LOGGER.info("[[ POST ]] postBeaconData - beaconId: {}", beaconId);
 		
@@ -131,6 +157,8 @@ public class BeaconController {
 		this.beaconMapper.insertBeaconDatasets(beaconId, datasets);
 		
 		LOGGER.info("[[ POST ]] postBeaconData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
+		
+		this.userService.increaseXp(UserLevelAction.BEACON_READOUT, auth);
 		
 	}
 	
@@ -155,7 +183,8 @@ public class BeaconController {
 	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/settings")
 	public void putBeaconSettings(
 			@PathVariable int beaconId,
-			@Validated(ValidationGroups.Update.class) @RequestBody BeaconSettings settings) {
+			@Validated(ValidationGroups.Update.class) @RequestBody BeaconSettings settings,
+			Principal principal) {
 		
 		LOGGER.info("[[ PUT ]] putBeaconSettings - beaconId: {}", beaconId);
 		
@@ -163,7 +192,8 @@ public class BeaconController {
 			throw new BadRequestException("Beacon settings are null, can't continue with putBeaconSettings for beaconId: " + beaconId);
 		}
 		
-		this.beaconMapper.insertBeaconSettings(beaconId, settings);
+		this.beaconMapper.insertBeaconSettings(beaconId, settings, null);
+		this.beaconMapper.updateBeaconStatus(beaconId, BeaconStatus.OK);
 		
 		LOGGER.info("[[ PUT ]] putBeaconSettings |END| - beaconId: {}, inserted settings", beaconId);
 		

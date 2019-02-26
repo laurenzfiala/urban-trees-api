@@ -10,6 +10,12 @@ package at.sparklingscience.urbantrees.domain;
 public enum BeaconStatus {
 
 	/**
+	 * The beacon was just set up and there has been no actual
+	 * access via the app and therefore no settings stored.
+	 */
+	INITIAL,
+	
+	/**
 	 * The beacon is operational and connects & logs normally.
 	 */
 	OK,
@@ -23,6 +29,11 @@ public enum BeaconStatus {
 	 * The beacon has invalid settings which prevent correct
 	 * read-out of data or logs.
 	 */
-	INVALID_SETTINGS
+	INVALID_SETTINGS,
+	
+	/**
+	 * The beacon has been marked deleted, but we don't actually want to delete anything.
+	 */
+	DELETED
 	
 }

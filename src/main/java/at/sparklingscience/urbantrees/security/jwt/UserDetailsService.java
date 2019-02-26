@@ -1,15 +1,18 @@
 package at.sparklingscience.urbantrees.security.jwt;
 
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.security.user.AuthenticationService;
-import at.sparklingscience.urbantrees.security.user.User;
 
 /**
  * Checks the database for valid credentials.
@@ -34,19 +37,39 @@ public class UserDetailsService implements org.springframework.security.core.use
 		LOGGER.trace("Searching for user {} in the database.", username);
 		User user = this.authenticationService.findUser(username);
 		if (user == null) {
-			LOGGER.trace("Could not find user {}.", username);
+			LOGGER.trace("Could not find user {}.", user);
 			throw new UsernameNotFoundException("Could not find user with name " + user);
 		}
 		
-		LOGGER.trace("User {} found.", username);
-		return new org.springframework.security.core.userdetails.User(
-				user.getUsername(),
-				user.getPassword(),
-				user.isActive(),
+		LOGGER.trace("User {} found.", user);
+		return this.domainUserToSecUser(user);
+		
+	}
+	
+	public UserDetails loadUserByLoginKey(String token) throws BadCredentialsException {
+		
+		LOGGER.trace("Searching for user by token in the database.");
+		User user = this.authenticationService.findUserByLoginKey(token);
+		if (user == null) {
+			LOGGER.trace("Could not find user {}.", user);
+			throw new BadCredentialsException("Could not find user with name " + user);
+		}
+		
+		LOGGER.trace("User {} found.", user);
+		return this.domainUserToSecUser(user);
+		
+	}
+	
+	private at.sparklingscience.urbantrees.security.user.User domainUserToSecUser(User domainUser) {
+		return new at.sparklingscience.urbantrees.security.user.User(
+				domainUser.getId(),
+				domainUser.getUsername(),
+				domainUser.getPassword() == null ? domainUser.getSecureLoginKey() : domainUser.getPassword(),
+				domainUser.isActive(),
 				true,
-				user.isCredentialsNonExpired(),
-				true,
-				AuthorityUtils.createAuthorityList(user.getRoles().toArray(new String[0]))
+				domainUser.isCredentialsNonExpired(),
+				this.authenticationService.isUserNonLocked(domainUser),
+				domainUser.getRoles().stream().map(u -> new SimpleGrantedAuthority(u.getName())).collect(Collectors.toList())
 				);
 	}
 

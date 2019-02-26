@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.security.jwt;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.FilterChain;
@@ -11,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,7 +27,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureException;
 
 /**
- * JWT authorization filter to authorize a user.
+ * JWT authorization filter to authorize an
+ * already logged-in user.
  * 
  * @author Laurenz Fiala
  * @since 2018/06/10
@@ -60,7 +62,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
             return;
         }
 
-        UsernamePasswordAuthenticationToken authentication = this.getAuthentication(header, req);
+        Authentication authentication = this.getAuthentication(header, req);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         chain.doFilter(req, res);
@@ -73,7 +75,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
      * @param request
      * @return
      */
-    private UsernamePasswordAuthenticationToken getAuthentication(final String token, HttpServletRequest request) {
+    private Authentication getAuthentication(final String token, HttpServletRequest request) {
     	
         if (token == null) {
         	return null;
@@ -93,12 +95,15 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     		return null;
     	}
     	
-        final String user = jwtClaims.getSubject();
+    	final int userId = jwtClaims.get(SecurityConfiguration.JWT_CLAIMS_USERID_KEY, Integer.class);
+        final String username = jwtClaims.getSubject();
         final List<GrantedAuthority> roles = AuthorityUtils.commaSeparatedStringToAuthorityList(jwtClaims.get(SecurityConfiguration.JWT_CLAIMS_ROLES_KEY, String.class));
+        final Date tokenExpirationDate = jwtClaims.getExpiration();
+        final Date tokenCreationDate = new Date(tokenExpirationDate.getTime() - SecurityConfiguration.JWT_EXPIRATION_TIME);
         
-        if (user != null) {
-        	LOGGER.trace("Setting username/password auth token for user {}.", user);
-            return new UsernamePasswordAuthenticationToken(user, null, roles);
+        if (username != null) {
+        	LOGGER.trace("Setting username/password auth token for user {}.", username);
+            return new AuthenticationToken(userId, username, roles, tokenCreationDate);
         }
         return null;
         

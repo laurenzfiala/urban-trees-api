@@ -30,28 +30,10 @@ public class Tree implements Comparable<Tree> {
 	private TreeLocation location;
 	
 	/**
-	 * Trees' species id.
-	 */
-	@Min(1)
-	private String speciesId;
-	
-	/**
 	 * Trees' species.
 	 */
 	@NotNull
-	private String species;
-	
-	/**
-	 * Trees' genus id.
-	 */
-	@Min(1)
-	private String genusId;
-	
-	/**
-	 * Trees' genus.
-	 */
-	@NotNull
-	private String genus;
+	private TreeSpecies species;
 	
 	/**
 	 * Year of plantation.
@@ -99,38 +81,14 @@ public class Tree implements Comparable<Tree> {
 		this.location = location;
 	}
 	
-	public String getSpeciesId() {
-		return speciesId;
-	}
-	
-	public void setSpeciesId(String speciesId) {
-		this.speciesId = speciesId;
-	}
-
-	public String getSpecies() {
+	public TreeSpecies getSpecies() {
 		return species;
 	}
 
-	public void setSpecies(String species) {
+	public void setSpecies(TreeSpecies species) {
 		this.species = species;
 	}
 	
-	public String getGenusId() {
-		return genusId;
-	}
-	
-	public void setGenusId(String genusId) {
-		this.genusId = genusId;
-	}
-
-	public String getGenus() {
-		return genus;
-	}
-
-	public void setGenus(String genus) {
-		this.genus = genus;
-	}
-
 	public int getPlantationYear() {
 		return plantationYear;
 	}

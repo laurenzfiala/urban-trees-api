@@ -1,7 +1,8 @@
 package at.sparklingscience.urbantrees.security.jwt;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +19,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -25,13 +27,15 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
+import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
-import at.sparklingscience.urbantrees.security.user.User;
+import at.sparklingscience.urbantrees.security.SecurityUtil;
 import io.jsonwebtoken.Jwts;
 
 /**
- * Authentication filter used for logged-in users.
+ * Authentication filter used to
+ * authenticate not logged-in users.
  * 
  * @author Laurenz Fiala
  * @since 2018/06/10
@@ -67,37 +71,57 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse res)
 			throws AuthenticationException {
 
+		User creds = null;
 		try {
-			
-			User creds = new ObjectMapper().readValue(req.getInputStream(), User.class);
+			creds = new ObjectMapper().readValue(req.getInputStream(), User.class);
 			LOGGER.trace("Got user info for user {}", creds.getUsername());
+
+			this.authMapper.increaseFailedLoginAttemptsByUsername(creds.getUsername());
+
+			Authentication auth;
+			if (creds.getSecureLoginKey() == null) {
+				auth = new UsernamePasswordAuthenticationToken(
+						creds.getUsername(),
+						creds.getPassword()
+						);
+			} else {
+				auth = new TokenAuthenticationToken(creds.getSecureLoginKey());
+			}
 			
-			return authenticationManager
-					.authenticate(
-							new UsernamePasswordAuthenticationToken(
-									creds.getUsername(),
-									creds.getPassword(),
-									new ArrayList<>()
-									)
-							);
+			return authenticationManager.authenticate(auth);
+							
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		} finally {
+			if (creds != null && creds.getUsername() != null) {
+				this.authMapper.updateLastLoginAttemptDatByUsername(creds.getUsername());
+			}
 		}
 
 	}
-
+	
 	@Override
 	protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain,
 			Authentication auth) throws IOException, ServletException {
 
+		at.sparklingscience.urbantrees.security.user.User user =
+				(at.sparklingscience.urbantrees.security.user.User) auth.getDetails();
+		
+		Collection<? extends GrantedAuthority> authorities = null;
+		if (!user.isCredentialsNonExpired()) {
+			// TODO log
+			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE));
+		}
+		
 		LOGGER.trace("Successful authentication, creating token for user {}.", auth.getPrincipal());
 		
-		final String username = ((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername();
+		this.authMapper.resetFailedLoginAttempts(user.getId());
+		this.authMapper.updateLastLoginDat(user.getId());
+		this.authMapper.updateUserLoginKey(user.getId(), null);
 		
-		
-		final String token = Jwts.builder().setSubject(username)
+		final String token = Jwts.builder().setSubject(user.getUsername())
 				.setExpiration(new Date(System.currentTimeMillis() + SecurityConfiguration.JWT_EXPIRATION_TIME))
-				.addClaims(this.getUserClaims(username))
+				.addClaims(this.getUserClaims(user, authorities))
 				.signWith(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG, this.getJWTSecret())
 				.compact();
 		
@@ -109,14 +133,24 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	/**
 	 * Fetches the users' roles and returns them to be added
 	 * to the JWT token as additional claims.
-	 * @param username the users' auth username
+	 * @param user User to get information from
+	 * @param overrideAuthorities null if users' authorities should be used; otherwise use this parameter
 	 */
-	private Map<String, Object> getUserClaims(final String username) {
+	private Map<String, Object> getUserClaims(at.sparklingscience.urbantrees.security.user.User user,
+											  Collection<? extends GrantedAuthority> overrideAuthorities) {
 		
-		Map<String, Object> userClaims = new HashMap<>(1);
+		if (overrideAuthorities == null) {
+			overrideAuthorities = user.getAuthorities();
+		}
+		
+		Map<String, Object> userClaims = new HashMap<>(2);
+		userClaims.put(
+				SecurityConfiguration.JWT_CLAIMS_USERID_KEY,
+				user.getId()
+				);
 		userClaims.put(
 				SecurityConfiguration.JWT_CLAIMS_ROLES_KEY,
-				this.authMapper.findRolesForUser(username).stream().collect(Collectors.joining(","))
+				overrideAuthorities.stream().map(ga -> ga.getAuthority()).collect(Collectors.joining(","))
 				);
 		
 		return userClaims;

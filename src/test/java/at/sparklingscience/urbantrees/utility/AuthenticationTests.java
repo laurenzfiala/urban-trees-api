@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.utility;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.apache.http.client.ClientProtocolException;
 import org.junit.Test;
@@ -34,7 +35,7 @@ public class AuthenticationTests {
 	@Commit
 	public void registerUser() throws ClientProtocolException, IOException {
 		
-		this.authenticationService.registerUser("test", "test");
+		this.authenticationService.registerUser("test", "test", new ArrayList<>());
 		
 	}
 

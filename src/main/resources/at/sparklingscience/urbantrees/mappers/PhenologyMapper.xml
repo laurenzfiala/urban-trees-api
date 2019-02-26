@@ -141,5 +141,28 @@
 			o.id,
 			r.id
     </select>
+    
+    <select id="getAllObservationTypes"
+            resultMap="PhenologyObservationTypeMap">
+        select 
+			t.id as type_id,
+			t."name" as "type",
+			o.id as object_id,
+			o."name" as "object",
+			r.id as result_id,
+			r.value as result_value,
+			r.description as result_description
+		from
+			tree_data.phenology_observation_type t,
+			tree_data.phenology_observation_object o,
+			tree_data.phenology_observation_result r
+		where
+			t.id = o.type_id
+			and t.id = r.type_id
+		order by
+			t.id,
+			o.id,
+			r.id
+    </select>
 	
 </mapper>

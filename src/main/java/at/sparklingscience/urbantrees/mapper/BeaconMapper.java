@@ -22,6 +22,8 @@ import at.sparklingscience.urbantrees.domain.BeaconStatus;
 @Mapper
 public interface BeaconMapper {
 	
+	List<Beacon> findAllBeaconsActive();
+	
 	List<Beacon> findAllBeaconsByStatus(@Param("status") BeaconStatus status);
 	
 	Beacon findBeaconById(@Param("beaconId") int beaconId);
@@ -46,12 +48,28 @@ public interface BeaconMapper {
 	
 	void insertBeaconSettings(
 			@Param("beaconId") int beaconId,
-			@Param("settings") BeaconSettings settings
+			@Param("settings") BeaconSettings settings,
+			@Param("user") String user
 			);
-			
+	
+	void insertBeaconLog(
+			@Param("beaconId") int beaconId,
+			@Param("log") BeaconLog log
+			);
+	
 	void insertBeaconLogs(
 			@Param("beaconId") int beaconId,
 			@Param("logs") List<BeaconLog> logs
+			);
+	
+	void insertBeacon(
+			@Param("beacon") Beacon beacon,
+			@Param("user") String user
+			);
+
+	void updateBeaconStatus(
+			@Param("id") int id,
+			@Param("status") BeaconStatus status
 			);
 	
 }

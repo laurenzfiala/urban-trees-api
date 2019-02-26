@@ -12,14 +12,15 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
+import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.NoOpAuthenticationManager;
+import at.sparklingscience.urbantrees.security.SecurityUtil;
 
 /**
  * Custom filter for authentication of api keys through the database.
@@ -33,11 +34,6 @@ public final class ApiKeyFilter extends BasicAuthenticationFilter {
 	 * Logger for this class.
 	 */
 	private static final Logger LOGGER = LoggerFactory.getLogger(ApiKeyFilter.class);
-
-	/**
-	 * The role ID for users authenticated with an API key.
-	 */
-	public static final SimpleGrantedAuthority ROLE_API_KEY = new SimpleGrantedAuthority("USER_APIKEY");
 
 	/**
 	 * HTTP Header key to get the api key from.
@@ -94,7 +90,11 @@ public final class ApiKeyFilter extends BasicAuthenticationFilter {
 		UUID apiKeyUuid = (UUID) UUID.fromString(apiKey);
         if (authMapper.hasValidApiKey(apiKeyUuid) > 0) {
         	LOGGER.trace("API key valid.");
-            return new PreAuthenticatedAuthenticationToken(apiKeyUuid.toString(), ROLE_API_KEY.getAuthority(), Collections.singletonList(ROLE_API_KEY));
+            return new PreAuthenticatedAuthenticationToken(
+            		apiKeyUuid.toString(),
+            		SecurityConfiguration.API_KEY_ACCESS_ROLE,
+            		Collections.singletonList(SecurityUtil.grantedAuthority(SecurityConfiguration.API_KEY_ACCESS_ROLE))
+    		);
         }
         LOGGER.info("API key {} invalid.", apiKey);
         return null;

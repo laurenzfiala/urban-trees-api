@@ -7,12 +7,12 @@ import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 
 /**
  * DAO.
- * Tree's species.
+ * Species' genus..
  * 
  * @author Laurenz Fiala
- * @since 2018/12/05
+ * @since 2018/12/29
  */
-public class TreeSpecies implements Comparable<TreeSpecies> {
+public class TreeGenus implements Comparable<TreeGenus> {
 
 	/**
 	 * Database identifier.
@@ -21,28 +21,20 @@ public class TreeSpecies implements Comparable<TreeSpecies> {
 	private int id;
 	
 	/**
-	 * Species name.
+	 * Genus name.
 	 */
 	@NotNull
 	private String name;
 	
-	/**
-	 * Genus tied to this species.
-	 */
-	@NotNull
-	private TreeGenus genus;
+	public TreeGenus() {}
 	
-	public TreeSpecies() {
-	}
-	
-	public TreeSpecies(int id, String name, TreeGenus genus) {
+	public TreeGenus(int id, String name) {
 		this.id = id;
 		this.name = name;
-		this.genus = genus;
 	}
 	
 	@Override
-	public int compareTo(TreeSpecies o) {
+	public int compareTo(TreeGenus o) {
 		int diff = o.getId() - this.getId();
 		if (diff > 0) {
 			return 1;
@@ -68,12 +60,4 @@ public class TreeSpecies implements Comparable<TreeSpecies> {
 		this.name = name;
 	}
 
-	public TreeGenus getGenus() {
-		return genus;
-	}
-
-	public void setGenus(TreeGenus genus) {
-		this.genus = genus;
-	}
-	
 }

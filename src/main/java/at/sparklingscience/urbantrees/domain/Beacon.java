@@ -9,6 +9,7 @@ import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 
 /**
  * A beacon (usually on a tree).
+ * Only holds necessary properties for display.
  * 
  * @author Laurenz Fiala
  * @since 2017/12/30
@@ -44,8 +45,10 @@ public class Beacon {
 	/**
 	 * Beacons' status.
 	 */
-	@NotNull
+	@NotNull(groups = {ValidationGroups.Read.class})
 	private BeaconStatus status;
+	
+	private BeaconSettings settings;
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -99,5 +102,13 @@ public class Beacon {
 	public void setStatus(BeaconStatus status) {
 		this.status = status;
 	}
-	
+
+	public BeaconSettings getSettings() {
+		return settings;
+	}
+
+	public void setSettings(BeaconSettings settings) {
+		this.settings = settings;
+	}
+
 }

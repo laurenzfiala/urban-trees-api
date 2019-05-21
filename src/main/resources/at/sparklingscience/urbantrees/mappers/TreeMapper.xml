@@ -91,10 +91,9 @@
     <insert id="insertTreeLocation" useGeneratedKeys="true" keyColumn="id" keyProperty="location.id">
         insert into
             tree_data.tree_location
-            (id, coords_x, coords_y, coords_projection, street, city_id, cre_dat, mod_dat, cre_usr, mod_usr)
+            (coords_x, coords_y, coords_projection, street, city_id, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
 		    (
-			    default,
 			    #{location.coordinates.x},
 			    #{location.coordinates.y},
 			    #{location.coordinates.projection},
@@ -111,7 +110,6 @@
 		insert into
             tree_data.tree_age
             (
-            	id,
 				tree_id,
 				plantation_year,
 				is_plantation_year_estimate,
@@ -123,7 +121,6 @@
 			)
 		values 
 		    (
-		    	default,
 		    	#{tree.id},
 		    	#{tree.plantationYear},
 		    	true,
@@ -138,9 +135,9 @@
     <insert id="insertTree" useGeneratedKeys="true" keyColumn="id" keyProperty="tree.id">
         insert into
             tree_data.tree
-            (id, location_id, species_id, cre_dat, mod_dat, cre_usr, mod_usr)
+            (location_id, species_id, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
-		    (default, #{tree.location.id}, #{tree.species.id}, now(), now(), #{user}, #{user})
+		    (#{tree.location.id}, #{tree.species.id}, now(), now(), #{user}, #{user})
 	</insert>
 	
 	<update id="updateTree" parameterType="at.sparklingscience.urbantrees.domain.Tree">
@@ -236,9 +233,9 @@
     <insert id="insertCity" useGeneratedKeys="true" keyColumn="id" keyProperty="city.id">
         insert into
             tree_data.city
-            (id, name, cre_dat, mod_dat, cre_usr, mod_usr)
+            (name, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
-		    (default, #{city.name}, now(), now(), #{user}, #{user})
+		    (#{city.name}, now(), now(), #{user}, #{user})
 	</insert>
     
     <select id="getSpecies" resultMap="SpeciesResultMap">

@@ -95,9 +95,9 @@
     <insert id="insertPhenology" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
             tree_data.phenology
-            (id, tree_id, observers, observe_dat, user_remark, cre_dat, mod_dat, cre_usr, mod_usr)
+            (tree_id, observers, observe_dat, user_remark, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
-		    (default, #{treeId}, #{observers}, #{observationDate}, #{remark}, now(), now(), user, user);
+		    (#{treeId}, #{observers}, #{observationDate}, #{remark}, now(), now(), user, user);
 	</insert>
 	
     <insert id="insertPhenologyObservation">

@@ -108,10 +108,9 @@
     <insert id="insertUser" useGeneratedKeys="true" keyColumn="id" keyProperty="user.id">
         insert into
             access_data.user
-            (id, username, password, is_credentials_non_expired, last_login_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+            (username, password, is_credentials_non_expired, last_login_dat, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
 		    (
-		    	default,
 		    	#{user.username},
 		    	#{user.password},
 		    	false,

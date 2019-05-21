@@ -193,10 +193,9 @@
     <insert id="insertBeaconDatasets">
         insert into
             tree_data.beacon_data
-            (id, beacon_id, humidity, temperature, dew_point, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+            (beacon_id, humidity, temperature, dew_point, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
 		    <foreach collection="datasets" item="dataset" index="index" open="(" separator="),("  close=")">
-		    	default,
 		    	#{beaconId},
 		    	#{dataset.humidity},
 		    	#{dataset.temperature},
@@ -214,7 +213,6 @@
         insert into
             tree_data.beacon_settings
             (
-	            id,
 				beacon_id,
 				device_name,
 				firmware_version_code,
@@ -237,7 +235,6 @@
 			)
 		values 
 		    (
-		    	default,
 				#{beaconId},
 				#{settings.deviceName},
 				#{settings.firmwareVersionCode},
@@ -298,7 +295,6 @@
         insert into
             tree_data.beacon_log
             (
-	            id,
 				beacon_id,
 				severity,
 				"type",
@@ -310,7 +306,6 @@
 			)
 		values 
 		    (
-		    	default,
 				#{beaconId},
 				#{log.severity},
 				#{log.type},
@@ -326,7 +321,6 @@
         insert into
             tree_data.beacon_log
             (
-	            id,
 				beacon_id,
 				severity,
 				"type",
@@ -338,7 +332,6 @@
 			)
 		values 
 		    <foreach collection="logs" item="log" index="index" open="(" separator="),("  close=")">
-		    	default,
 				#{log.beaconId},
 				#{log.severity},
 				#{log.type},
@@ -354,7 +347,6 @@
         insert into
             tree_data.beacon
             (
-	            id,
 				device_id,
 				tree_id,
 				bluetooth_address,
@@ -366,7 +358,6 @@
 			)
 		values 
 		    (
-		    	default,
 		    	#{beacon.deviceId},
 		    	#{beacon.treeId},
 		    	#{beacon.bluetoothAddress},

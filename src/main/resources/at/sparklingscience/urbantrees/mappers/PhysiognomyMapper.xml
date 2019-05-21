@@ -42,10 +42,10 @@
     <insert id="insertPhysiognomyDataset" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
             tree_data.physiognomy
-	        (id, tree_id, tree_height, trunk_circumference, crown_base, 
+	        (tree_id, tree_height, trunk_circumference, crown_base, 
 	        crown_width, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
         values 
-            (default, #{treeId}, #{treeHeight}, #{trunkCircumference}, #{crownBase},
+            (#{treeId}, #{treeHeight}, #{trunkCircumference}, #{crownBase},
             #{crownWidth}, #{observationDate}, now(), now(), user, user)
 	</insert>
 

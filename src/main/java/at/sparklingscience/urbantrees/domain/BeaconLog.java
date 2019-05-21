@@ -24,7 +24,7 @@ public class BeaconLog {
 	/**
 	 * ID of associated {@link Beacon}.
 	 */
-	@Min(value = 1, groups = {ValidationGroups.Read.class})
+	@Min(1)
 	private int beaconId;
 	
 	/**

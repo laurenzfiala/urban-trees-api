@@ -1,11 +1,13 @@
 package at.sparklingscience.urbantrees.controller;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,8 +16,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
+import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconLog;
 import at.sparklingscience.urbantrees.domain.BeaconLogSeverity;
@@ -71,6 +76,9 @@ public class AdminController {
 	@Autowired
 	private AuthenticationService authService;
 	
+	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
+	private String dateFormatPattern;
+	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/city")
 	public City postCity(@Validated(ValidationGroups.Update.class) @RequestBody City city, Authentication auth) {
@@ -80,10 +88,10 @@ public class AdminController {
 		try {
 			this.treeMapper.insertCity(city, PREPEND_USER_INSERTS + auth.getName());
 		} catch (DuplicateKeyException ex) {
-			LOGGER.debug("Admin tried to enter duplicate city: {}", ex.getMessage(), ex);
+			LOGGER.warn("Admin tried to enter duplicate city: {}", ex.getMessage(), ex);
 			throw new BadRequestException("There is already a city with given name.", ClientError.CITY_DUPLICATE);
 		} catch (Throwable t) {
-			LOGGER.debug("Internal excetion during postCity: {}", t.getMessage(), t);
+			LOGGER.error("Internal excetion during postCity: {}", t.getMessage(), t);
 			throw new InternalException("Internal error encountered while adding city.", ClientError.CITY_INTERNAL_ERROR);
 		}
 		
@@ -107,10 +115,10 @@ public class AdminController {
 			this.beaconMapper.insertBeacon(beacon, PREPEND_USER_INSERTS + name);
 			this.beaconMapper.insertBeaconSettings(beacon.getId(), beacon.getSettings(), PREPEND_USER_INSERTS + name);
 		} catch (DuplicateKeyException ex) {
-			LOGGER.debug("Admin tried to enter duplicate beacon: {}", ex.getMessage(), ex);
+			LOGGER.warn("Admin tried to enter duplicate beacon: {}", ex.getMessage(), ex);
 			throw new BadRequestException("There is already a beacon with given deviceId or same address.", ClientError.BEACON_DUPLICATE);
 		} catch (Throwable t) {
-			LOGGER.debug("Internal excetion during postBeacon: {}", t.getMessage(), t);
+			LOGGER.error("Internal excetion during postBeacon: {}", t.getMessage(), t);
 			throw new InternalException("Internal error encountered while adding beacon.", ClientError.BEACON_INTERNAL_ERROR);
 		}
 		
@@ -132,7 +140,7 @@ public class AdminController {
 			this.treeMapper.insertTree(tree, name);
 			this.treeMapper.insertTreeAge(tree, name);
 		} catch (Throwable t) {
-			LOGGER.debug("Internal excetion during postTree: {}", t.getMessage(), t);
+			LOGGER.error("Internal excetion during postTree: {}", t.getMessage(), t);
 			throw new BadRequestException("Internal error encountered while adding tree.", ClientError.TREE_INSERT_FAILED);
 		}
 		
@@ -154,7 +162,7 @@ public class AdminController {
 		try {
 			this.treeMapper.updateTree(tree, auth.getName());
 		} catch (Throwable t) {
-			LOGGER.debug("Internal excetion during postTreeUpdate: {}", t.getMessage(), t);
+			LOGGER.error("Internal excetion during postTreeUpdate: {}", t.getMessage(), t);
 			throw new BadRequestException("Internal error encountered while updating tree.", ClientError.TREE_UPDATE_FAILED);
 		}
 		
@@ -182,7 +190,7 @@ public class AdminController {
 			this.beaconMapper.updateBeaconStatus(beaconId, BeaconStatus.DELETED);
 			this.beaconMapper.insertBeaconLog(beaconId, log);
 		} catch (Throwable t) {
-			LOGGER.debug("Error while deleting beacon: {}", t.getMessage(), t);
+			LOGGER.error("Error while deleting beacon: {}", t.getMessage(), t);
 			throw new InternalException("Failed to delete beacon.", ClientError.BEACON_DELETE_FAILED);
 		}
 		
@@ -202,7 +210,7 @@ public class AdminController {
 			}
 			return users;
 		} catch (Throwable t) {
-			LOGGER.debug("Could not find users: {}", t.getMessage(), t);
+			LOGGER.error("Could not find users: {}", t.getMessage(), t);
 			throw new InternalException("Failed to find users.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ GET ]] getUsers |END|");
@@ -218,7 +226,7 @@ public class AdminController {
 		try {
 			this.authMapper.deleteUser(userId);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not delete user: {}", t.getMessage(), t);
+			LOGGER.error("Could not delete user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to delete user.", ClientError.GENERIC_ERROR);
 		}
 
@@ -234,7 +242,7 @@ public class AdminController {
 		try {
 			this.authService.expireCredentials(userId);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not expire credentials: {}", t.getMessage(), t);
+			LOGGER.error("Could not expire credentials: {}", t.getMessage(), t);
 			throw new InternalException("Failed to expire credentials.", ClientError.GENERIC_ERROR);
 		}
 
@@ -250,7 +258,7 @@ public class AdminController {
 		try {
 			this.authService.activate(userId);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not activate user: {}", t.getMessage(), t);
+			LOGGER.error("Could not activate user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to activate user.", ClientError.GENERIC_ERROR);
 		}
 
@@ -266,7 +274,7 @@ public class AdminController {
 		try {
 			this.authService.inactivate(userId);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not inactivate user: {}", t.getMessage(), t);
+			LOGGER.error("Could not inactivate user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to inactivate user.", ClientError.GENERIC_ERROR);
 		}
 
@@ -282,7 +290,7 @@ public class AdminController {
 		try {
 			return this.authMapper.findAllUserRoles();
 		} catch (Throwable t) {
-			LOGGER.debug("Could not inactivate user: {}", t.getMessage(), t);
+			LOGGER.error("Could not inactivate user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to inactivate user.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ GET ]] getUserRoles |END|");
@@ -298,7 +306,7 @@ public class AdminController {
 		try {
 			return this.authService.getLoginKey(userId);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not get secure login key for user: {}", t.getMessage(), t);
+			LOGGER.error("Could not get secure login key for user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get secure login key for user.", ClientError.FAILED_KEY_STORE);
 		} finally {
 			LOGGER.info("[[ GET ]] getLoginKey |END| - userId: {}", userId);
@@ -314,7 +322,7 @@ public class AdminController {
 		try {
 			this.authService.registerUser(user.getUsername(), null, user.getRoles());
 		} catch (Throwable t) {
-			LOGGER.debug("Could not create user: {}", t.getMessage(), t);
+			LOGGER.error("Could not create user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to create user.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ PUT ]] putNewUser |END| - called by: {}, user to create: {}", auth.getName(), user);
@@ -332,7 +340,7 @@ public class AdminController {
 		try {
 			this.authService.modifyRoles(userId, roles, true);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not add roles: {}", t.getMessage(), t);
+			LOGGER.error("Could not add roles: {}", t.getMessage(), t);
 			throw new InternalException("Failed to add roles.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ PUT ]] putAddRole |END| - called by: {}, user to add roles to: {}, roles: {}", auth.getName(), userId, roles);
@@ -350,7 +358,7 @@ public class AdminController {
 		try {
 			this.authService.modifyRoles(userId, roles, false);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not remove roles: {}", t.getMessage(), t);
+			LOGGER.error("Could not remove roles: {}", t.getMessage(), t);
 			throw new InternalException("Failed to remove roles.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ PUT ]] putRemoveRole |END| - called by: {}, user to remove roles from: {}, roles: {}", auth.getName(), userId, roles);
@@ -366,7 +374,7 @@ public class AdminController {
 		try {
 			return this.phenologyMapper.getAllObservationTypes();
 		} catch (Throwable t) {
-			LOGGER.debug("Could not get all phenology observation types: {}", t.getMessage(), t);
+			LOGGER.error("Could not get all phenology observation types: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get all phenology observation types.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ GET ]] getAllPhenologyObservationTypes |END|");
@@ -382,7 +390,7 @@ public class AdminController {
 		try {
 			return this.uiMapper.getAllAnnouncements();
 		} catch (Throwable t) {
-			LOGGER.debug("Could not get all announcements: {}", t.getMessage(), t);
+			LOGGER.error("Could not get all announcements: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get all announcements.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ GET ]] getAllAnnouncements |END|");
@@ -400,7 +408,7 @@ public class AdminController {
 		try {
 			this.uiMapper.insertAnnouncement(announcement, PREPEND_USER_INSERTS + name);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not insert announcement: {}", t.getMessage(), t);
+			LOGGER.error("Could not insert announcement: {}", t.getMessage(), t);
 			throw new InternalException("Failed to insert announcement.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ PUT ]] putAnnouncement |END|");
@@ -416,10 +424,81 @@ public class AdminController {
 		try {
 			this.uiMapper.deleteAnnouncement(announcementId);
 		} catch (Throwable t) {
-			LOGGER.debug("Could not insert announcement: {}", t.getMessage(), t);
+			LOGGER.error("Could not insert announcement: {}", t.getMessage(), t);
 			throw new InternalException("Failed to insert announcement.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ PUT ]] putAnnouncement |END|");
+		}
+		
+	}
+
+	@RequestMapping(method = RequestMethod.GET, path = "/beacon/logs")
+	public List<BeaconLog> getBeaconLogs(@RequestParam(required = false) Integer beaconId,
+										 @RequestParam(required = false) BeaconLogSeverity minSeverity,
+										 @RequestParam(required = false) Integer offset,
+										 @RequestParam(required = false) Integer maxLogs,
+										 @RequestParam(required = false) String timespanMin,
+										 @RequestParam(required = false) String timespanMax) {
+		
+		if (LOGGER.isTraceEnabled()) {
+			LOGGER.trace("[[ GET ]] getBeaconLogs - beaconId: " + beaconId +
+					", minSeverity: " + minSeverity +
+					", offset: " + offset +
+					", maxLogs: " + maxLogs +
+					", timespanMin: " + timespanMin +
+					", timespanMax: " + timespanMax);			
+		}
+		
+		try {
+			
+			List<BeaconLogSeverity> severities = null;
+			if (minSeverity != null) {
+				severities = new ArrayList<>();
+				switch(minSeverity) {
+					case TRACE:
+						severities.add(BeaconLogSeverity.TRACE);
+					case DEBUG:
+						severities.add(BeaconLogSeverity.DEBUG);
+					case INFO:
+						severities.add(BeaconLogSeverity.INFO);
+					case WARN:
+						severities.add(BeaconLogSeverity.WARN);
+					case ERROR:
+						severities.add(BeaconLogSeverity.ERROR);
+						break;
+					default:
+						LOGGER.error("User requetsed illegal beacon log severity: " + minSeverity);
+						throw new BadRequestException("Invalid beacon log serverity given", ClientError.BEACON_LOG_SEVERITY_INVALID);
+				}
+			}
+			
+			if (beaconId == null) {
+				beaconId = -1;
+			}
+			if (offset == null) {
+				offset = -1;
+			}
+			if (maxLogs == null) {
+				maxLogs = -1;
+			}
+			
+			Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
+			
+			return this.beaconMapper.findBeaconLogs(
+					beaconId,
+					severities,
+					offset,
+					maxLogs,
+					timespan.getStart(),
+					timespan.getEnd()
+			);
+		} catch (BadRequestException e) {
+			throw e;
+		} catch (Throwable t) {
+			LOGGER.error("Could not get beacon logs for beacon with id {}: {}", beaconId, t.getMessage(), t);
+			throw new InternalException("Could not get beacon logs for beacon: " + t.getMessage(), ClientError.GENERIC_ERROR);
+		} finally {
+			LOGGER.trace("[[ GET ]] getBeaconLogs |END|");
 		}
 		
 	}

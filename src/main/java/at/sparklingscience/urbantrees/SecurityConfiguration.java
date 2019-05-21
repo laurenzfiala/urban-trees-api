@@ -140,7 +140,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    			"/tree/**",
 		    			"/ui",
 		    			"/ui/**",
-		    			"/beacon/**/data"
+		    			"/beacon/**/data",
+		    			"/content/**"
     			).permitAll()
 		    	.antMatchers(
 		    			"/admin/**"

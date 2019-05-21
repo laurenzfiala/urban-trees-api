@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Param;
 import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
 import at.sparklingscience.urbantrees.domain.BeaconLog;
+import at.sparklingscience.urbantrees.domain.BeaconLogSeverity;
 import at.sparklingscience.urbantrees.domain.BeaconSettings;
 import at.sparklingscience.urbantrees.domain.BeaconStatus;
 
@@ -46,6 +47,15 @@ public interface BeaconMapper {
 			@Param("beaconId") int beaconId
 			);
 	
+	List<BeaconLog> findBeaconLogs(
+			@Param("beaconId") Integer beaconId,
+			@Param("severities") List<BeaconLogSeverity> severities,
+			@Param("offset") Integer offset,
+			@Param("maxLogs") Integer maxLogs,
+			@Param("timespanMin") Date timespanMin,
+			@Param("timespanMax") Date timespanMax
+			);
+	
 	void insertBeaconSettings(
 			@Param("beaconId") int beaconId,
 			@Param("settings") BeaconSettings settings,
@@ -58,7 +68,6 @@ public interface BeaconMapper {
 			);
 	
 	void insertBeaconLogs(
-			@Param("beaconId") int beaconId,
 			@Param("logs") List<BeaconLog> logs
 			);
 	

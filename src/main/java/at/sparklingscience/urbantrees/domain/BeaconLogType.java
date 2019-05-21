@@ -8,6 +8,7 @@ package at.sparklingscience.urbantrees.domain;
  */
 public enum BeaconLogType {
 	
-	SYSTEM
+	SYSTEM,
+	ANDR_APP
 
 }

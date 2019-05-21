@@ -1,0 +1,43 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.UserContentMapper">
+
+    <resultMap id="UserContentResultMap" type="at.sparklingscience.urbantrees.domain.UserContent">
+        <id 	column="id"			property="id" />
+        <result column="content"	property="content" />
+        <result column="tag"		property="tag" />
+        <result column="mod_dat"	property="modDate" />
+        
+        <association property="language">
+        	<id 	column="lang"		property="id"/>
+        	<result column="lang_name"	property="name"/>
+        </association>
+    </resultMap>
+	
+	<select id="findContent" resultMap="UserContentResultMap">
+		select
+			c.id,
+			c.content,
+			l.id lang,
+			l."name" lang_name,
+			c.tag,
+			c.mod_dat
+		from
+			user_data.content_generic c,
+			user_data.content_generic_lang l
+		where
+			<if test="id != null">
+				c.id = #{id}
+			</if>
+			<if test="id != null and tag != null">
+				and
+			</if>
+			<if test="tag != null">
+				c.tag = #{tag}
+			</if>
+			and c.lang = l.id
+	</select>
+
+</mapper>

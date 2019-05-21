@@ -36,11 +36,21 @@
 	    <result column="phys_button_enabled" 		property="physicalButtonEnabled" />
 	    <result column="temperature_calibration" 	property="temperatureCalibration" />
 	    <result column="humidity_calibration" 		property="humidityCalibration" />
-	    <result column="logging_interval_min" 		property="loggingIntervalMin" />
+	    <result column="logging_interval_sec" 		property="loggingIntervalSec" />
 	    <result column="sensor_interval_sec" 		property="sensorIntervalSec" />
 	    <result column="adv_freq_ms" 				property="advertisingFrequencyMs" />
 	    <result column="pin" 						property="pin" />
 	    <result column="check_dat" 					property="checkDate" />
+    </resultMap>
+
+    <resultMap id="BeaconLogResultMap" type="at.sparklingscience.urbantrees.domain.BeaconLog">
+	    <result column="id" 				property="id" />
+	    <result column="beacon_id" 			property="beaconId" />
+	    <result column="severity" 			property="severity" />
+	    <result column="type" 				property="type" />
+	    <result column="message" 			property="message" />
+	    <result column="event_dat" 			property="eventDate" />
+	    <result column="settings_id" 		property="settingsId" />
     </resultMap>
 
 	<select id="findAllBeaconsActive" resultMap="BeaconResultMap">
@@ -132,13 +142,61 @@
     	order by
     		observe_dat asc
     </select>
+	
+    <select id="findBeaconLogs" resultMap="BeaconLogResultMap">
+        select
+			id,
+			beacon_id,
+			severity,
+			"type",
+			message,
+			event_dat,
+			settings_id
+		from
+			tree_data.beacon_log
+		<if test="beaconId != -1 or severities != null or timespanMin != null or timespanMax != null">
+		where
+		</if>
+			<if test="beaconId != -1">
+				beacon_id = #{beaconId}
+				<if test="severities != null or timespanMin != null or timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="severities != null">
+				severity in 
+				<foreach item="logLevel" collection="severities" separator="," open="(" close=")">
+			        #{logLevel}
+			    </foreach>
+				<if test="timespanMin != null or timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="timespanMin != null">
+				event_dat &gt;= #{timespanMin}
+				<if test="timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="timespanMax != null">
+				event_dat &lt;= #{timespanMax}
+			</if>
+		order by id desc
+		<if test="offset != -1">
+			offset #{offset}
+		</if>
+		<if test="maxLogs != -1">
+			limit #{maxLogs}
+		</if>
+	</select>
     
-    <insert id="insertBeaconDatasets" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    <insert id="insertBeaconDatasets">
         insert into
             tree_data.beacon_data
-            (beacon_id, humidity, temperature, dew_point, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+            (id, beacon_id, humidity, temperature, dew_point, observe_dat, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
 		    <foreach collection="datasets" item="dataset" index="index" open="(" separator="),("  close=")">
+		    	default,
 		    	#{beaconId},
 		    	#{dataset.humidity},
 		    	#{dataset.temperature},
@@ -169,7 +227,7 @@
 				phys_button_enabled,
 				temperature_calibration,
 				humidity_calibration,
-				logging_interval_min,
+				logging_interval_sec,
 				sensor_interval_sec,
 				adv_freq_ms,
 				pin,
@@ -192,7 +250,7 @@
 				#{settings.physicalButtonEnabled},
 				#{settings.temperatureCalibration},
 				#{settings.humidityCalibration},
-				#{settings.loggingIntervalMin},
+				#{settings.loggingIntervalSec},
 				#{settings.sensorIntervalSec},
 				#{settings.advertisingFrequencyMs},
 				#{settings.pin},
@@ -222,7 +280,7 @@
 			phys_button_enabled,
 			temperature_calibration,
 			humidity_calibration,
-			logging_interval_min,
+			logging_interval_sec,
 			sensor_interval_sec,
 			adv_freq_ms,
 			pin,
@@ -236,7 +294,7 @@
 		limit 1
     </select>
     
-    <insert id="insertBeaconLog" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
+    <insert id="insertBeaconLog">
         insert into
             tree_data.beacon_log
             (
@@ -281,7 +339,7 @@
 		values 
 		    <foreach collection="logs" item="log" index="index" open="(" separator="),("  close=")">
 		    	default,
-				#{beaconId},
+				#{log.beaconId},
 				#{log.severity},
 				#{log.type},
 				#{log.message},

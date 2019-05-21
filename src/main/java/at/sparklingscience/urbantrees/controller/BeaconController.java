@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.controller;
 
 import java.security.Principal;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
 import at.sparklingscience.urbantrees.domain.BeaconLog;
+import at.sparklingscience.urbantrees.domain.BeaconReadoutResult;
 import at.sparklingscience.urbantrees.domain.BeaconSettings;
 import at.sparklingscience.urbantrees.domain.BeaconStatus;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
@@ -86,6 +88,23 @@ public class BeaconController {
 		
 	}
 	
+	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/status/{beaconStatus}")
+	public void putBeaconStatus(@PathVariable int beaconId, @PathVariable String beaconStatus) {
+		
+		final BeaconStatus status = BeaconStatus.valueOf(beaconStatus);
+		
+		LOGGER.debug("[[ PUT ]] putBeaconStatus - beaconId: {}, status: {}", beaconId, status);
+		
+		try {
+			this.beaconMapper.updateBeaconStatus(beaconId, status);					
+		} catch (Throwable t) {
+			throw new InternalError("Update of beacon " + beaconId + " to status " + status + " failed.");			
+		}
+		
+		LOGGER.info("[[ POST ]] putBeaconStatus |END| - beaconId: {}, status: {}", beaconId, status);
+		
+	}
+	
 	@RequestMapping(method = RequestMethod.GET, path = "/{beaconId:\\d+}")
 	public Beacon getBeacon(@PathVariable int beaconId) {
 		
@@ -142,13 +161,48 @@ public class BeaconController {
 	}
 	
 	@Transactional
+	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/readout")
+	public void putBeaconReadoutResult(
+			@PathVariable int beaconId,
+			@Validated(ValidationGroups.Update.class) @RequestBody BeaconReadoutResult result,
+			Authentication auth) {
+		
+		LOGGER.info("[[ PUT ]] putBeaconReadoutResult - beaconId: {}", beaconId);
+		
+		if (result == null || result.getDatasets() == null || result.getSettings() == null) {
+			throw new BadRequestException("Beacon data/settings is null, can't continue with putBeaconData for beaconId: " + beaconId);
+		}
+		
+		List<BeaconDataset> datasets = result.getDatasets();
+		int loggingIntSec = result.getSettings().getLoggingIntervalSec();
+		long readoutTimeApprox = System.currentTimeMillis() - result.getTimeSinceDataReadoutMs();
+		long logTime = result.getSettings().getRefTime().getTime();
+		while (logTime <= readoutTimeApprox - (long) loggingIntSec * 1000l) {
+			logTime += (long) loggingIntSec * 1000l;
+		}
+		for (int i = datasets.size()-1; i >= 0; i--) {
+			datasets.get(i).setObservationDate(new Date(logTime));
+			logTime -= (long) loggingIntSec * 1000l;
+		}
+		
+		this.beaconMapper.insertBeaconDatasets(beaconId, datasets);
+		this.beaconMapper.insertBeaconSettings(beaconId, result.getSettings(), null);
+
+		this.beaconMapper.updateBeaconStatus(beaconId, BeaconStatus.OK);
+		this.userService.increaseXp(UserLevelAction.BEACON_READOUT, auth);
+		
+		LOGGER.info("[[ PUT ]] postBeaconputBeaconReadoutResultData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
+		
+	}
+	
+	@Transactional
 	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/data")
 	public void putBeaconData(
 			@PathVariable int beaconId,
 			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconDataset> datasets,
 			Authentication auth) {
 		
-		LOGGER.info("[[ POST ]] postBeaconData - beaconId: {}", beaconId);
+		LOGGER.info("[[ PUT ]] putBeaconData - beaconId: {}", beaconId);
 		
 		if (datasets == null) {
 			throw new BadRequestException("Beacon datasets are null, can't continue with postBeaconData for beaconId: " + beaconId);
@@ -156,7 +210,7 @@ public class BeaconController {
 		
 		this.beaconMapper.insertBeaconDatasets(beaconId, datasets);
 		
-		LOGGER.info("[[ POST ]] postBeaconData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
+		LOGGER.info("[[ PUT ]] putBeaconData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
 		
 		this.userService.increaseXp(UserLevelAction.BEACON_READOUT, auth);
 		
@@ -200,20 +254,15 @@ public class BeaconController {
 	}
 	
 	@Transactional
-	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/logs")
-	public void putBeaconLogs(
-			@PathVariable int beaconId,
-			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconLog> logs) {
+	@RequestMapping(method = RequestMethod.PUT, path = "/logs")
+	public void putBeaconLogs(@Validated(ValidationGroups.Update.class)
+							  @RequestBody List<BeaconLog> logs) {
 		
-		LOGGER.info("[[ PUT ]] putBeaconLogs - beaconId: {}", beaconId);
+		LOGGER.info("[[ PUT ]] putBeaconLogs - inserting {} logs", logs.size());
 		
-		if (logs == null) {
-			throw new BadRequestException("Beacon logs are null, can't continue with putBeaconSettings for beaconId: " + beaconId);
-		}
+		this.beaconMapper.insertBeaconLogs(logs);
 		
-		this.beaconMapper.insertBeaconLogs(beaconId, logs);
-		
-		LOGGER.info("[[ PUT ]] putBeaconLogs |END| - beaconId: {}, inserted settings", beaconId);
+		LOGGER.info("[[ PUT ]] putBeaconLogs |END| - successfully inserted {} logs", logs.size());
 		
 	}
 

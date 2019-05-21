@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.security;
 
+import java.util.Collection;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -29,5 +31,14 @@ public class SecurityUtil {
 	public static GrantedAuthority grantedAuthority(final String role) {
     	return new SimpleGrantedAuthority(role(role));
     }
+	
+	public static boolean hasAllAuthorities(Collection<? extends GrantedAuthority> userAuthorities, Collection<? extends GrantedAuthority> checkAuthorities) {
+		for (GrantedAuthority checkAuthority : checkAuthorities) {
+			if (!userAuthorities.contains(checkAuthority)) {
+				return false;
+			}
+		}
+		return true;
+	}
 	
 }

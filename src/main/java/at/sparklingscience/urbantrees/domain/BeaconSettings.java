@@ -88,9 +88,9 @@ public class BeaconSettings {
 	private double humidityCalibration;
 	
 	/**
-	 * Logging interval in minutes.
+	 * Logging interval in seconds.
 	 */
-	private int loggingIntervalMin;
+	private int loggingIntervalSec;
 	
 	/**
 	 * Sensor capturing interval in seconds.
@@ -218,12 +218,12 @@ public class BeaconSettings {
 		this.humidityCalibration = humidityCalibration;
 	}
 
-	public int getLoggingIntervalMin() {
-		return loggingIntervalMin;
+	public int getLoggingIntervalSec() {
+		return loggingIntervalSec;
 	}
 
-	public void setLoggingIntervalMin(int loggingIntervalMin) {
-		this.loggingIntervalMin = loggingIntervalMin;
+	public void setLoggingIntervalSec(int loggingIntervalSec) {
+		this.loggingIntervalSec = loggingIntervalSec;
 	}
 
 	public int getSensorIntervalSec() {

@@ -25,9 +25,11 @@ import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconLog;
 import at.sparklingscience.urbantrees.domain.BeaconLogSeverity;
 import at.sparklingscience.urbantrees.domain.BeaconLogType;
+import at.sparklingscience.urbantrees.domain.BeaconSettings;
 import at.sparklingscience.urbantrees.domain.BeaconStatus;
 import at.sparklingscience.urbantrees.domain.City;
 import at.sparklingscience.urbantrees.domain.PhenologyObservationType;
+import at.sparklingscience.urbantrees.domain.Report;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.User;
@@ -37,7 +39,7 @@ import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.ClientError;
 import at.sparklingscience.urbantrees.exception.InternalException;
-import at.sparklingscience.urbantrees.mapper.AuthMapper;
+import at.sparklingscience.urbantrees.mapper.ApplicationMapper;
 import at.sparklingscience.urbantrees.mapper.BeaconMapper;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.TreeMapper;
@@ -53,11 +55,6 @@ public class AdminController {
 	 */
 	private static final Logger LOGGER = LoggerFactory.getLogger(AdminController.class);
 	
-	/**
-	 * String to prepend all mod_user & cre_user inserts with.
-	 */
-	private static final String PREPEND_USER_INSERTS = "WEBADM_";
-	
 	@Autowired
 	private TreeMapper treeMapper;
 	
@@ -66,12 +63,12 @@ public class AdminController {
 	
 	@Autowired
 	private PhenologyMapper phenologyMapper;
-
-	@Autowired
-	private AuthMapper authMapper;
 	
 	@Autowired
 	private UiMapper uiMapper;
+	
+	@Autowired
+	private ApplicationMapper appMapper;
 	
 	@Autowired
 	private AuthenticationService authService;
@@ -85,8 +82,9 @@ public class AdminController {
 		
 		LOGGER.info("[[ POST ]] postCity - city: {}", city.getName());
 		
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
 		try {
-			this.treeMapper.insertCity(city, PREPEND_USER_INSERTS + auth.getName());
+			this.treeMapper.insertCity(city, String.valueOf(userId));
 		} catch (DuplicateKeyException ex) {
 			LOGGER.warn("Admin tried to enter duplicate city: {}", ex.getMessage(), ex);
 			throw new BadRequestException("There is already a city with given name.", ClientError.CITY_DUPLICATE);
@@ -103,26 +101,73 @@ public class AdminController {
 	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/beacon")
-	public Beacon postBeacon(@Validated(ValidationGroups.Update.class) @RequestBody Beacon beacon, Authentication auth) {
+	public Beacon postNewBeacon(@Validated(ValidationGroups.Update.class) @RequestBody Beacon beacon, Authentication auth) {
 		
-		LOGGER.info("[[ POST ]] postBeacon - deviceId: {}", beacon.getDeviceId());
+		LOGGER.info("[[ POST ]] postNewBeacon - deviceId: {}", beacon.getDeviceId());
 		
 		// initialize default values
 		beacon.setStatus(BeaconStatus.INITIAL);
 		
-		final String name = auth.getName();
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
 		try {
-			this.beaconMapper.insertBeacon(beacon, PREPEND_USER_INSERTS + name);
-			this.beaconMapper.insertBeaconSettings(beacon.getId(), beacon.getSettings(), PREPEND_USER_INSERTS + name);
+			if (beacon.getTree() == null || beacon.getTree().getLocation().getId() != beacon.getLocation().getId()) { // new location entry
+				this.treeMapper.insertLocation(beacon.getLocation(), String.valueOf(userId));				
+			}
+			this.beaconMapper.insertBeacon(beacon, String.valueOf(userId));
+			this.beaconMapper.insertBeaconSettings(beacon.getId(), beacon.getSettings(), String.valueOf(userId));
 		} catch (DuplicateKeyException ex) {
 			LOGGER.warn("Admin tried to enter duplicate beacon: {}", ex.getMessage(), ex);
 			throw new BadRequestException("There is already a beacon with given deviceId or same address.", ClientError.BEACON_DUPLICATE);
 		} catch (Throwable t) {
-			LOGGER.error("Internal excetion during postBeacon: {}", t.getMessage(), t);
+			LOGGER.error("Internal exception during postBeacon: {}", t.getMessage(), t);
 			throw new InternalException("Internal error encountered while adding beacon.", ClientError.BEACON_INTERNAL_ERROR);
 		}
 		
-		LOGGER.info("[[ POST ]] postBeacon |END| - deviceId: {}, inserted beacon id: {}", beacon.getDeviceId(), beacon.getId());
+		LOGGER.info("[[ POST ]] postNewBeacon |END| - deviceId: {}, inserted beacon id: {}", beacon.getDeviceId(), beacon.getId());
+		
+		return beacon;
+		
+	}
+	
+	@Transactional
+	@RequestMapping(method = RequestMethod.POST, path = "/beacon/{beaconId:\\d+}")
+	public Beacon postBeaconUpdate(
+			@PathVariable("beaconId") int beaconId,
+			@Validated(ValidationGroups.Update.class) @RequestBody Beacon beacon,
+			Authentication auth) {
+		
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
+		LOGGER.info("[[ POST ]] postBeaconUpdate - tree id: {}, admin uid: {}", beaconId, userId);
+		
+		try {
+			
+			final Beacon oldBeacon = this.beaconMapper.findBeaconById(beaconId);
+			oldBeacon.setSettings(this.beaconMapper.findLatestBeaconSettingsByBeaconId(beaconId));
+			
+			if (beacon.getLocation().getId() == 0) { // new location entry (beacon loc was separated from tree)
+				this.treeMapper.insertLocation(beacon.getLocation(), String.valueOf(userId));
+				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
+			} else if (beacon.getTree() != null && beacon.getTree().getLocation().getId() == beacon.getLocation().getId() &&
+					oldBeacon.getLocation().getId() != beacon.getLocation().getId()) { // delete loc entry (beacon loc was attached to tree)
+				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
+				this.treeMapper.deleteLocation(oldBeacon.getLocation().getId());
+			} else if (beacon.getTree() == null) {
+				this.treeMapper.updateLocation(beacon.getLocation(), String.valueOf(userId));
+				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
+			} else {
+				throw new RuntimeException("postBeaconUpdate logic error: could not decide how to update");
+			}
+			
+			BeaconSettings newSettings = oldBeacon.getSettings();
+			newSettings.setPin(beacon.getSettings().getPin());
+			this.beaconMapper.updateBeaconSettings(newSettings, String.valueOf(userId));
+			
+		} catch (Throwable t) {
+			LOGGER.error("Internal excetion during postBeaconUpdate: {}", t.getMessage(), t);
+			throw new BadRequestException("Internal error encountered while updating beacon.", ClientError.BEACON_UPDATE_FAILED);
+		}
+		
+		LOGGER.info("[[ POST ]] postBeaconUpdate |END| - beacon id: {}, admin uid: {}", beaconId, userId);
 		
 		return beacon;
 		
@@ -136,7 +181,7 @@ public class AdminController {
 		
 		final String name = auth.getName();
 		try {
-			this.treeMapper.insertTreeLocation(tree.getLocation(), name);
+			this.treeMapper.insertLocation(tree.getLocation(), name);
 			this.treeMapper.insertTree(tree, name);
 			this.treeMapper.insertTreeAge(tree, name);
 		} catch (Throwable t) {
@@ -157,7 +202,7 @@ public class AdminController {
 			@Validated(ValidationGroups.Update.class) @RequestBody Tree tree,
 			Authentication auth) {
 		
-		LOGGER.info("[[ POST ]] postTreeUpdate - tree id: {}", tree.getId());
+		LOGGER.info("[[ POST ]] postTreeUpdate - tree id: {}", treeId);
 		
 		try {
 			this.treeMapper.updateTree(tree, auth.getName());
@@ -166,7 +211,7 @@ public class AdminController {
 			throw new BadRequestException("Internal error encountered while updating tree.", ClientError.TREE_UPDATE_FAILED);
 		}
 		
-		LOGGER.info("[[ POST ]] postTreeUpdate |END| - tree id: {}", tree.getId());
+		LOGGER.info("[[ POST ]] postTreeUpdate |END| - tree id: {}", treeId);
 		
 		return tree;
 		
@@ -204,7 +249,7 @@ public class AdminController {
 		LOGGER.info("[[ GET ]] getUsers");
 		
 		try {
-			List<UserLight> users = this.authMapper.findAllUsersLight();
+			List<UserLight> users = this.authService.getAllUsersLight();
 			for (UserLight user : users) {
 				user.setNonLocked(this.authService.isUserNonLocked(user));
 			}
@@ -224,7 +269,7 @@ public class AdminController {
 		LOGGER.info("[[ DELETE ]] deleteUser - userId: " + userId);
 		
 		try {
-			this.authMapper.deleteUser(userId);
+			this.authService.deleteUser(userId);
 		} catch (Throwable t) {
 			LOGGER.error("Could not delete user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to delete user.", ClientError.GENERIC_ERROR);
@@ -288,10 +333,10 @@ public class AdminController {
 		LOGGER.info("[[ GET ]] getUserRoles");
 		
 		try {
-			return this.authMapper.findAllUserRoles();
+			return this.authService.getAllUserRoles();
 		} catch (Throwable t) {
-			LOGGER.error("Could not inactivate user: {}", t.getMessage(), t);
-			throw new InternalException("Failed to inactivate user.", ClientError.GENERIC_ERROR);
+			LOGGER.error("Could not get user roles: {}", t.getMessage(), t);
+			throw new InternalException("Failed to get user roles.", ClientError.GENERIC_ERROR);
 		} finally {
 			LOGGER.info("[[ GET ]] getUserRoles |END|");
 		}
@@ -404,9 +449,9 @@ public class AdminController {
 		
 		LOGGER.info("[[ PUT ]] putAnnouncement");
 		
-		final String name = auth.getName();
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
 		try {
-			this.uiMapper.insertAnnouncement(announcement, PREPEND_USER_INSERTS + name);
+			this.uiMapper.insertAnnouncement(announcement, String.valueOf(userId));
 		} catch (Throwable t) {
 			LOGGER.error("Could not insert announcement: {}", t.getMessage(), t);
 			throw new InternalException("Failed to insert announcement.", ClientError.GENERIC_ERROR);
@@ -501,6 +546,56 @@ public class AdminController {
 			LOGGER.trace("[[ GET ]] getBeaconLogs |END|");
 		}
 		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/report")
+	public List<Report> getReports(
+			@PathVariable(required = false) Boolean autoCreate,
+			@RequestParam(required = false) Boolean resolved,
+			@RequestParam(required = false) Integer maxReports,
+			@RequestParam(required = false) Integer offset,
+			@RequestParam(required = false) String timespanMin,
+			@RequestParam(required = false) String timespanMax) {
+		
+		LOGGER.debug("[[ GET ]] getReports");
+		
+		if (maxReports == null) {
+			maxReports = -1; // infinite
+		}
+		
+		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
+
+		List<Report> reports = 
+				this.appMapper.findReports(
+						null,
+						autoCreate,
+						resolved,
+						offset,
+						maxReports,
+						timespan.getStart(),
+						timespan.getEnd());
+		return reports;
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.PUT, path = "/report/{id:\\d+}/remark")
+	public void putReportRemark(
+			@PathVariable int id,
+			@RequestBody(required = false) String remark) {
+		LOGGER.debug("[[ PUT ]] putReportRemark - id: " + id);
+		this.appMapper.updateReportRemark(id, remark);
+	}
+	
+	@RequestMapping(method = RequestMethod.PUT, path = "/report/{id:\\d+}/resolve")
+	public void putReportResolve(@PathVariable int id) {
+		LOGGER.debug("[[ PUT ]] putReportResolve - id: " + id);
+		this.appMapper.updateReportResolved(id, true);
+	}
+	
+	@RequestMapping(method = RequestMethod.PUT, path = "/report/{id:\\d+}/unresolve")
+	public void putReportUnresolve(@PathVariable int id) {
+		LOGGER.debug("[[ PUT ]] putReportUnresolve - id: " + id);
+		this.appMapper.updateReportResolved(id, false);
 	}
 	
 }

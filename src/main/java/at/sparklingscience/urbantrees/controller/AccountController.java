@@ -1,9 +1,12 @@
 package at.sparklingscience.urbantrees.controller;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -12,8 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.PasswordReset;
+import at.sparklingscience.urbantrees.domain.User;
+import at.sparklingscience.urbantrees.domain.UserIdentity;
+import at.sparklingscience.urbantrees.domain.UserPermission;
+import at.sparklingscience.urbantrees.domain.UserPermissionRequest;
 import at.sparklingscience.urbantrees.domain.UsernameChange;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
+import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
 import at.sparklingscience.urbantrees.security.user.AuthenticationService;
@@ -68,6 +76,74 @@ public class AccountController {
 		this.authenticationService.changeUsername(authToken.getId(), newUsername);
 		
 		LOGGER.debug("[[ PUT ]] putChangeUsername |END| Successfully changed username.");
+		
+	}
+
+	@RequestMapping(method = RequestMethod.POST, path = "/permission/request")
+	public UserIdentity postUserPermissionRequest(@RequestBody UserPermissionRequest payload, Authentication auth) {
+		
+		final AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
+
+		LOGGER.debug(
+			"[[ POST ]] postUserPermissionRequest - add permission: {} from user: {} to user: {}",
+			payload.getPermission(),
+			payload.getUsername(),
+			authToken.getUsername()
+		);
+
+		final User user = this.authenticationService.findUser(payload.getUsername());
+		if (user == null) {
+			throw new UnauthorizedException("Permission Request: Username or password wrong");
+		}
+		
+		final boolean authValid = this.authenticationService.isPasswordValid(user, payload.getPassword());
+		final boolean userOk = this.authenticationService.isUserNonLocked(user);
+		
+		if (!authValid) {
+			try {
+				this.authenticationService.increaseFailedLoginAttempts(payload.getUsername());
+			} catch (Throwable t) {}
+			throw new UnauthorizedException("Permission Request: Username or password wrong");
+		}
+		
+		if (!userOk) {
+			throw new UnauthorizedException("Permission Request: Username or password wrong");
+		}
+		
+		this.authenticationService.successfulAuth(user.getId());
+		this.authenticationService.addUserPermission(user.getId(), authToken.getId(), payload.getPermission());
+		
+		LOGGER.debug(
+				"[[ POST ]] postUserPermissionRequest |END| Successfully added permission: {} from user: {} to user: {}",
+				payload.getPermission(),
+				payload.getUsername(),
+				authToken.getUsername()
+			);
+		
+		return UserIdentity.fromUser(user);
+		
+	}
+
+	@RequestMapping(method = RequestMethod.GET, path = "/permission/granted/{permission}")
+	public List<UserIdentity> getUsersGrantingPermission(@PathVariable UserPermission permission, Authentication auth) {
+		
+		final int receivingUserId = ControllerUtil.getAuthToken(auth).getId();
+
+		LOGGER.debug(
+			"[[ GET ]] getUsersGrantingPermission - get granting users for receiving user: {} with perm: {}",
+			receivingUserId,
+			permission
+		);
+
+		List<UserIdentity> grantingUsers = this.authenticationService.getUsersGrantingPermission(receivingUserId, permission);
+		
+		LOGGER.debug(
+				"[[ GET ]] getUsersGrantingPermission |END| Successfully got granting users for receiving user: {} with perm: {}",
+				receivingUserId,
+				permission
+			);
+		
+		return grantingUsers;
 		
 	}
 

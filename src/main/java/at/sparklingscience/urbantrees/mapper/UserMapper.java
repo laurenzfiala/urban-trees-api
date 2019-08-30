@@ -4,6 +4,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import at.sparklingscience.urbantrees.domain.UserAchievements;
+import at.sparklingscience.urbantrees.domain.UserData;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
 
 /**
@@ -48,5 +49,7 @@ public interface UserMapper {
 	void insertLevel(@Param("userId") int userId,
 					 @Param("xp") int xp,
 					 @Param("action") String action);
+	
+	UserData findUserData(@Param("userId") int userId);
 	
 }

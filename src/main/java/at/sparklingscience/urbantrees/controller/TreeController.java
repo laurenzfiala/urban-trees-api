@@ -27,6 +27,7 @@ import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.TreeSpecies;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
+import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.ClientError;
@@ -35,6 +36,7 @@ import at.sparklingscience.urbantrees.exception.NotFoundException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.PhysiognomyMapper;
 import at.sparklingscience.urbantrees.mapper.TreeMapper;
+import at.sparklingscience.urbantrees.service.ApplicationService;
 import at.sparklingscience.urbantrees.service.UserService;
 
 @RestController
@@ -48,6 +50,9 @@ public class TreeController {
 	
 	@Autowired
 	private UserService userService;
+
+	@Autowired
+	private ApplicationService appService;
 	
 	@Autowired
 	private TreeMapper treeMapper;
@@ -186,6 +191,17 @@ public class TreeController {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
 		}
 		
+		int[] assocUsers = null;
+		if (!ControllerUtil.isUserAnonymous(auth)) {
+			
+			assocUsers = ControllerUtil.addUserIdToIntArray(dataset.getObserversUserIds(), auth);
+			
+			int observersRef = this.appService.assocUsers(assocUsers);
+			dataset.setObservers(null);
+			dataset.setObserversRef(observersRef);
+			
+		}
+		
 		try {
 			this.phenologyMapper.insertPhenology(dataset);
 			this.phenologyMapper.insertPhenologyObservation(dataset);
@@ -196,7 +212,12 @@ public class TreeController {
 		
 		LOGGER.info("[[ POST ]] postTreePhenologyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
 		
-		this.userService.increaseXp(UserLevelAction.PHENOLOGY_OBSERVATION, auth);
+		this.userService.increaseXp(
+			UserLevelAction.PHENOLOGY_OBSERVATION,
+			assocUsers,
+			UserPermission.PHENOLOGY_OBSERVATION,
+			auth
+		);
 		
 		return dataset;
 		

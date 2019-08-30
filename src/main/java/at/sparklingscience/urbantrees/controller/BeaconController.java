@@ -106,7 +106,8 @@ public class BeaconController {
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/{beaconId:\\d+}")
-	public Beacon getBeacon(@PathVariable int beaconId) {
+	public Beacon getBeacon(@PathVariable int beaconId,
+							Authentication auth) {
 		
 		LOGGER.debug("[[ GET ]] getBeacon - beaconId: {}", beaconId);
 		

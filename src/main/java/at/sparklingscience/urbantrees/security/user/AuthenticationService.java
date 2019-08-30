@@ -1,8 +1,10 @@
 package at.sparklingscience.urbantrees.security.user;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Base64.Encoder;
+
 import java.util.List;
 import java.util.Random;
 
@@ -16,12 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.User;
+import at.sparklingscience.urbantrees.domain.UserIdentity;
+import at.sparklingscience.urbantrees.domain.UserLight;
+import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
+import at.sparklingscience.urbantrees.security.CryptoHelper;
 import at.sparklingscience.urbantrees.service.UserService;
 
 /**
- * Service provides functionalits for authorization,
+ * Service provides functionality for authorization,
  * e.g. register users, etc.
  * 
  * @author Laurenz Fiala
@@ -34,6 +40,9 @@ public class AuthenticationService {
 	 * Logger for this class.
 	 */
 	private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
+	
+	@Autowired
+	private CryptoHelper cryptor;
 	
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -52,19 +61,21 @@ public class AuthenticationService {
 	@Transactional
 	public User findUser(final int userId) {
 		
-		return this.authMapper.findUserById(userId);
+		return this.decryptUser(this.authMapper.findUserById(userId));
 		
 	}
 	
 	/**
 	 * Searches for a user with the given username.
-	 * @param username Username
+	 * @param username Username (raw)
 	 * @return If the user is found, return that user; if not, null will be returned.
 	 */
 	@Transactional
-	public User findUser(final String username) {
-		
-		return this.authMapper.findUserByUsername(username);
+	public User findUser(final String usernameRaw) {
+		final String encryptedUsername = this.encryptUsername(usernameRaw);
+		return this.decryptUser(
+				this.authMapper.findUserByUsername(encryptedUsername)
+				);
 		
 	}
 	
@@ -76,7 +87,7 @@ public class AuthenticationService {
 	@Transactional
 	public User findUserByLoginKey(final String token) {
 		
-		return this.authMapper.findUserByLoginKey(token);
+		return this.decryptUser(this.authMapper.findUserByLoginKey(token));
 		
 	}
 	
@@ -122,16 +133,16 @@ public class AuthenticationService {
 	
 	/**
 	 * Inserts a new user into the database.
-	 * @param username Username to register.
+	 * @param usernameRaw Username to register (raw).
 	 * @param rawPassword Password entered by the user (raw).
 	 * @param roles Roles to assign to the new user.
 	 * @return The given user object with ID set.
 	 */
 	@Transactional
-	public User registerUser(final String username, final String rawPassword, final List<Role> roles) {
+	public User registerUser(final String usernameRaw, final String rawPassword, final List<Role> roles) {
 		
 		User newUser = new User();
-		newUser.setUsername(username);
+		newUser.setUsername(this.encryptUsername(usernameRaw));
 		
 		if (rawPassword == null) {
 			newUser.setPassword(null);
@@ -189,13 +200,14 @@ public class AuthenticationService {
 	/**
 	 * Update a users' username to newUsername.
 	 * @param userId userId
-	 * @param newUsername new username
+	 * @param newUsername new username (raw)
 	 * @return true if successful; false otherwise
 	 */
 	@Transactional
-	public boolean changeUsername(final int userId, final String newUsername) {
+	public boolean changeUsername(final int userId, final String newUsernameRaw) {
 		
-		final int updatedRows = this.authMapper.updateUsername(userId, newUsername);
+		final String newUsernameEncrypted = this.encryptUsername(newUsernameRaw);
+		final int updatedRows = this.authMapper.updateUsername(userId, newUsernameEncrypted);
 		if (updatedRows == 1) {
 			return true;
 		} else {
@@ -203,6 +215,16 @@ public class AuthenticationService {
 			return false;
 		}
 		
+	}
+
+	/**
+	 * Check the DB user againt the given raw password.
+	 * @param user DB user (password is encrypted)
+	 * @param rawPassword plaintext password to check
+	 * @return true if the password matches; flese otherwise
+	 */
+	public boolean isPasswordValid(User user, String rawPassword) {
+		return this.bCryptPasswordEncoder.matches(rawPassword, user.getPassword());
 	}
 
 	/**
@@ -241,7 +263,7 @@ public class AuthenticationService {
 		
 	}
 	
-	public String generateSecureToken() {
+	private String generateSecureToken() {
 		
 		Random random = new SecureRandom();
 		byte[] randomData = new byte[SecurityConfiguration.SECURE_LOGIN_KEY_BYTES];
@@ -260,6 +282,148 @@ public class AuthenticationService {
 		} else {
 			this.authMapper.deleteUserRoles(userId, roles);
 		}
+		
+	}
+	
+	@Transactional
+	public void increaseFailedLoginAttempts(final String usernameRaw) {
+		
+		this.authMapper.increaseFailedLoginAttemptsByUsername(
+			this.encryptUsername(usernameRaw)
+		);
+		
+	}
+	
+	@Transactional
+	public void updateLastLoginAttemptDat(final String usernameRaw) {
+		
+		this.authMapper.updateLastLoginAttemptDatByUsername(
+			this.encryptUsername(usernameRaw)
+		);
+		
+	}
+	
+	@Transactional
+	public void successfulAuth(final int userId) {
+		
+		this.authMapper.resetFailedLoginAttempts(userId);
+		this.authMapper.updateLastLoginDat(userId);
+		this.authMapper.updateUserLoginKey(userId, null);
+		
+	}
+	
+	@Transactional
+	public void deleteUser(final int userId) {
+		
+		this.authMapper.deleteUser(userId);
+		
+	}
+
+	/**
+	 * Add a single user permission to receivingUser.
+	 * @param grantingUserId User ID of permission granting user (giving permission)
+	 * @param receivingUserId User ID of permission receiving user (getting permission)
+	 * @param permission type of permission
+	 */
+	@Transactional
+	public void addUserPermission(int grantingUserId, int receivingUserId, UserPermission permission) {
+		this.authMapper.insertUserPermission(grantingUserId, receivingUserId, permission.name());
+	}
+
+	/**
+	 * Whether the receivingUser has the given permission from the given grantingUser.
+	 * @param grantingUserId User ID of permission granting user (giving permission)
+	 * @param receivingUserId User ID of permission receiving user (getting permission)
+	 * @param permission type of permission
+	 */
+	@Transactional
+	public boolean hasUserPermission(int grantingUserId, int receivingUserId, UserPermission permission) {
+		return this.authMapper.hasUserPermission(grantingUserId, receivingUserId, permission.name()) > 0;
+	}
+
+	/**
+	 * Get all users that have given the receivingUser the specified permission
+	 * @param receivingUserId User ID of permission receiving user (getting permission)
+	 * @param permission type of permission
+	 * @return list of users that have given the receivingUser the specified permission
+	 */
+	@Transactional
+	public List<UserIdentity> getUsersGrantingPermission(int receivingUserId, UserPermission permission) {
+		List<UserIdentity> grantingUsers = this.authMapper.findUserIdentitiesGrantingPermission(receivingUserId, permission.name());
+		for (UserIdentity u : grantingUsers) {
+			u.setUsername(this.cryptor.decrypt(u.getUsername()));
+		}
+		return grantingUsers;
+	}
+	
+	/**
+	 * Fetches all users in a light version.
+	 * Important Note: THIS METHOD MUST SOLELY BE CALLED BY AN ADMIN VIA ADMINCONTROLLER!
+	 */
+	public List<UserLight> getAllUsersLight() {
+		
+		List<UserLight> users = this.authMapper.findAllUsersLight();
+		for (UserLight u : users) {
+			this.decryptUser(u);
+		}
+		return users;
+		
+	}
+	
+	/**
+	 * Fetches all user roles available.
+	 */
+	public List<Role> getAllUserRoles() {
+		
+		return this.authMapper.findAllUserRoles();
+		
+	}
+	
+	/**
+	 * Fetches the JWT secret from the database, used for
+	 * signing the JWT tokens.
+	 * DB-call is cached by mybatis.
+	 */
+	public byte[] getJWTSecret() {
+		
+		return this.authMapper.findSetting(AuthSettings.JWT_SECRET).getBytes(StandardCharsets.UTF_8);
+		
+	}
+	
+	/**
+	 * Gets the encryption salt for queryable text from the auth settings table.
+	 * DB-call is cached by mybatis.
+	 */
+	public String getQueryableEncryptionSalt() {
+		
+		return this.authMapper.findSetting(AuthSettings.QUERYABLE_ENCRYPTION_SALT);
+		
+	}
+	
+	/**
+	 * Decrypt encrypted values of {@link User} object
+	 * that has just been retrieved from the DB.
+	 * 
+	 * @param user user to be modified (no copy is created)
+	 * @return the same object-ref as user-parameter, for convenience
+	 */
+	private User decryptUser(User user) {
+		
+		user.setUsername(this.cryptor.decrypt(user.getUsername()));
+		
+		return user;
+		
+	}
+
+	/**
+	 * Encrypt raw usernameand return it.
+	 * 
+	 * @param usernameRaw cleartext username
+	 * @return encrypted username
+	 */
+	private String encryptUsername(String usernameRaw) {
+		
+		return this.cryptor.encryptQueryable(usernameRaw);
 		
 	}
 	

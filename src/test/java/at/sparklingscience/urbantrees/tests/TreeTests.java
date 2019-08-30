@@ -30,7 +30,7 @@ import at.sparklingscience.urbantrees.domain.PhenologyObservationResult;
 import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.TreeGenus;
-import at.sparklingscience.urbantrees.domain.TreeLocation;
+import at.sparklingscience.urbantrees.domain.Location;
 import at.sparklingscience.urbantrees.domain.TreeSpecies;
 
 /**
@@ -68,7 +68,7 @@ public class TreeTests {
 
 		Tree test = new Tree();
 		test.setId(9990);
-		TreeLocation testLocation = new TreeLocation();
+		Location testLocation = new Location();
 		testLocation.setId(9990);
 		testLocation.setCoordinates(new Coordinates(465.25f, 564.52f, "EPSG:900913"));
 		testLocation.setStreet("Samplestreet 1");

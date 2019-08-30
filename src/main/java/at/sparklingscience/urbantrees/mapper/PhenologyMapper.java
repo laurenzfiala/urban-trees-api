@@ -25,6 +25,9 @@ public interface PhenologyMapper {
 			@Param("timespanMax") Date timespanMax
 			);
 	
+	PhenologyDataset findPhenologyById(
+			@Param("phenologyId") int phenologyId
+			);
 	
 	void insertPhenology(PhenologyDataset dataset);
 	

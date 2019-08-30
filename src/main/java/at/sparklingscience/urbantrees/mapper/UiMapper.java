@@ -6,8 +6,10 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import at.sparklingscience.urbantrees.domain.ui.Announcement;
+import at.sparklingscience.urbantrees.domain.ui.DateIntValue;
 import at.sparklingscience.urbantrees.domain.ui.Image;
-import at.sparklingscience.urbantrees.domain.ui.Statistics;
+import at.sparklingscience.urbantrees.domain.ui.MeasurementStatistics;
+import at.sparklingscience.urbantrees.domain.ui.SystemStatistics;
 
 /**
  * Mybatis mapping interface.
@@ -56,8 +58,24 @@ public interface UiMapper {
 	
 	/**
 	 * Gets statistics on the system.
-	 * @return {@link Statistics}
+	 * @return {@link SystemStatistics}
 	 */
-	Statistics getStatistics();
+	SystemStatistics getSystemStatistics();
+
+	/**
+	 * Daily beacon readout amount for the past 14 days.
+	 */
+	List<DateIntValue> getBeaconReadoutDaily();
+
+	/**
+	 * Daily phenology observation amount for the past 14 days.
+	 */
+	List<DateIntValue> getPhenologyObservationDaily();
+	
+	/**
+	 * Gets measurement-stats on the system.
+	 * @return {@link MeasurementStatistics}
+	 */
+	MeasurementStatistics getMeasurementStatistics();
 	
 }

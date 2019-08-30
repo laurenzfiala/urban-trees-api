@@ -32,9 +32,20 @@ public class PhenologyDataset {
 	private int treeId;
 	
 	/**
-	 * Names of people who observed.
+	 * Associated user ids sent by frontend if user is not anonymous.
 	 */
-	@NotNull
+	private int[] observersUserIds;
+	
+	/**
+	 * Ref to observers' user accounts.
+	 * Only used if user is not anonymous.
+	 */
+	private Integer observersRef;
+	
+	/**
+	 * Names of people who observed.
+	 * Only used if user is anonymous.
+	 */
 	private String observers;
 	
 	/**
@@ -104,5 +115,21 @@ public class PhenologyDataset {
 	public void setRemark(String remark) {
 		this.remark = remark;
 	}
-	
+
+	public int[] getObserversUserIds() {
+		return observersUserIds;
+	}
+
+	public void setObserversUserIds(int[] observersUserIds) {
+		this.observersUserIds = observersUserIds;
+	}
+
+	public Integer getObserversRef() {
+		return observersRef;
+	}
+
+	public void setObserversRef(Integer observersRef) {
+		this.observersRef = observersRef;
+	}
+
 }

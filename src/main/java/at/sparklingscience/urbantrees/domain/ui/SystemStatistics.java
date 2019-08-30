@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.domain.ui;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Statistics to show in the UI,
@@ -9,9 +10,9 @@ import java.io.Serializable;
  * @author Laurenz Fiala
  * @since 2018/05/23
  */
-public class Statistics implements Serializable {
+public class SystemStatistics implements Serializable {
 	
-	private static final long serialVersionUID = 20180523L;
+	private static final long serialVersionUID = 20190714L;
 
 	/**
 	 * Amount of cities in the system.
@@ -47,43 +48,17 @@ public class Statistics implements Serializable {
 	 * Total amount of beacon datasets recorded.
 	 */
 	private long beaconDatasetAmount;
+	
+	/**
+	 * Amount of beacon readout per day for the last 14 days.
+	 */
+	private List<DateIntValue> beaconReadouts;
+	
+	/**
+	 * Amount of beacon readout per day for the last 14 days.
+	 */
+	private List<DateIntValue> phenologyObservations;
 
-	/**
-	 * Minimum temperature of all recorded
-	 * beacon datasets.
-	 */
-	private double beaconTempMinimum;
-	
-	/**
-	 * Average temperature of all recorded
-	 * beacon datasets.
-	 */
-	private double beaconTempAverage;
-	
-	/**
-	 * Maximum temperature of all recorded
-	 * beacon datasets.
-	 */
-	private double beaconTempMaximum;
-
-	/**
-	 * Minimum humidity of all recorded
-	 * beacon datasets.
-	 */
-	private double beaconHumidityMinimum;
-	
-	/**
-	 * Average humidity of all recorded
-	 * beacon datasets.
-	 */
-	private double beaconHumidityAverage;
-	
-	/**
-	 * Maximum humidity of all recorded
-	 * beacon datasets.
-	 */
-	private double beaconHumidityMaximum;
-	
 	public int getCityAmount() {
 		return cityAmount;
 	}
@@ -132,54 +107,6 @@ public class Statistics implements Serializable {
 		this.beaconDatasetAmount = beaconDatasetAmount;
 	}
 	
-	public double getBeaconTempMinimum() {
-		return beaconTempMinimum;
-	}
-	
-	public void setBeaconTempMinimum(double beaconTempMinimum) {
-		this.beaconTempMinimum = beaconTempMinimum;
-	}
-	
-	public double getBeaconTempAverage() {
-		return beaconTempAverage;
-	}
-	
-	public void setBeaconTempAverage(double beaconTempAverage) {
-		this.beaconTempAverage = beaconTempAverage;
-	}
-	
-	public double getBeaconTempMaximum() {
-		return beaconTempMaximum;
-	}
-	
-	public void setBeaconTempMaximum(double beaconTempMaximum) {
-		this.beaconTempMaximum = beaconTempMaximum;
-	}
-	
-	public double getBeaconHumidityMinimum() {
-		return beaconHumidityMinimum;
-	}
-	
-	public void setBeaconHumidityMinimum(double beaconHumidityMinimum) {
-		this.beaconHumidityMinimum = beaconHumidityMinimum;
-	}
-	
-	public double getBeaconHumidityAverage() {
-		return beaconHumidityAverage;
-	}
-	
-	public void setBeaconHumidityAverage(double beaconHumidityAverage) {
-		this.beaconHumidityAverage = beaconHumidityAverage;
-	}
-	
-	public double getBeaconHumidityMaximum() {
-		return beaconHumidityMaximum;
-	}
-	
-	public void setBeaconHumidityMaximum(double beaconHumidityMaximum) {
-		this.beaconHumidityMaximum = beaconHumidityMaximum;
-	}
-	
 	public static long getSerialversionuid() {
 		return serialVersionUID;
 	}
@@ -190,6 +117,22 @@ public class Statistics implements Serializable {
 
 	public void setBeaconAmount(long beaconAmount) {
 		this.beaconAmount = beaconAmount;
+	}
+
+	public List<DateIntValue> getBeaconReadouts() {
+		return beaconReadouts;
+	}
+
+	public void setBeaconReadouts(List<DateIntValue> beaconReadouts) {
+		this.beaconReadouts = beaconReadouts;
+	}
+
+	public List<DateIntValue> getPhenologyObservations() {
+		return phenologyObservations;
+	}
+
+	public void setPhenologyObservations(List<DateIntValue> phenologyObservations) {
+		this.phenologyObservations = phenologyObservations;
 	}
 	
 }

@@ -31,12 +31,11 @@ spring:
     time-zone: UTC
   # File Upload
   servlet:
-    http:
-      multipart:
-        max-file-size: 5MB
-        max-request-size: 5MB
-  security:
-    require-ssl: false
+	  multipart:
+	    max-file-size: 5MB
+	    max-request-size: 5MB
+  #security:
+  #  require-ssl: false
     
 
 # - MyBatis -
@@ -55,4 +54,5 @@ at:
   sparklingscience:
     urbantrees:
       dateFormatPattern: "yyyy-MM-dd'T'HH-mm-ss"
+      encryptionPassword: ${encryption.password}
     

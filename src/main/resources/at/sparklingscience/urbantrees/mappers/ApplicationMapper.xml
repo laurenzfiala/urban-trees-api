@@ -1,0 +1,252 @@
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="at.sparklingscience.urbantrees.mapper.ApplicationMapper">
+
+	<resultMap id="EventMap" type="at.sparklingscience.urbantrees.domain.Event">
+		<id column="id"						property="id" />
+        <result column="message"			property="message" />
+        <result column="details"			property="details" />
+        <result column="severity"			property="severity" />
+        <result column="remark"				property="remark" />
+        <result column="event_dat"			property="eventDate" />
+    </resultMap>
+    
+    <resultMap id="ReportMap" type="at.sparklingscience.urbantrees.domain.Report">
+		<id column="id"						property="id"/>
+        <result column="message"			property="message" />
+        <result column="userId"				property="user_id" />
+        <result column="auto_create"		property="autoCreate" />
+        <result column="resolved"			property="resolved" />
+        <result column="remark"				property="remark" />
+        <result column="cre_dat"			property="reportDate" />
+        
+        <association
+        	column="{id=event_ref}"
+	        property="assocEvent"
+	        select="findEvents" />
+    </resultMap>
+    
+    <select id="findEvents" resultMap="EventMap">
+    	select
+			id,
+			message,
+			details,
+			severity,
+			remark,
+			event_dat
+		from
+			application.event
+		<if test="severities != null or timespanMin != null or timespanMax != null or id != null">
+		where
+		</if>
+			<if test="id != null">
+				id = #{id}
+				<if test="timespanMin != null or timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="severities != null">
+				severity in 
+				<foreach item="eventSeverity" collection="severities" separator="," open="(" close=")">
+			        #{eventSeverity}
+			    </foreach>
+				<if test="timespanMin != null or timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="timespanMin != null">
+				event_dat &gt;= #{timespanMin}
+				<if test="timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="timespanMax != null">
+				event_dat &lt;= #{timespanMax}
+			</if>
+		order by id asc
+		<if test="offset != -1">
+			offset #{offset}
+		</if>
+		<if test="maxEvents != -1">
+			limit #{maxEvents}
+		</if>
+	</select>
+
+	<insert id="insertEvent" useGeneratedKeys="true" keyColumn="id" keyProperty="event.id">
+		insert into
+			application."event"
+			(message, details, severity, remark, event_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+		values
+			(
+				#{event.message},
+				#{event.details},
+				#{event.severity},
+				#{event.remark},
+				now(),
+				now(),
+				now(),
+				user,
+				user
+			)
+		returning
+			id
+	</insert>
+	
+	<select id="findReports" resultMap="ReportMap">
+    	select
+			id,
+			message,
+			event_ref,
+			user_id,
+			auto_create,
+			resolved,
+			remark,
+			cre_dat
+		from
+			application.report
+		<if test="resolved != null or autoCreate != null or timespanMin != null or timespanMax != null or id != null">
+		where
+		</if>
+			<if test="id != null">
+				id = #{id}
+				<if test="resolved != null or timespanMin != null or timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="resolved != null">
+				resolved = #{resolved}
+				<if test="timespanMin != null or timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="autoCreate != null">
+				autoCreate = #{autoCreate}
+			</if>
+			<if test="timespanMin != null">
+				event_dat &gt;= #{timespanMin}
+				<if test="timespanMax != null">
+					and
+				</if>
+			</if>
+			<if test="timespanMax != null">
+				event_dat &lt;= #{timespanMax}
+			</if>
+		order by id asc
+		<if test="offset != -1">
+			offset #{offset}
+		</if>
+		<if test="maxReports != -1">
+			limit #{maxReports}
+		</if>
+	</select>
+
+	<insert id="insertReport" useGeneratedKeys="true" keyColumn="id" keyProperty="report.id">
+		insert into
+			application.report
+			(message, event_ref, user_id, auto_create, resolved, remark, cre_dat, mod_dat, cre_usr, mod_usr)
+		values
+			(
+				#{report.message},
+				<if test="report.assocEvent == null">
+					null
+				</if>
+				<if test="report.assocEvent != null">
+					#{report.assocEvent.id}
+				</if>,
+				#{report.userId},
+				#{report.autoCreate},
+				#{report.resolved},
+				#{report.remark},
+				now(),
+				now(),
+				user,
+				user
+			)
+	</insert>
+
+	<update id="updateReportRemark">
+		update
+			application.report
+		set
+			remark = #{remark},
+			mod_dat = now()
+		where
+			id = #{id}
+	</update>
+
+	<update id="updateReportResolved">
+		update
+			application.report
+		set
+			resolved = #{resolved},
+			mod_dat = now()
+		where
+			id = #{id}
+	</update>
+	
+	<select id="nextUserRefId" resultType="java.lang.Integer">
+    	select nextval('application.user_ref_seq')
+	</select>
+	
+	<insert id="insertUserRef">
+    	insert into
+			application.user_ref
+			(ref_id, user_id, cre_dat, cre_usr)
+		values
+			(
+				#{refId},
+				#{userId},
+				now(),
+				user
+			)
+	</insert>
+	
+	<select id="findUsersByRefId" resultMap="at.sparklingscience.urbantrees.mapper.AuthMapper.UserIdentityMap">
+    	select
+			u.id,
+			u.username
+		from
+			application.user_ref r,
+			access_data."user" u
+		where
+			r.ref_id = #{refId}
+			and r.user_id = u.id
+	</select>
+	
+	<select id="findUserIdsByRefId" resultType="java.lang.Integer">
+    	select
+			u.id
+		from
+			application.user_ref r,
+			access_data."user" u
+		where
+			r.ref_id = #{refId}
+			and r.user_id = u.id
+	</select>
+	
+	<select id="findUserReports" resultMap="ReportMap">
+    	select
+			id,
+			message,
+			event_ref,
+			user_id,
+			auto_create,
+			resolved,
+			remark,
+			cre_dat
+		from
+			application.report
+		where
+			user_id = #{userId}
+			and
+			(
+				mod_dat >= NOW() - INTERVAL '3 MONTH'
+				or resolved = false
+			)
+		order by
+			cre_dat desc
+	</select>
+
+</mapper>

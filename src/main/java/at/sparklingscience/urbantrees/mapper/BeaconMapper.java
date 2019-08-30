@@ -75,10 +75,20 @@ public interface BeaconMapper {
 			@Param("beacon") Beacon beacon,
 			@Param("user") String user
 			);
+	
+	void updateBeacon(
+			@Param("beacon") Beacon beacon,
+			@Param("user") String user
+			);
 
 	void updateBeaconStatus(
 			@Param("id") int id,
 			@Param("status") BeaconStatus status
+			);
+	
+	void updateBeaconSettings(
+			@Param("settings") BeaconSettings settings,
+			@Param("user") String user
 			);
 	
 }

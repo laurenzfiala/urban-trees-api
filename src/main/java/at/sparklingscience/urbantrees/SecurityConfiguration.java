@@ -28,9 +28,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import at.sparklingscience.urbantrees.controller.AdminController;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AdminAccessDecisionVoter;
+import at.sparklingscience.urbantrees.security.CryptoHelper;
 import at.sparklingscience.urbantrees.security.apikey.ApiKeyFilter;
 import at.sparklingscience.urbantrees.security.jwt.JWTAuthenticationFilter;
 import at.sparklingscience.urbantrees.security.jwt.JWTAuthorizationFilter;
+import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 import at.sparklingscience.urbantrees.security.user.PostAuthenticationChecks;
 import at.sparklingscience.urbantrees.security.user.StandardAuthenticationProvider;
 import at.sparklingscience.urbantrees.security.user.TokenAuthenticationProvider;
@@ -126,6 +128,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private AuthMapper authMapper;
 	
+	@Autowired
+	private AuthenticationService authService;
+	
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
@@ -140,6 +145,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    			"/tree/**",
 		    			"/ui",
 		    			"/ui/**",
+		    			"/beacon",
 		    			"/beacon/**/data",
 		    			"/content/**"
     			).permitAll()
@@ -165,7 +171,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    	.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 	    	.and()
 	    		.addFilterBefore(new ApiKeyFilter(this.authenticationManager(), this.authMapper), UsernamePasswordAuthenticationFilter.class)
-	    		.addFilter(new JWTAuthenticationFilter(this.authenticationManager(), this.authMapper))
+	    		.addFilter(new JWTAuthenticationFilter(this.authenticationManager(), this.authService))
                 .addFilter(new JWTAuthorizationFilter(this.authenticationManager(), this.authMapper));
 
     }
@@ -215,6 +221,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+    
+    @Bean
+    public CryptoHelper cryptor() {
+    	return new CryptoHelper();
     }
     
 }

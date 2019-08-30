@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import at.sparklingscience.urbantrees.domain.ui.Announcement;
 import at.sparklingscience.urbantrees.domain.ui.Image;
-import at.sparklingscience.urbantrees.domain.ui.Statistics;
+import at.sparklingscience.urbantrees.domain.ui.MeasurementStatistics;
+import at.sparklingscience.urbantrees.domain.ui.SystemStatistics;
 import at.sparklingscience.urbantrees.mapper.UiMapper;
 
 /**
@@ -63,13 +64,29 @@ public class UiController {
 	/*
 	 * TODO API def
 	 */
-	@RequestMapping(method = RequestMethod.GET, path = "/statistics")
-	public Statistics getStatistics() {
+	@RequestMapping(method = RequestMethod.GET, path = "/statistics/system")
+	public SystemStatistics getSystemStatistics() {
 		
-		LOGGER.trace("[[ GET ]] getStatistics");
+		LOGGER.trace("[[ GET ]] getSystemStatistics");
 		
-	    return this.uiMapper.getStatistics();
+	    SystemStatistics stats = this.uiMapper.getSystemStatistics();
+	    stats.setBeaconReadouts(this.uiMapper.getBeaconReadoutDaily());
+	    stats.setPhenologyObservations(this.uiMapper.getPhenologyObservationDaily());
+	
+	    return stats;
+	    
+	}
+	
+	/*
+	 * TODO API def
+	 */
+	@RequestMapping(method = RequestMethod.GET, path = "/statistics/measurements")
+	public MeasurementStatistics getMeasurementStatistics() {
+		
+		LOGGER.trace("[[ GET ]] getMeasurementStatistics");
+		
+	    return this.uiMapper.getMeasurementStatistics();
 	
 	}
-
+	
 }

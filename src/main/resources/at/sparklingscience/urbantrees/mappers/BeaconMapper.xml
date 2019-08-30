@@ -7,10 +7,17 @@
     <resultMap id="BeaconResultMap" type="at.sparklingscience.urbantrees.domain.Beacon">
 	    <result column="id" 				property="id" />
 	    <result column="device_id" 			property="deviceId" />
-	    <result column="tree_id" 			property="treeId" />
 	    <result column="bluetooth_address" 	property="bluetoothAddress" />
 	    <result column="status" 			property="status" />
 	    <result column="pin" 				property="pin" />
+	    
+	    <association column="location_id"
+				     property="location"
+				     select="at.sparklingscience.urbantrees.mapper.TreeMapper.findLocationById" />
+	    
+	    <association column="tree_id"
+				     property="tree"
+				     select="at.sparklingscience.urbantrees.mapper.TreeMapper.findTreeLightById" />
     </resultMap>
     
     <resultMap id="BeaconDatasetResultMap" type="at.sparklingscience.urbantrees.domain.BeaconDataset">
@@ -59,11 +66,14 @@
 			device_id,
 		    tree_id,
 		    bluetooth_address,
-		    status
+		    status,
+		    location_id
 		from
 		    tree_data.beacon
 	    where
 	    	status != 'DELETED'
+    	order by
+    		id
     </select>
     
     <select id="findAllBeaconsByStatus" resultMap="BeaconResultMap">
@@ -72,11 +82,14 @@
 			device_id,
 		    tree_id,
 		    bluetooth_address,
-		    status
+		    status,
+		    location_id
 		from
 		    tree_data.beacon
 	    where
 		    status = #{status}
+    	order by
+    		id
     </select>
 
     <select id="findBeaconById" resultMap="BeaconResultMap">
@@ -85,7 +98,8 @@
 			device_id,
 		    tree_id,
 		    bluetooth_address,
-		    status
+		    status,
+		    location_id
 		from
 		    tree_data.beacon
 		where
@@ -99,7 +113,8 @@
 			device_id,
 		    tree_id,
 		    bluetooth_address,
-		    status
+		    status,
+		    location_id
 		from
 		    tree_data.beacon
 		where
@@ -131,7 +146,7 @@
 		        </if>
 		    order by
 		        d.observe_dat desc
-	        <if test="timespanMax != -1">
+	        <if test="maxDatapoints != -1">
 	            limit #{maxDatapoints}
 	        </if>
         )
@@ -261,6 +276,15 @@
 		    	</if>
 	    	)
 	</insert>
+	
+	<update id="updateBeaconSettings">
+		update
+            tree_data.beacon_settings
+        set
+        	pin = #{settings.pin}
+       	where
+       		id = #{settings.id}
+	</update>
 
     <select id="findLatestBeaconSettingsByBeaconId" resultMap="BeaconSettingsResultMap">
         select
@@ -351,6 +375,7 @@
 				tree_id,
 				bluetooth_address,
 				status,
+				location_id,
 				cre_dat,
 				mod_dat,
 				cre_usr,
@@ -359,15 +384,30 @@
 		values 
 		    (
 		    	#{beacon.deviceId},
-		    	#{beacon.treeId},
+		    	#{beacon.tree.id},
 		    	#{beacon.bluetoothAddress},
 		    	#{beacon.status},
+		    	#{beacon.location.id},
 		    	now(),
 		    	now(),
 		    	#{user},
 		    	#{user}
 		    )
 	</insert>
+	
+    <update id="updateBeacon" useGeneratedKeys="true" keyColumn="id" keyProperty="beacon.id">
+    	update
+            tree_data.beacon
+        set
+        	device_id = #{beacon.deviceId},
+        	tree_id = #{beacon.tree.id},
+        	bluetooth_address = #{beacon.bluetoothAddress},
+        	location_id = #{beacon.location.id},
+        	mod_dat = now(),
+        	mod_usr = #{user}
+       	where
+       		id = #{beacon.id}
+	</update>
 	
     <delete id="updateBeaconStatus">
         update

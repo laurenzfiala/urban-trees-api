@@ -26,7 +26,7 @@
         <result column="display_to_dat"		property="displayToDate" />
     </resultMap>
 
-    <resultMap id="StatisticsMapper" type="at.sparklingscience.urbantrees.domain.ui.Statistics">
+    <resultMap id="SystemStatisticsMapper" type="at.sparklingscience.urbantrees.domain.ui.SystemStatistics">
         <result column="cities" 					property="cityAmount" />
         <result column="tree" 						property="treeAmount" />
         <result column="tree_species" 				property="treeSpeciesAmount" />
@@ -34,12 +34,20 @@
         <result column="phenology_observation" 		property="phenologyObservationObjectAmount" />
         <result column="beacon" 					property="beaconAmount" />
         <result column="beacon_data" 				property="beaconDatasetAmount" />
+    </resultMap>
+
+    <resultMap id="MeasurementStatisticsMapper" type="at.sparklingscience.urbantrees.domain.ui.MeasurementStatistics">
         <result column="beacon_data_temp_min" 		property="beaconTempMinimum" />
         <result column="beacon_data_temp_avg" 		property="beaconTempAverage" />
         <result column="beacon_data_temp_max" 		property="beaconTempMaximum" />
         <result column="beacon_data_humidity_min" 	property="beaconHumidityMinimum" />
         <result column="beacon_data_humidity_avg" 	property="beaconHumidityAverage" />
         <result column="beacon_data_humidity_max" 	property="beaconHumidityMaximum" />
+    </resultMap>
+    
+    <resultMap id="DateIntValueMapper" type="at.sparklingscience.urbantrees.domain.ui.DateIntValue">
+        <result column="time" 				property="time" />
+        <result column="value" 				property="value" />
     </resultMap>
 
     <select id="findImageForPhenologyObservationResult" resultMap="PhenologyObservationResultImageMap">
@@ -111,7 +119,7 @@
 			id = #{aId}
     </delete>
 
-    <select id="getStatistics" resultMap="StatisticsMapper">
+    <select id="getSystemStatistics" resultMap="SystemStatisticsMapper">
         select
 		(
 			select
@@ -159,7 +167,35 @@
 				count(0)
 			from
 				tree_data.beacon_data
-		) as beacon_data,
+		) as beacon_data
+    </select>
+    
+    <select id="getBeaconReadoutDaily" resultMap="DateIntValueMapper">
+        select
+			date_trunc('day', check_dat) "time",
+			count(0) "value"
+		from
+			tree_data.beacon_settings
+		where
+			check_dat > date_trunc('day', now()) - INTERVAL '14 day'
+		group by
+			1
+    </select>
+    
+    <select id="getPhenologyObservationDaily" resultMap="DateIntValueMapper">
+        select
+			date_trunc('day', observe_dat) "time",
+			count(0) "value"
+		from
+			tree_data.phenology
+		where
+			observe_dat > date_trunc('day', now()) - INTERVAL '14 day'
+		group by
+			1
+    </select>
+    
+    <select id="getMeasurementStatistics" resultMap="MeasurementStatisticsMapper">
+		select
 		(
 			select
 				min(temperature)

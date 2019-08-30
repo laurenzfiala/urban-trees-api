@@ -30,10 +30,9 @@ public class Beacon {
 	private String deviceId;
 	
 	/**
-	 * The {@link Tree} this beacon belongs/is attached to.
+	 * (optional) The {@link Tree} this beacon belongs/is attached to.
 	 */
-	@Min(1)
-	private int treeId;
+	private TreeLight tree;
 	
 	/**
 	 * The bluetooth identifier using which
@@ -48,7 +47,16 @@ public class Beacon {
 	@NotNull(groups = {ValidationGroups.Read.class})
 	private BeaconStatus status;
 	
+	/**
+	 * Beacons' settings (only for admins)
+	 */
 	private BeaconSettings settings;
+	
+	/**
+	 * Beacons' location.
+	 */
+	@NotNull
+	private Location location;
 	
 	@Override
 	public boolean equals(Object obj) {
@@ -57,9 +65,12 @@ public class Beacon {
 		}
 		
 		Beacon b = (Beacon) obj;
+		if (this.getTree() == null ^ b.getTree() == null) {
+			return false;
+		}
 		
 		return ObjectUtils.nullSafeEquals(this.getId(), b.getId())
-				&& ObjectUtils.nullSafeEquals(this.getTreeId(), b.getTreeId())
+				&& (this.getTree() == null || b.getTree() == null || ObjectUtils.nullSafeEquals(this.getTree().getId(), b.getTree().getId()))
 				&& ObjectUtils.nullSafeEquals(this.getBluetoothAddress(), b.getBluetoothAddress());
 	}
 	
@@ -69,14 +80,6 @@ public class Beacon {
 	
 	public void setId(int id) {
 		this.id = id;
-	}
-	
-	public int getTreeId() {
-		return treeId;
-	}
-	
-	public void setTreeId(int treeId) {
-		this.treeId = treeId;
 	}
 	
 	public String getBluetoothAddress() {
@@ -109,6 +112,22 @@ public class Beacon {
 
 	public void setSettings(BeaconSettings settings) {
 		this.settings = settings;
+	}
+
+	public Location getLocation() {
+		return location;
+	}
+
+	public void setLocation(Location location) {
+		this.location = location;
+	}
+
+	public TreeLight getTree() {
+		return tree;
+	}
+
+	public void setTree(TreeLight tree) {
+		this.tree = tree;
 	}
 
 }

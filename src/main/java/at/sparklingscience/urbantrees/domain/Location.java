@@ -7,12 +7,12 @@ import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 
 /**
  * DAO.
- * Describes the location of a tree, including its coordinates, city and street.
+ * Describes the location of a tree, beacon etc., including its coordinates, city and street.
  * 
  * @author Laurenz Fiala
  * @since 2017/12/25
  */
-public class TreeLocation {
+public class Location {
 
 	/**
 	 * Database identifier (autoincrement).

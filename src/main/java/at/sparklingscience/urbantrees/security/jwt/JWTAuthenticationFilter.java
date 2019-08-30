@@ -28,9 +28,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.domain.User;
-import at.sparklingscience.urbantrees.mapper.AuthMapper;
-import at.sparklingscience.urbantrees.security.AuthSettings;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
+import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 import io.jsonwebtoken.Jwts;
 
 /**
@@ -52,11 +51,11 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	 */
 	private AuthenticationManager authenticationManager;
 	
-	private AuthMapper authMapper;
+	private AuthenticationService authService;
 
-	public JWTAuthenticationFilter(AuthenticationManager authenticationManager, AuthMapper authMapper) {
+	public JWTAuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationService authService) {
 		this.authenticationManager = authenticationManager;
-		this.authMapper = authMapper;
+		this.authService = authService;
 	}
 
 	@Override
@@ -64,7 +63,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		super.initFilterBean();
 		
 		WebApplicationContext webApplicationContext = WebApplicationContextUtils.getWebApplicationContext(this.getServletContext());
-        this.authMapper = webApplicationContext.getBean(AuthMapper.class);
+        this.authService = webApplicationContext.getBean(AuthenticationService.class);
 	}
 	
 	@Override
@@ -76,7 +75,9 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			creds = new ObjectMapper().readValue(req.getInputStream(), User.class);
 			LOGGER.trace("Got user info for user {}", creds.getUsername());
 
-			this.authMapper.increaseFailedLoginAttemptsByUsername(creds.getUsername());
+			if (creds.getUsername() != null) {
+				this.authService.increaseFailedLoginAttempts(creds.getUsername());				
+			}
 
 			Authentication auth;
 			if (creds.getSecureLoginKey() == null) {
@@ -94,7 +95,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			throw new RuntimeException(e);
 		} finally {
 			if (creds != null && creds.getUsername() != null) {
-				this.authMapper.updateLastLoginAttemptDatByUsername(creds.getUsername());
+				this.authService.updateLastLoginAttemptDat(creds.getUsername());
 			}
 		}
 
@@ -115,14 +116,12 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		
 		LOGGER.trace("Successful authentication, creating token for user {}.", auth.getPrincipal());
 		
-		this.authMapper.resetFailedLoginAttempts(user.getId());
-		this.authMapper.updateLastLoginDat(user.getId());
-		this.authMapper.updateUserLoginKey(user.getId(), null);
+		this.authService.successfulAuth(user.getId());
 		
 		final String token = Jwts.builder().setSubject(user.getUsername())
 				.setExpiration(new Date(System.currentTimeMillis() + SecurityConfiguration.JWT_EXPIRATION_TIME))
 				.addClaims(this.getUserClaims(user, authorities))
-				.signWith(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG, this.getJWTSecret())
+				.signWith(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG, this.authService.getJWTSecret())
 				.compact();
 		
 		res.addHeader("Access-Control-Expose-Headers", SecurityConfiguration.HEADER_KEY);
@@ -154,17 +153,6 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 				);
 		
 		return userClaims;
-		
-	}
-	
-	/**
-	 * Fetches the JWT secret from the database, used for
-	 * signing the JWT tokens.
-	 * DB-call is cached by mybatis.
-	 */
-	private byte[] getJWTSecret() {
-		
-		return this.authMapper.findSetting(AuthSettings.JWT_SECRET).getBytes();
 		
 	}
 

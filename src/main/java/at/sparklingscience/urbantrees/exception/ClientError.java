@@ -9,6 +9,7 @@ package at.sparklingscience.urbantrees.exception;
  */
 public enum ClientError {
 	
+	UNCAUGHT(-1),
 	GENERIC_ERROR(0),
 	
 	PHENOLOGY_DUPLICATE(10),
@@ -23,6 +24,7 @@ public enum ClientError {
 	BEACON_INTERNAL_ERROR(31),
 	BEACON_DELETE_FAILED(32),
 	BEACON_LOG_SEVERITY_INVALID(33),
+	BEACON_UPDATE_FAILED(34),
 	
 	TREE_INSERT_FAILED(40),
 	TREE_UPDATE_FAILED(41),

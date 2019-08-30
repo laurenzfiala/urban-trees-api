@@ -12,11 +12,12 @@ public enum UserLevelAction {
 	PHENOLOGY_IMAGE_UPLOAD(150),
 	BEACON_READOUT(100),
 	UPGRADE_ACCOUNT(0),
+	ADMIN_THANKYOU(null),
 	INITIAL(0);
 	
-	private int rewardXp;
+	private Integer rewardXp;
 	
-	private UserLevelAction(final int rewardXp) {
+	private UserLevelAction(final Integer rewardXp) {
 		this.rewardXp = rewardXp;
 	}
 

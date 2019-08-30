@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
@@ -15,22 +14,10 @@ import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
  * @author Laurenz Fiala
  * @since 2018/06/09
  */
-public class User implements Serializable {
+public class User extends UserIdentity implements Serializable {
 
-	private static final long serialVersionUID = 20181205L;
+	private static final long serialVersionUID = 20190808L;
 
-	/**
-	 * Users' unique identifier.
-	 */
-	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
-	
-	/**
-	 * Users' username to authenticate. 
-	 */
-	@NotNull
-	private String username;
-	
 	/**
 	 * Users' password to authenticate.
 	 */
@@ -78,22 +65,11 @@ public class User implements Serializable {
 	@NotNull(groups = {ValidationGroups.Read.class})
 	private List<Role> roles;
 	
-	public int getId() {
-		return id;
+	@Override
+	public String toString() {
+		return "[userId: " + this.getId() + "]";
 	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public String getUsername() {
-		return username;
-	}
-
-	public void setUsername(String username) {
-		this.username = username;
-	}
-
+	
 	public String getPassword() {
 		return password;
 	}

@@ -20,6 +20,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import at.sparklingscience.urbantrees.domain.Beacon;
 import at.sparklingscience.urbantrees.domain.BeaconDataset;
+import at.sparklingscience.urbantrees.domain.Tree;
 
 /**
  * Tests for the beacon REST endpoint.
@@ -55,7 +56,8 @@ public class BeaconTests {
 		
 		Beacon test = new Beacon();
 		test.setId(9990);
-		test.setTreeId(9990);
+		test.setTree(new Tree());
+		test.getTree().setId(9990);
 		test.setBluetoothAddress("18-75-22-BA-6A-68");
 		
 		assertThat(beacon).isEqualToComparingFieldByField(test);
@@ -69,7 +71,8 @@ public class BeaconTests {
 		
 		Beacon test = new Beacon();
 		test.setId(9990);
-		test.setTreeId(9990);
+		test.setTree(new Tree());
+		test.getTree().setId(9990);
 		test.setBluetoothAddress("18-75-22-BA-6A-68");
 		
 		assertThat(beacon).isEqualToComparingFieldByField(test);

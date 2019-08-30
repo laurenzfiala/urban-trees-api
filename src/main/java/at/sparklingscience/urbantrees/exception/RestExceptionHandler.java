@@ -4,6 +4,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import at.sparklingscience.urbantrees.domain.EventSeverity;
+import at.sparklingscience.urbantrees.service.ApplicationService;
 
 /**
  * Exception handler for the application. Creates the {@link ApiError} classes
@@ -33,6 +37,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	 */
 	private static final Logger LOGGER = LoggerFactory.getLogger(RestExceptionHandler.class);
 	
+	@Autowired
+	private ApplicationService appService;
+	
 	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
 		return new ResponseEntity<>(apiError, apiError.getStatus());
 	}
@@ -42,6 +49,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		final String error = "Malformed JSON request";
 		LOGGER.debug("handleHttpMessageNotReadable: {}", error, ex);
+		this.appService.logEvent(error, null, EventSeverity.SUSPICIOUS);
 		return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
 	}
 
@@ -50,12 +58,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 			HttpStatus status, WebRequest request) {
 		final String error = "Missing path variable " + ex.getVariableName();
 		LOGGER.debug("handleMissingPathVariable: {}", error, ex);
+		this.appService.logEvent(error, null);
 		return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
 	}
 
 	@ExceptionHandler(NotFoundException.class)
 	protected ResponseEntity<Object> handleNotFound(NotFoundException ex) {
-		LOGGER.trace("handleNotFound: {}", ex.getMessage());
+		LOGGER.trace("handleNotFound: {}", ex.getMessage(), ex);
 		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
 		apiError.setMessage(ex.getMessage());
 		return buildResponseEntity(apiError);
@@ -64,8 +73,20 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(InternalException.class)
 	protected ResponseEntity<Object> handleInternal(InternalException ex) {
 		LOGGER.warn("handleInternal: {}", ex.getMessage(), ex);
-		ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR);
-		apiError.setMessage(ex.getMessage());
+		ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error encountered", ex);
+		this.appService.logExceptionEvent(ex.getMessage(), ex);
+		return buildResponseEntity(apiError);
+	}
+	
+	/**
+	 * Catches all remeinaing throwables that are not covered by the specific handlers.
+	 */
+	@ExceptionHandler(Throwable.class)
+	protected ResponseEntity<Object> handleOtherThrowables(Throwable ex) {
+		LOGGER.warn("handleInternal: {}", ex.getMessage(), ex);
+		ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error encountered", ex);
+		apiError.setClientErrorCodeFromClientError(ClientError.UNCAUGHT);
+		this.appService.logExceptionEvent(ex.getMessage(), ex);
 		return buildResponseEntity(apiError);
 	}
 	
@@ -73,6 +94,16 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleBadRequest(BadRequestException ex) {
 		LOGGER.trace("handleBadRequest: {}", ex.getMessage());
 		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+		apiError.setMessage(ex.getMessage());
+		apiError.setClientErrorCodeFromClientError(ex.getClientError());
+		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.INTERNAL);
+		return buildResponseEntity(apiError);
+	}
+	
+	@ExceptionHandler(UnauthorizedException.class)
+	protected ResponseEntity<Object> handleUnauthorized(UnauthorizedException ex) {
+		LOGGER.trace("handleUnauthorized: {}", ex.getMessage());
+		ApiError apiError = new ApiError(HttpStatus.UNAUTHORIZED);
 		apiError.setMessage(ex.getMessage());
 		apiError.setClientErrorCodeFromClientError(ex.getClientError());
 		return buildResponseEntity(apiError);
@@ -86,6 +117,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 				.map(o -> o.getField() + ": " + o.getDefaultMessage())
 				.collect(Collectors.joining(", ")));
 		LOGGER.debug("handleMethodArgumentNotValid: {}, invalid arguments: {}", ex.getMessage(), apiError.getMessage());
+		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
 		return buildResponseEntity(apiError);
 	}
 

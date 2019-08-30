@@ -4,6 +4,12 @@
 
 <mapper namespace="at.sparklingscience.urbantrees.mapper.UserMapper">
 
+	<cache
+	  eviction="LRU"
+	  flushInterval="900000"
+	  size="512"
+	  readOnly="true"/>
+
 	<resultMap id="UserAchievementsResultMap" type="at.sparklingscience.urbantrees.domain.UserAchievements">
 		<id column="user_id" />
         <result column="xp"			property="xp" />
@@ -20,6 +26,10 @@
         <result column="action"		property="action" />
         <result column="cre_dat"	property="date" />
     </resultMap>
+    
+    <resultMap id="UserDataMap" type="at.sparklingscience.urbantrees.domain.UserData">
+        <result column="new_msg_amount"			property="newMessagesAmount" />
+    </resultMap>
 
 	<insert id="insertPhenologyImage">
 		insert into
@@ -29,7 +39,7 @@
 			(#{phenologyId}, #{imgData}, #{imgType}, now(), now(), user, user)
 	</insert>
 	
-	<select id="findAchievementsForUserId" resultMap="UserAchievementsResultMap">
+	<select id="findAchievementsForUserId" resultMap="UserAchievementsResultMap" useCache="false">
 		with help as (
 			select
 				l.xp
@@ -51,7 +61,7 @@
 			help
 	</select>
 	
-	<select id="findXpHistoryByUserId" resultMap="XpResultMap">
+	<select id="findXpHistoryByUserId" resultMap="XpResultMap" useCache="false">
 		select
 			l.xp,
 			l."action",
@@ -98,5 +108,14 @@
 				user
 			)
 	</insert>
+	
+	<select id="findUserData" resultMap="UserDataMap" useCache="false">
+		select
+			count(0) as new_msg_amount
+		from
+			application.report
+		where
+			resolved = false
+	</select>
 
 </mapper>

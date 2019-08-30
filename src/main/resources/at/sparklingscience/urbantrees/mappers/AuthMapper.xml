@@ -4,6 +4,12 @@
 
 <mapper namespace="at.sparklingscience.urbantrees.mapper.AuthMapper">
 
+	<cache
+	  eviction="LRU"
+	  flushInterval="900000"
+	  size="512"
+	  readOnly="true"/>
+
     <resultMap id="AuthResultMap" type="Integer">
         <result column="amount" 	property="value" />
     </resultMap>
@@ -40,12 +46,17 @@
 	        select="findRolesByUserId" />
     </resultMap>
     
+    <resultMap id="UserIdentityMap" type="at.sparklingscience.urbantrees.domain.UserIdentity">
+        <id column="id" 							property="id" />
+        <result column="username"					property="username" />
+    </resultMap>
+    
     <resultMap id="RoleMap" type="at.sparklingscience.urbantrees.domain.Role">
         <id column="id" 							property="id" />
         <result column="name"						property="name" />
     </resultMap>
 
-    <select id="hasValidApiKey" resultMap="AuthResultMap">
+    <select id="hasValidApiKey" resultMap="AuthResultMap" useCache="true">
         select 
 		    count(0) as amount
 		from 
@@ -54,7 +65,7 @@
 		    api_key = #{apiKey}
     </select>
     
-    <select id="findUserByLoginKey" resultMap="UserMap">
+    <select id="findUserByLoginKey" resultMap="UserMap" useCache="false">
         select 
 		    u.id,
 			u.username,
@@ -71,7 +82,7 @@
 		    u.secure_login_key = #{token}
     </select>
     
-    <select id="findUserById" resultMap="UserMap">
+    <select id="findUserById" resultMap="UserMap" useCache="false">
         select
 			u.id,
 			u.username,
@@ -88,7 +99,7 @@
 			u.id = #{userId}
     </select>
     
-    <select id="findUserByUsername" resultMap="UserMap">
+    <select id="findUserByUsername" resultMap="UserMap" useCache="false">
         select
 			u.id,
 			u.username,
@@ -220,7 +231,7 @@
 			id = #{userId}
 	</update>
 	
-	<select id="findRolesByUserId" resultMap="RoleMap">
+	<select id="findRolesByUserId" resultMap="RoleMap" useCache="false">
         select
         	r.id,
 			r."name"
@@ -232,7 +243,7 @@
 			and ur.role_id = r.id
     </select>
 	
-	<select id="findSetting" resultType="java.lang.String">
+	<select id="findSetting" resultType="java.lang.String" useCache="true">
         select
 			value
 		from
@@ -241,7 +252,7 @@
 			key = #{key}
     </select>
     
-    <select id="findAllUsersLight" resultMap="UserLightMap">
+    <select id="findAllUsersLight" resultMap="UserLightMap" useCache="false">
         select
 			u.id,
 			u.username,
@@ -275,7 +286,7 @@
 			id = #{userId}
     </update>
     
-    <select id="findUserLoginKey" resultType="java.lang.String">
+    <select id="findUserLoginKey" resultType="java.lang.String" useCache="false">
         select
 			secure_login_key
 		from
@@ -293,7 +304,7 @@
 			id = #{userId}
     </update>
     
-    <select id="findAllUserRoles" resultMap="RoleMap">
+    <select id="findAllUserRoles" resultMap="RoleMap" useCache="false">
         select
 			id,
 			"name"
@@ -301,6 +312,71 @@
 			access_data."role"
 		where
 			is_active = true
+    </select>
+    
+    <insert id="insertUserPermission">
+        insert into
+            access_data.user_permission
+            (granting_user_id, receiving_user_id, permission, revoke_dat, cre_dat, mod_dat, cre_usr, mod_usr)
+		values
+			(
+                #{grantingUserId},
+		    	#{receivingUserId},
+		    	#{permission},
+		    	null,
+		    	now(),
+		    	now(),
+		    	user,
+		    	user
+            )
+	</insert>
+	
+	<select id="hasUserPermission" resultType="java.lang.Integer" useCache="false">
+        select
+			count(0)
+		from
+			access_data.user_permission
+		where
+			granting_user_id = #{grantingUserId}
+			and receiving_user_id = #{receivingUserId}
+			and permission = #{permission}
+			and
+			(
+			revoke_dat is null
+			or revoke_dat > now()
+			)
+    </select>
+    
+    <select id="findUserIdentitiesGrantingPermission" resultMap="UserIdentityMap" useCache="false">
+        select
+			u.id,
+			u.username
+		from
+			access_data.user_permission p,
+			access_data."user" u
+		where
+			p.receiving_user_id = #{receivingUserId}
+			and p."permission" = #{permission}
+			and u.id = p.granting_user_id
+		order by
+			u.id
+    </select>
+    
+    <select id="findUserIdentitiesReceivingPermission" resultMap="UserIdentityMap" useCache="false">
+        select
+			u.id,
+			u.username
+		from
+			access_data.user_permission p,
+			access_data."user" u
+		where
+			p.granting_user_id = #{grantingUserId}
+			<if test="permission != null">
+	            and p."permission" = #{permission}
+	        </if>
+			and u.id = p.granting_user_id
+		order by
+			p.permission, u.id
     </select>
     
 </mapper>

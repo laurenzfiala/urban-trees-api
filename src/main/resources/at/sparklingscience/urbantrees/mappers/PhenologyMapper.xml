@@ -8,12 +8,17 @@
 	    <id column="id" 				property="id" />
 	    <result column="tree_id" 		property="treeId" />
 	    <result column="observers" 		property="observers" />
+	    <result column="observers_ref" 	property="observersRef" />
 	    <result column="observe_dat" 	property="observationDate" />
 	    <result column="remark" 		property="remark" />
 	    
 	    <collection column="id"
 				    property="observations"
 				    select="findPhenologyObservationsByPhenologyId" />
+				    
+	    <collection column="observers_ref"
+				    property="observersUserIds"
+				    select="at.sparklingscience.urbantrees.mapper.ApplicationMapper.findUserIdsByRefId" />
     </resultMap>
 
     <resultMap id="PhenologyObservationMap" type="at.sparklingscience.urbantrees.domain.PhenologyObservation">
@@ -48,8 +53,9 @@
 		    p.id,
 		    p.tree_id,
 		    p.observers,
+		    p.observers_ref,
 		    p.observe_dat,
-		    p.remark
+		    p.user_remark
 		from
 		    tree_data.tree t,
 		    tree_data.phenology p
@@ -64,6 +70,20 @@
             </if>
         order by
             p.observe_dat desc
+    </select>
+
+    <select id="findPhenologyById" resultMap="PhenologyResultMap">
+        select
+		    p.id,
+		    p.tree_id,
+		    p.observers,
+		    p.observers_ref,
+		    p.observe_dat,
+		    p.user_remark
+		from
+		    tree_data.phenology p
+		where
+		    p.id = #{phenologyId}
     </select>
 
     <select id="findPhenologyObservationsByPhenologyId"
@@ -95,9 +115,9 @@
     <insert id="insertPhenology" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         insert into
             tree_data.phenology
-            (tree_id, observers, observe_dat, user_remark, cre_dat, mod_dat, cre_usr, mod_usr)
+            (tree_id, observers, observers_ref, observe_dat, user_remark, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
-		    (#{treeId}, #{observers}, #{observationDate}, #{remark}, now(), now(), user, user);
+		    (#{treeId}, #{observers}, #{observersRef}, #{observationDate}, #{remark}, now(), now(), user, user);
 	</insert>
 	
     <insert id="insertPhenologyObservation">

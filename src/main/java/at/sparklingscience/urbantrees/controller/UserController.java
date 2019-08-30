@@ -2,12 +2,17 @@ package at.sparklingscience.urbantrees.controller;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,11 +20,19 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
+import at.sparklingscience.urbantrees.domain.PhenologyDataset;
+import at.sparklingscience.urbantrees.domain.Report;
 import at.sparklingscience.urbantrees.domain.UserAchievements;
+import at.sparklingscience.urbantrees.domain.UserData;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
+import at.sparklingscience.urbantrees.domain.UserPermission;
+import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.ClientError;
+import at.sparklingscience.urbantrees.mapper.AuthMapper;
+import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.UserMapper;
+import at.sparklingscience.urbantrees.service.ApplicationService;
 import at.sparklingscience.urbantrees.service.UserService;
 
 /**
@@ -39,11 +52,21 @@ public class UserController {
 
 	@Autowired
     private UserMapper userMapper;
+
+	@Autowired
+    private PhenologyMapper phenologyMapper;
+
+	@Autowired
+    private AuthMapper authMapper;
 	
 	@Autowired
     private UserService userService;
+
+	@Autowired
+    private ApplicationService appService;
 	
 	@RequestMapping(method = RequestMethod.POST, path = "/phenology/observation/{phenologyId:\\d+}/image")
+	@Transactional
 	public void postPhenologyImage(
 			@PathVariable int phenologyId,
 			@RequestParam("file") MultipartFile image,
@@ -68,9 +91,16 @@ public class UserController {
 			LOGGER.error("Could not upload phenology user image: " + e.getMessage(), e);
 			throw new BadRequestException("Failed to retrieve image from client");
 		}
+		
 		LOGGER.debug("[[ POST ]] postPhenologyImage |END| Successfully uploaded user image - phenologyId: {}", phenologyId);
 		
-		this.userService.increaseXp(UserLevelAction.PHENOLOGY_IMAGE_UPLOAD, auth);
+		PhenologyDataset phenology = this.phenologyMapper.findPhenologyById(phenologyId);
+		this.userService.increaseXp(
+			UserLevelAction.PHENOLOGY_IMAGE_UPLOAD,
+			phenology.getObserversUserIds(),
+			UserPermission.PHENOLOGY_OBSERVATION,
+			auth
+		);
 		
 	}
 	
@@ -86,5 +116,56 @@ public class UserController {
 		return achievements;
 		
 	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/data")
+	public UserData getUserData(Authentication auth) {
+		
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
+		LOGGER.debug("[[ GET ]] getUserData - user: {}", userId);
+		
+		return this.userMapper.findUserData(userId);
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.DELETE, path = "/delete")
+	public void deleteUser(Authentication auth) {
+		
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
+		LOGGER.info("[[ DELETE ]] deleteUser - user: {}", userId);
+		
+		this.authMapper.deleteUser(userId);
+		
+		LOGGER.info("[[ DELETE ]] deleteUser |END| Successfully deleted user - user: {}", userId);
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/report")
+	public List<Report> getReport(Authentication auth) {
+		
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
+		LOGGER.info("[[ PUT ]] getReport - user: {}", userId);
+		
+		return this.appService.getUserReports(auth);
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.PUT, path = "/report")
+	public void putReport(@Validated(ValidationGroups.Update.class) @RequestBody Report report,
+						  Authentication auth) {
+		
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
+		LOGGER.info("[[ PUT ]] putReport - user: {}", userId);
+		
+		Report re = new Report();
+		re.setMessage(report.getMessage());
+		re.setAutoCreate(false);
+		re.setUserId(userId);
+		re.setReportDate(new Date());
+		this.appService.report(re);
+		
+		LOGGER.info("[[ PUT ]] putReport |END| Successfully added report- user: {}", userId);
+		
+	}
+
 
 }

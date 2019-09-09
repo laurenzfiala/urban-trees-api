@@ -47,7 +47,13 @@ public class ApplicationService {
 	 * @param principal
 	 */
 	public void logExceptionEvent(String message, Throwable t, EventSeverity severity) {
-		this.logEvent(message, ControllerUtil.traceToString(t.getStackTrace()), severity);
+		String details = ControllerUtil.traceToString(t.getStackTrace());
+		Throwable cause = t.getCause();
+		if (cause != null) {
+			details += "\n\n\tCaused by: " + cause.getMessage();
+			details += "\n\t" + ControllerUtil.traceToString(cause.getStackTrace());
+		}
+		this.logEvent(message, details, severity);
 	}
 	
 	/**

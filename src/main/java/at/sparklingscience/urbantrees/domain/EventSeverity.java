@@ -9,7 +9,7 @@ package at.sparklingscience.urbantrees.domain;
 public enum EventSeverity {
 	
 	EXCEPTION(true),
-	SUSPICIOUS(true),
+	SUSPICIOUS(false),
 	INTERNAL(false);
 	
 	private final boolean autoCreateReport;

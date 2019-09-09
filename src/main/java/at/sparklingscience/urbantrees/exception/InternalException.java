@@ -13,13 +13,21 @@ public class InternalException extends GenericException {
 	 * Serial of this exception. Should be updated on each change.
 	 */
 	private static final long serialVersionUID = 20171228L;
-
+	
 	public InternalException(String message) {
 		super(message);
 	}
 	
+	public InternalException(String message, Throwable cause) {
+		super(message, cause);
+	}
+	
 	public InternalException(String message, ClientError clientError) {
 		super(message, clientError);
+	}
+	
+	public InternalException(String message, ClientError clientError, Throwable cause) {
+		super(message, clientError, cause);
 	}
 
 }

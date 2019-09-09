@@ -16,6 +16,7 @@ import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import at.sparklingscience.urbantrees.domain.EventSeverity;
@@ -107,6 +108,12 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		apiError.setMessage(ex.getMessage());
 		apiError.setClientErrorCodeFromClientError(ex.getClientError());
 		return buildResponseEntity(apiError);
+	}
+	
+	@ExceptionHandler(ResponseStatusException.class)
+	protected ResponseEntity<Object> handleResponseStatus(ResponseStatusException ex) {
+		LOGGER.trace("handleResponseStatus: {}", ex.getMessage());
+		return new ResponseEntity<>(null, ex.getStatus());
 	}
 	
 	@Override

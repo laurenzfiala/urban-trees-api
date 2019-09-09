@@ -120,7 +120,7 @@ public class AdminController {
 			throw new BadRequestException("There is already a beacon with given deviceId or same address.", ClientError.BEACON_DUPLICATE);
 		} catch (Throwable t) {
 			LOGGER.error("Internal exception during postBeacon: {}", t.getMessage(), t);
-			throw new InternalException("Internal error encountered while adding beacon.", ClientError.BEACON_INTERNAL_ERROR);
+			throw new InternalException("Internal error encountered while adding beacon", ClientError.BEACON_INTERNAL_ERROR, t);
 		}
 		
 		LOGGER.info("[[ POST ]] postNewBeacon |END| - deviceId: {}, inserted beacon id: {}", beacon.getDeviceId(), beacon.getId());
@@ -151,11 +151,11 @@ public class AdminController {
 					oldBeacon.getLocation().getId() != beacon.getLocation().getId()) { // delete loc entry (beacon loc was attached to tree)
 				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
 				this.treeMapper.deleteLocation(oldBeacon.getLocation().getId());
-			} else if (beacon.getTree() == null) {
+			} else if (beacon.getTree() == null) { // just update loc
 				this.treeMapper.updateLocation(beacon.getLocation(), String.valueOf(userId));
 				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
-			} else {
-				throw new RuntimeException("postBeaconUpdate logic error: could not decide how to update");
+			} else { // loc unchanged
+				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
 			}
 			
 			BeaconSettings newSettings = oldBeacon.getSettings();

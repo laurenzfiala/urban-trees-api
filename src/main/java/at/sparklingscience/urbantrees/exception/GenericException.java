@@ -25,12 +25,21 @@ public abstract class GenericException extends RuntimeException {
 	private ClientError clientError;
 	
 	public GenericException(String message) {
-		this(message, null);
+		this(message, null, null);
+	}
+	
+	public GenericException(String message, Throwable cause) {
+		this(message, null, cause);
 	}
 	
 	public GenericException(String message, ClientError clientError) {
+		this(message, clientError, null);
+	}
+	
+	public GenericException(String message, ClientError clientError, Throwable cause) {
 		this.setMessage(message);
 		this.setClientError(clientError);
+		this.initCause(cause);
 	}
 
 	public String getMessage() {

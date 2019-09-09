@@ -6,10 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import at.sparklingscience.urbantrees.domain.ui.Announcement;
 import at.sparklingscience.urbantrees.domain.ui.Image;
@@ -45,7 +47,13 @@ public class UiController {
 		
 		LOGGER.debug("[[ GET ]] getPhenologyObservationResultImage - treeSpeciesId: {}, resultId: {}", treeSpeciesId, resultId);
 		
-		return this.uiMapper.findImageForPhenologyObservationResult(treeSpeciesId, resultId);
+		Image img = this.uiMapper.findImageForPhenologyObservationResult(treeSpeciesId, resultId);
+		
+		if (img == null) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+		} else {
+			return img;
+		}
 		
 	}
 	

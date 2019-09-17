@@ -4,7 +4,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Base64.Encoder;
-
 import java.util.List;
 import java.util.Random;
 
@@ -416,7 +415,7 @@ public class AuthenticationService {
 	}
 
 	/**
-	 * Encrypt raw usernameand return it.
+	 * Encrypt raw username and return it.
 	 * 
 	 * @param usernameRaw cleartext username
 	 * @return encrypted username

@@ -1,7 +1,5 @@
 package at.sparklingscience.urbantrees.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.encrypt.Encryptors;
@@ -75,8 +73,6 @@ public class CryptoHelper {
 		return this.getCompositeEncryptionString(encryptedData, salt, VERSION, METHOD_NONQUERYABLE);
 		
 	}
-	
-	private static final Logger LOGGER = LoggerFactory.getLogger(CryptoHelper.class);
 	
 	/**
 	 * Encrypts given string using AES256/CBC/PKCS5Padding using salt stored in auth settings table and

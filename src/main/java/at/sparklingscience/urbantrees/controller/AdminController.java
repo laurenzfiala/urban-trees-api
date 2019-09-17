@@ -148,10 +148,11 @@ public class AdminController {
 				this.treeMapper.insertLocation(beacon.getLocation(), String.valueOf(userId));
 				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
 			} else if (beacon.getTree() != null && beacon.getTree().getLocation().getId() == beacon.getLocation().getId() &&
-					oldBeacon.getLocation().getId() != beacon.getLocation().getId()) { // delete loc entry (beacon loc was attached to tree)
+					   oldBeacon.getLocation().getId() != beacon.getLocation().getId()) { // delete loc entry (beacon loc was attached to tree)
 				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
 				this.treeMapper.deleteLocation(oldBeacon.getLocation().getId());
-			} else if (beacon.getTree() == null) { // just update loc
+			} else if (beacon.getTree() == null ||
+					   beacon.getLocation().getId() != beacon.getTree().getLocation().getId()) { // update beacon-specific loc
 				this.treeMapper.updateLocation(beacon.getLocation(), String.valueOf(userId));
 				this.beaconMapper.updateBeacon(beacon, String.valueOf(userId));
 			} else { // loc unchanged

@@ -31,6 +31,7 @@
     <resultMap id="PhenologyObservationTypeMap" type="at.sparklingscience.urbantrees.domain.PhenologyObservationType">
 	    <id column="type_id" 			property="id"/>
 		<result column="type" 			property="name"/>
+		<result column="optional" 		property="optional"/>
 		
 		<collection property="objects" 	resultMap="PhenologyObservationObjectMap"/>
 		<collection property="results" 	resultMap="PhenologyObservationResultMap"/>
@@ -145,7 +146,8 @@
 			o."name" as "object",
 			r.id as result_id,
 			r.value as result_value,
-			r.description as result_description
+			r.description as result_description,
+			ts.optional as optional
 		from
 			tree_data.phenology_observation_type t,
 			tree_data.phenology_observation_object o,
@@ -156,8 +158,11 @@
 			and t.id = r.type_id
 			and t.id = ts.type_id
 			and ts.species_id = #{treeSpeciesId}
+			and ts.show = true
 		order by
 			t.id,
+			ts.optional,
+			ts."order",
 			o.id,
 			r.id
     </select>

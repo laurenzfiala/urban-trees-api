@@ -26,6 +26,11 @@ public class PhenologyObservationType {
 	@NotNull
 	private String name;
 	
+	/**
+	 * Whether the type is optional to fill out or not.
+	 */
+	private boolean optional;
+	
 	@NotNull
 	private List<PhenologyObservationObject> objects;
 	
@@ -33,9 +38,10 @@ public class PhenologyObservationType {
 	
 	public PhenologyObservationType() {}
 	
-	public PhenologyObservationType(int id, String name) {
+	public PhenologyObservationType(int id, String name, boolean optional) {
 		this.setId(id);
 		this.setName(name);
+		this.setOptional(optional);
 	}
 
 	public int getId() {
@@ -68,6 +74,14 @@ public class PhenologyObservationType {
 
 	public void setResults(List<PhenologyObservationResult> results) {
 		this.results = results;
+	}
+
+	public boolean isOptional() {
+		return optional;
+	}
+
+	public void setOptional(boolean optional) {
+		this.optional = optional;
 	}
 
 }

@@ -122,6 +122,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	 */
 	public static final int SECURE_LOGIN_KEY_BYTES = 64;
 	
+	/**
+	 * Length of permissions PIN (digits).
+	 */
+	public static final int PERMISSIONS_PIN_LENGTH = 6;
+	
 	@Autowired
 	private UserDetailsService userDetailsService;
 	

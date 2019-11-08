@@ -379,4 +379,36 @@
 			p.permission, u.id
     </select>
     
+    <select id="setPermissionsPIN" useCache="false">
+        update
+			access_data."user"
+		set
+			permissions_pin = #{ppin},
+			permissions_pin_attempts = 0
+		where
+			id = #{userId}
+    </select>
+    
+    <select id="increasePermissionsPINAttempts" useCache="false">
+        update
+			access_data."user"
+		set
+			permissions_pin_attempts = permissions_pin_attempts + 1
+		where
+			id = #{userId}
+    </select>
+    
+    <select id="hasPermissionsPIN" resultType="java.lang.Boolean" useCache="false">
+        select exists(        
+	        select
+				1
+			from
+				access_data."user"
+			where
+				id = #{userId}
+				and permissions_pin = #{ppin}
+				and permissions_pin_attempts &lt;= 1
+        )
+    </select>
+    
 </mapper>

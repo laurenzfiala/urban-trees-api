@@ -14,7 +14,7 @@ public class UserPermissionRequest {
 	private String username;
 	
 	@NotNull
-	private String password;
+	private String ppin;
 	
 	@NotNull
 	private UserPermission permission;
@@ -25,17 +25,17 @@ public class UserPermissionRequest {
 	public void setUsername(String username) {
 		this.username = username;
 	}
-	public String getPassword() {
-		return password;
-	}
-	public void setPassword(String password) {
-		this.password = password;
-	}
 	public UserPermission getPermission() {
 		return permission;
 	}
 	public void setPermission(UserPermission permission) {
 		this.permission = permission;
+	}
+	public String getPpin() {
+		return ppin;
+	}
+	public void setPpin(String ppin) {
+		this.ppin = ppin;
 	}
 	
 }

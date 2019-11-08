@@ -208,6 +208,29 @@ public interface AuthMapper {
 	 */
 	List<UserIdentity> findUserIdentitiesReceivingPermission(@Param("grantingUserId") int grantingUserId,
 															 @Param("permission") String permission);
+
+	/**
+	 * Store the given PPIN in the database and reset the check tries.
+	 * @param userId users' id
+	 * @param ppin permissions PIN
+	 */
+	void setPermissionsPIN(@Param("userId") int userId, @Param("ppin") String ppin);
+	
+	/**
+	 * Increase PPIN attempts by 1.
+	 * @param userId users' id
+	 */
+	void increasePermissionsPINAttempts(@Param("userId") int userId);
+
+	/**
+	 * Whether the given user has the given PPIN or not.
+	 * Might return false even if the PPIN is correct, when the
+	 * attempts are exceeded.
+	 * @param userId users' id
+	 * @param ppin permissions PIN
+	 * @return true if the users' ppin matches the given ppin
+	 */
+	boolean hasPermissionsPIN(@Param("userId") int userId, @Param("ppin") String ppin);
 	
 	/**
 	 * Find all available users.

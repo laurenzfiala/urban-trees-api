@@ -246,6 +246,18 @@ public class AuthenticationService {
 		}
 		
 	}
+
+	/**
+	 * Check whether the given PPIN is valid for the given user.
+	 * @param userId users' id
+	 * @param ppin permissions PIN
+	 * @return true if PPIN matches, false otherwise.
+	 */
+	@Transactional
+	public boolean isPermissionPINValid(final int userId, final String ppin) {
+		this.authMapper.increasePermissionsPINAttempts(userId);
+		return this.authMapper.hasPermissionsPIN(userId, ppin);
+	}
 	
 	@Transactional
 	public String getLoginKey(int userId) {
@@ -353,6 +365,23 @@ public class AuthenticationService {
 			u.setUsername(this.cryptor.decrypt(u.getUsername()));
 		}
 		return grantingUsers;
+	}
+	
+	/**
+	 * Set a new permissions PIN and return it.
+	 * Also resets the attempts in the DB.
+	 */
+	@Transactional
+	public String newPermissionsPIN(final int userId) {
+		
+		final SecureRandom sr = new SecureRandom();
+		final int pinNum = sr.nextInt((int) Math.pow(10, SecurityConfiguration.PERMISSIONS_PIN_LENGTH));
+		final String pin = String.format("%0" + SecurityConfiguration.PERMISSIONS_PIN_LENGTH + "d", pinNum);
+		
+		this.authMapper.setPermissionsPIN(userId, pin);
+		
+		return pin;
+		
 	}
 	
 	/**

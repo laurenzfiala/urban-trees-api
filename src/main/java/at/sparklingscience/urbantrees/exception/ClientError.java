@@ -29,7 +29,9 @@ public enum ClientError {
 	TREE_INSERT_FAILED(40),
 	TREE_UPDATE_FAILED(41),
 
-	FAILED_KEY_STORE(50);
+	FAILED_KEY_STORE(50),
+	
+	SAME_USER_PERM_REQUEST(60);
 
 	
 	private final int errorCode;

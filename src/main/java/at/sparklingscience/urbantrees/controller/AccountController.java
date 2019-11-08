@@ -21,6 +21,7 @@ import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.domain.UserPermissionRequest;
 import at.sparklingscience.urbantrees.domain.UsernameChange;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
+import at.sparklingscience.urbantrees.exception.ClientError;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
@@ -96,7 +97,11 @@ public class AccountController {
 			throw new UnauthorizedException("Permission Request: Username or password wrong");
 		}
 		
-		final boolean authValid = this.authenticationService.isPasswordValid(user, payload.getPassword());
+		if (authToken.getId() == user.getId()) {
+			throw new BadRequestException("Permission Request: User may not request permission from themself", ClientError.SAME_USER_PERM_REQUEST);
+		}
+		
+		final boolean authValid = this.authenticationService.isPermissionPINValid(user.getId(), payload.getPpin());
 		final boolean userOk = this.authenticationService.isUserNonLocked(user);
 		
 		if (!authValid) {
@@ -144,6 +149,16 @@ public class AccountController {
 			);
 		
 		return grantingUsers;
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/permission/pin")
+	public String getPermissionsPIN(Authentication auth) {
+		
+		final int userId = ControllerUtil.getAuthToken(auth).getId();
+		LOGGER.debug("[[ GET ]] getPermissionsPIN - generate new PPIN for user: {}", userId);
+		
+		return this.authenticationService.newPermissionsPIN(userId);
 		
 	}
 

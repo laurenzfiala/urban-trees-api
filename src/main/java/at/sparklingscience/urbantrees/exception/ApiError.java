@@ -83,7 +83,9 @@ public class ApiError {
 	}
 
 	public void setClientErrorCodeFromClientError(ClientError clientError) {
-		this.clientErrorCode = clientError.getErrorCode();
+		if (clientError != null) {
+			this.clientErrorCode = clientError.getErrorCode();
+		}
 	}
 	   
 }

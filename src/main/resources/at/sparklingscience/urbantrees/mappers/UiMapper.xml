@@ -196,48 +196,14 @@
     
     <select id="getMeasurementStatistics" resultMap="MeasurementStatisticsMapper">
 		select
-		(
-			select
-				min(temperature)
-			from
-				tree_data.beacon_data
-		)
-		as beacon_data_temp_min,
-		(
-			select
-				min(temperature)
-			from
-				tree_data.beacon_data
-		)
-		as beacon_data_temp_avg,
-		(
-			select
-				max(temperature)
-			from
-				tree_data.beacon_data
-		)
-		as beacon_data_temp_max,
-		(
-			select
-				min(humidity)
-			from
-				tree_data.beacon_data
-		)
-		as beacon_data_humidity_min,
-		(
-			select
-				avg(humidity)
-			from
-				tree_data.beacon_data
-		)
-		as beacon_data_humidity_avg,
-		(
-			select
-				max(humidity)
-			from
-				tree_data.beacon_data
-		)
-		as beacon_data_humidity_max
+			min(temperature) as beacon_data_temp_min,
+			avg(temperature) as beacon_data_temp_avg,
+			max(temperature) as beacon_data_temp_max,
+			min(humidity) as beacon_data_humidity_min,
+			avg(humidity) as beacon_data_humidity_avg,
+			max(humidity) as beacon_data_humidity_max
+		from
+			tree_data.beacon_data
     </select>
     
 </mapper>

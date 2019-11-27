@@ -44,9 +44,6 @@ public class TokenAuthenticationProvider extends DaoAuthenticationProvider {
 	}
 	
 	@Override
-	protected void doAfterPropertiesSet() throws Exception {}
-	
-	@Override
 	public boolean supports(Class<?> authentication) {
 		return TokenAuthenticationToken.class.isAssignableFrom(authentication);
 	}

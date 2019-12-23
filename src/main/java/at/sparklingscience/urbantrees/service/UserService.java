@@ -60,6 +60,10 @@ public class UserService {
 		
 	}
 	
+	/**
+	 * Increase xp for all given users.
+	 * Every user gets the same amount of XP (action-xp divided by amount of users).
+	 */
 	public void increaseXp(UserLevelAction action, int[] userIds, UserPermission permission, Authentication auth) {
 	
 		if (ControllerUtil.isUserAnonymous(auth)) {
@@ -104,10 +108,16 @@ public class UserService {
 		
 	}
 	
+	/**
+	 * Increase the users' XP using the given action.
+	 */
 	public void increaseXp(UserLevelAction action, int userId) throws RuntimeException {
 		this.increaseXp(action, action.getRewardXp(), userId);
 	}
 	
+	/**
+	 * Execute the XP increase on the DB.
+	 */
 	public void increaseXp(UserLevelAction action, int xp, int userId) throws RuntimeException {
 		
 		if (this.userMapper.insertIncreaseLevel(xp, action, userId) == 0) {

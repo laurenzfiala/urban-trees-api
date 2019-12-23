@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.domain;
 
+import java.time.Duration;
+
 /**
  * Values of the action-column in user_data.level.
  * 
@@ -16,9 +18,11 @@ public enum UserLevelAction {
 	INITIAL(0);
 	
 	private Integer rewardXp;
+	//private Duration timeout;
 	
-	private UserLevelAction(final Integer rewardXp) {
+	private UserLevelAction(final Integer rewardXp/*, final Duration timeout*/) {
 		this.rewardXp = rewardXp;
+		//this.timeout = timeout;
 	}
 
 	public int getRewardXp() {

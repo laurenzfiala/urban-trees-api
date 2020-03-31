@@ -6,9 +6,20 @@
 
     <resultMap id="UserContentResultMap" type="at.sparklingscience.urbantrees.domain.UserContent">
         <id 	column="id"			property="id" />
+        <result column="content_id"	property="contentId" />
+        <result column="content_order"		property="contentOrder" />
+        <result column="content_title"	property="contentTitle" />
+        <result column="content_lang"	property="contentLang" />
+        <result column="content_lang_name"	property="contentLangName" />
         <result column="content"	property="content" />
-        <result column="tag"		property="tag" />
-        <result column="mod_dat"	property="modDate" />
+        <result column="is_draft"	property="isDraft" />
+        <result column="is_shown"	property="isShown" />
+        <result column="is_editable"	property="isEditable" />
+        <result column="save_dat"	property="saveDat" />
+        <result column="history_id"	property="historyId" />
+        <result column="user_id"	property="userId" />
+        <result column="approve_dat"	property="approveDat" />
+        <result column="approve_user_id"	property="approveUserId" />
         
         <association property="language">
         	<id 	column="lang"		property="id"/>
@@ -17,27 +28,81 @@
     </resultMap>
 	
 	<select id="findContent" resultMap="UserContentResultMap">
+		with role_view_access as (
+			select
+				car.allow_view, car.approval_by_role
+			from
+				user_data.content_access_role car,
+				access_data.user_role ur
+			where
+				car.role_id = ur.role_id
+				and car.allow_view = true
+				and ur.user_id = #{userId}
+		)   
 		select
 			c.id,
-			c.content,
-			l.id lang,
-			l."name" lang_name,
-			c.tag,
-			c.mod_dat
+			c.content_id,
+			c.content_order,
+			c.content_title,
+			c.content_lang,
+			cl."name" as content_lang_name,
+			c."content",
+			c.is_draft,
+			cr.is_shown,
+			(
+				select
+					bool_or(cr.allow_edit) or coalesce(bool_or(car.allow_edit), false)
+				from
+					user_data.content_registry cr
+				left outer join
+					access_data.user_role ur on (ur.user_id = #{userId})
+				left join
+					user_data.content_access_role car on (cr.content_id = car.content_id and ur.role_id = car.role_id)
+				where
+					cr.content_id = #{contentId}
+			) is_editable,
+			c.save_dat,
+			c.history_id,
+			c.user_id,
+			c.approve_dat,
+			c.approve_user_id,
+			c.cre_dat,
+			c.mod_dat,
+			c.cre_usr,
+			c.mod_usr
 		from
-			user_data.content_generic c,
-			user_data.content_generic_lang l
+			user_data."content" c,
+			user_data.content_registry cr,
+			user_data.content_lang cl
 		where
-			<if test="id != null">
-				c.id = #{id}
-			</if>
-			<if test="id != null and tag != null">
-				and
-			</if>
-			<if test="tag != null">
-				c.tag = #{tag}
-			</if>
-			and c.lang = l.id
+			c.content_id = cr.content_id 
+			and c.content_id = #{contentId}
+			and cr.is_shown = true
+			and c.is_draft = false
+			and (
+				cr.allow_view = true
+				or exists (
+					select
+						1
+					from
+						role_view_access
+				)
+			)
+			and exists (
+				select
+					approval_by_role
+				from
+					role_view_access
+				where
+					(
+						approval_by_role is null
+						or c.approve_dat is not null 
+					)
+			)
+		order by
+			content_order desc
+		limit
+			1
 	</select>
 
 </mapper>

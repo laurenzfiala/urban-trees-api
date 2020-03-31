@@ -1,7 +1,5 @@
 package at.sparklingscience.urbantrees.mapper;
 
-import java.util.List;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,12 +16,14 @@ import at.sparklingscience.urbantrees.domain.UserContent;
 public interface UserContentMapper {
 
 	/**
-	 * TODO
-	 * @param username
+	 * 
+	 * @param userId
+	 * @param contentId
+	 * @return
 	 */
-	List<UserContent> findContent(
-			@Param("id") Integer id,
-			@Param("tag") String tag
+	UserContent findContent(
+			@Param("userId") int userId,
+			@Param("id") int contentId
 			);
 	
 }

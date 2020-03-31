@@ -1,7 +1,5 @@
 package at.sparklingscience.urbantrees.controller;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,14 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.UserContent;
-import at.sparklingscience.urbantrees.domain.UserContentTag;
 import at.sparklingscience.urbantrees.service.UserContentService;
 
 /**
  * Controller for user-related backend calls.
  * 
  * @author Laurenz Fiala
- * @since 2018/02/28
+ * @since 2019/02/28
  */
 @RestController
 @RequestMapping("/content")
@@ -34,9 +31,9 @@ public class UserContentController {
 	@Autowired
     private UserContentService contentService;
 	
-	@RequestMapping(method = RequestMethod.GET, path = "/{contentId:\\d+}")
+	@RequestMapping(method = RequestMethod.GET, path = "/{contentId}")
 	public UserContent getUserContent(
-			@PathVariable int contentId,
+			@PathVariable String contentId,
 			Authentication auth) {
 		
 		LOGGER.debug("[[ GET ]] getUserContent - contentId: {}", contentId);
@@ -45,23 +42,6 @@ public class UserContentController {
 			return this.contentService.getContent(ControllerUtil.getAuthToken(auth), contentId);			
 		} finally {
 			LOGGER.debug("[[ GET ]] getUserContent - contentId: {}", contentId);
-		}
-		
-	}
-	
-
-	
-	@RequestMapping(method = RequestMethod.GET, path = "/{contentTag:[A-Z]+}")
-	public List<UserContent> getUserContent(
-			@PathVariable UserContentTag contentTag,
-			Authentication auth) {
-		
-		LOGGER.debug("[[ GET ]] getUserContent - contentTag: {}", contentTag);
-		
-		try {
-			return this.contentService.getContent(ControllerUtil.getAuthToken(auth), contentTag);			
-		} finally {
-			LOGGER.debug("[[ GET ]] getUserContent - contentTag: {}", contentTag);
 		}
 		
 	}

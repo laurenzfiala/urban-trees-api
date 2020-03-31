@@ -6,7 +6,7 @@ import javax.validation.constraints.NotNull;
  * A language for {@link UserContent}.
  * 
  * @author Laurenz Fiala
- * @since 2018/03/13
+ * @since 2019/03/13
  */
 public class UserContentLanguage {
 

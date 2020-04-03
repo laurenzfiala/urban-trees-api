@@ -22,7 +22,6 @@ import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
-import at.sparklingscience.urbantrees.security.CryptoHelper;
 import at.sparklingscience.urbantrees.service.UserService;
 
 /**
@@ -41,9 +40,6 @@ public class AuthenticationService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
 	
 	@Autowired
-	private CryptoHelper cryptor;
-	
-	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
 	
 	@Autowired
@@ -59,9 +55,7 @@ public class AuthenticationService {
 	 */
 	@Transactional
 	public User findUser(final int userId) {
-		
-		return this.decryptUser(this.authMapper.findUserById(userId));
-		
+		return this.authMapper.findUserById(userId);
 	}
 	
 	/**
@@ -70,12 +64,8 @@ public class AuthenticationService {
 	 * @return If the user is found, return that user; if not, null will be returned.
 	 */
 	@Transactional
-	public User findUser(final String usernameRaw) {
-		final String encryptedUsername = this.encryptUsername(usernameRaw);
-		return this.decryptUser(
-				this.authMapper.findUserByUsername(encryptedUsername)
-				);
-		
+	public User findUser(final String username) {
+		return this.authMapper.findUserByUsername(username);
 	}
 	
 	/**
@@ -85,9 +75,7 @@ public class AuthenticationService {
 	 */
 	@Transactional
 	public User findUserByLoginKey(final String token) {
-		
-		return this.decryptUser(this.authMapper.findUserByLoginKey(token));
-		
+		return this.authMapper.findUserByLoginKey(token);
 	}
 	
 	/**
@@ -132,16 +120,16 @@ public class AuthenticationService {
 	
 	/**
 	 * Inserts a new user into the database.
-	 * @param usernameRaw Username to register (raw).
+	 * @param username Username to register (raw).
 	 * @param rawPassword Password entered by the user (raw).
 	 * @param roles Roles to assign to the new user.
 	 * @return The given user object with ID set.
 	 */
 	@Transactional
-	public User registerUser(final String usernameRaw, final String rawPassword, final List<Role> roles) {
+	public User registerUser(final String username, final String rawPassword, final List<Role> roles) {
 		
 		User newUser = new User();
-		newUser.setUsername(this.encryptUsername(usernameRaw));
+		newUser.setUsername(username);
 		
 		if (rawPassword == null) {
 			newUser.setPassword(null);
@@ -203,10 +191,9 @@ public class AuthenticationService {
 	 * @return true if successful; false otherwise
 	 */
 	@Transactional
-	public boolean changeUsername(final int userId, final String newUsernameRaw) {
+	public boolean changeUsername(final int userId, final String newUsername) {
 		
-		final String newUsernameEncrypted = this.encryptUsername(newUsernameRaw);
-		final int updatedRows = this.authMapper.updateUsername(userId, newUsernameEncrypted);
+		final int updatedRows = this.authMapper.updateUsername(userId, newUsername);
 		if (updatedRows == 1) {
 			return true;
 		} else {
@@ -297,21 +284,13 @@ public class AuthenticationService {
 	}
 	
 	@Transactional
-	public void increaseFailedLoginAttempts(final String usernameRaw) {
-		
-		this.authMapper.increaseFailedLoginAttemptsByUsername(
-			this.encryptUsername(usernameRaw)
-		);
-		
+	public void increaseFailedLoginAttempts(final String username) {
+		this.authMapper.increaseFailedLoginAttemptsByUsername(username);
 	}
 	
 	@Transactional
-	public void updateLastLoginAttemptDat(final String usernameRaw) {
-		
-		this.authMapper.updateLastLoginAttemptDatByUsername(
-			this.encryptUsername(usernameRaw)
-		);
-		
+	public void updateLastLoginAttemptDat(final String username) {
+		this.authMapper.updateLastLoginAttemptDatByUsername(username);
 	}
 	
 	@Transactional
@@ -360,11 +339,7 @@ public class AuthenticationService {
 	 */
 	@Transactional
 	public List<UserIdentity> getUsersGrantingPermission(int receivingUserId, UserPermission permission) {
-		List<UserIdentity> grantingUsers = this.authMapper.findUserIdentitiesGrantingPermission(receivingUserId, permission.name());
-		for (UserIdentity u : grantingUsers) {
-			u.setUsername(this.cryptor.decrypt(u.getUsername()));
-		}
-		return grantingUsers;
+		return this.authMapper.findUserIdentitiesGrantingPermission(receivingUserId, permission.name());
 	}
 	
 	/**
@@ -389,13 +364,7 @@ public class AuthenticationService {
 	 * Important Note: THIS METHOD MUST SOLELY BE CALLED BY AN ADMIN VIA ADMINCONTROLLER!
 	 */
 	public List<UserLight> getAllUsersLight() {
-		
-		List<UserLight> users = this.authMapper.findAllUsersLight();
-		for (UserLight u : users) {
-			this.decryptUser(u);
-		}
-		return users;
-		
+		return this.authMapper.findAllUsersLight();
 	}
 	
 	/**
@@ -425,33 +394,6 @@ public class AuthenticationService {
 	public String getQueryableEncryptionSalt() {
 		
 		return this.authMapper.findSetting(AuthSettings.QUERYABLE_ENCRYPTION_SALT);
-		
-	}
-	
-	/**
-	 * Decrypt encrypted values of {@link User} object
-	 * that has just been retrieved from the DB.
-	 * 
-	 * @param user user to be modified (no copy is created)
-	 * @return the same object-ref as user-parameter, for convenience
-	 */
-	private User decryptUser(User user) {
-		
-		user.setUsername(this.cryptor.decrypt(user.getUsername()));
-		
-		return user;
-		
-	}
-
-	/**
-	 * Encrypt raw username and return it.
-	 * 
-	 * @param usernameRaw cleartext username
-	 * @return encrypted username
-	 */
-	private String encryptUsername(String usernameRaw) {
-		
-		return this.cryptor.encryptQueryable(usernameRaw);
 		
 	}
 	

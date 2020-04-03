@@ -9,16 +9,12 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.security.crypto.keygen.KeyGenerators;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import at.sparklingscience.urbantrees.domain.User;
-import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
-import at.sparklingscience.urbantrees.security.CryptoHelper;
 import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 
 /**
@@ -37,9 +33,6 @@ public class AuthenticationTests {
 	private AuthenticationService authenticationService;
 	
 	@Autowired
-	private CryptoHelper cryptor;
-	
-	@Autowired
 	private AuthMapper authMapper;
 	
 	@Test
@@ -50,6 +43,7 @@ public class AuthenticationTests {
 		
 	}
 	
+	/*
 	@Test
 	@Commit
 	public void encryptAllPlainUsernames() throws ClientProtocolException, IOException {
@@ -86,5 +80,6 @@ public class AuthenticationTests {
 		System.out.println(KeyGenerators.string().generateKey());
 		
 	}
+	*/
 
 }

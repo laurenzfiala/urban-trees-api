@@ -28,7 +28,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import at.sparklingscience.urbantrees.controller.AdminController;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AdminAccessDecisionVoter;
-import at.sparklingscience.urbantrees.security.CryptoHelper;
 import at.sparklingscience.urbantrees.security.apikey.ApiKeyFilter;
 import at.sparklingscience.urbantrees.security.jwt.JWTAuthenticationFilter;
 import at.sparklingscience.urbantrees.security.jwt.JWTAuthorizationFilter;
@@ -226,11 +225,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
-    }
-    
-    @Bean
-    public CryptoHelper cryptor() {
-    	return new CryptoHelper();
     }
     
 }

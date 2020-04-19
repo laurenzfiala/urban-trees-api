@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.crypto.SecretKey;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -32,11 +31,10 @@ import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 /**
  * Authentication filter used to
- * authenticate not logged-in users.
+ * authenticate not yet logged-in users.
  * 
  * @author Laurenz Fiala
  * @since 2018/06/10
@@ -120,11 +118,10 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		
 		this.authService.successfulAuth(user.getId());
 		
-		final SecretKey signingKey = Keys.hmacShaKeyFor(this.authService.getJWTSecret());
 		final String token = Jwts.builder().setSubject(user.getUsername())
 				.setExpiration(new Date(System.currentTimeMillis() + SecurityConfiguration.JWT_EXPIRATION_TIME))
 				.addClaims(this.getUserClaims(user, authorities))
-				.signWith(signingKey, SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG)
+				.signWith(this.authService.generateJWTSecret(user))
 				.compact();
 		
 		res.addHeader("Access-Control-Expose-Headers", SecurityConfiguration.HEADER_KEY);

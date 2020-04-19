@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.security.jwt;
 
 import java.io.IOException;
+import java.security.Key;
 import java.util.Date;
 import java.util.List;
 
@@ -19,12 +20,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
-import at.sparklingscience.urbantrees.mapper.AuthMapper;
-import at.sparklingscience.urbantrees.security.AuthSettings;
+import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SigningKeyResolver;
+import io.jsonwebtoken.SigningKeyResolverAdapter;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 
@@ -42,11 +45,11 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 	 */
 	private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthorizationFilter.class);
 	
-	private AuthMapper authMapper;
+	private AuthenticationService authService;
 
-	public JWTAuthorizationFilter(AuthenticationManager authManager, AuthMapper authMapper) {
+	public JWTAuthorizationFilter(AuthenticationManager authManager, AuthenticationService authService) {
         super(authManager);
-        this.authMapper = authMapper;
+        this.authService = authService;
     }
 	
     @Override
@@ -79,8 +82,16 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         	
     	Claims jwtClaims;
     	try {
+    		SigningKeyResolver signingKeyResolver = new SigningKeyResolverAdapter() {
+    			@Override
+				public Key resolveSigningKey(@SuppressWarnings("rawtypes") JwsHeader header, Claims claims) {
+    				final int userId = claims.get(SecurityConfiguration.JWT_CLAIMS_USERID_KEY, Integer.class);
+    				return authService.getJWTSecret(userId);
+				}
+			};
+    		
     		jwtClaims = Jwts.parserBuilder()
-    				.setSigningKey(this.authMapper.findSetting(AuthSettings.JWT_SECRET).getBytes())
+    				.setSigningKeyResolver(signingKeyResolver)
     				.build()
     				.parseClaimsJws(token.replace(SecurityConfiguration.JWT_TOKEN_PREFIX, ""))
     				.getBody();

@@ -1,5 +1,6 @@
 package at.sparklingscience.urbantrees.mapper;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -157,7 +158,7 @@ public interface AuthMapper {
 	/**
 	 * Find login key for user.
 	 * @param userId user id
-	 * @return secure login key
+	 * @return secure login key if it exists and is not expired.
 	 */
 	String findUserLoginKey(@Param("userId") int userId);
 	
@@ -165,9 +166,11 @@ public interface AuthMapper {
 	 * Update secure login key to given token.
 	 * @param userId user id of user to update
 	 * @param token secure login key to set (regardless of old key)
+	 * @param tokenExpirationDate expiration date of given token
 	 */
 	void updateUserLoginKey(@Param("userId") int userId,
-   		  					@Param("token") String token);
+   		  					@Param("token") String token,
+   		  					@Param("tokenExpirationDate") Date tokenExpirationDate);
 	
 	/**
 	 * Insert a single user permission into access_data.user_permission
@@ -244,5 +247,20 @@ public interface AuthMapper {
 	 * @return The settings' value.
 	 */
 	String findSetting(@Param("key") AuthSettings key);
+	
+	/**
+	 * Find the given users' token secret.
+	 * @param userId users' id
+	 * @return token secret
+	 */
+	String findUserTokenSecret(@Param("userId") int userId);
+	
+	/**
+	 * Set the users' token secret.
+	 * @param userId users' id
+	 * @param tokenSecret Token secret in string form. The DB field has no limitation in size (text field).
+	 * @return amount of rows affected (must be 1)
+	 */
+	int updateUserTokenSecret(@Param("userId") int userId, @Param("tokenSecret") String tokenSecret);
 	
 }

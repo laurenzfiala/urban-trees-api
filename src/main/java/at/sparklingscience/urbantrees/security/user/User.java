@@ -2,6 +2,8 @@ package at.sparklingscience.urbantrees.security.user;
 
 import java.util.Collection;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.security.core.GrantedAuthority;
 
 /**
@@ -16,15 +18,30 @@ public class User extends org.springframework.security.core.userdetails.User {
 	private static final long serialVersionUID = 20190118L;
 	
 	private int id;
+	
+	/**
+	 * The users' token {@link SecretKey} to use for this request,
+	 */
+	private SecretKey tokenSecret; // TODO remove
 
-	public User(int id, String username, String password, boolean enabled, boolean accountNonExpired,
-			boolean credentialsNonExpired, boolean accountNonLocked,
+	public User(
+			int id,
+			String username,
+			String password,
+			boolean enabled,
+			boolean accountNonExpired,
+			boolean credentialsNonExpired,
+			boolean accountNonLocked,
 			Collection<? extends GrantedAuthority> authorities) {
 		super(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
 		this.setId(id);
 	}
 
-	public User(int id, String username, String password, Collection<? extends GrantedAuthority> authorities) {
+	public User(
+			int id,
+			String username,
+			String password,
+			Collection<? extends GrantedAuthority> authorities) {
 		super(username, password, authorities);
 		this.setId(id);
 	}
@@ -40,6 +57,10 @@ public class User extends org.springframework.security.core.userdetails.User {
 
 	public void setId(int id) {
 		this.id = id;
+	}
+
+	public SecretKey getTokenSecret() {
+		return tokenSecret;
 	}
 	
 }

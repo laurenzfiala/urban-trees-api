@@ -1,11 +1,13 @@
 package at.sparklingscience.urbantrees.security.user;
 
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Base64.Encoder;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
+
+import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +22,14 @@ import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserIdentity;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
+import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
 import at.sparklingscience.urbantrees.service.UserService;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.WeakKeyException;
 
 /**
  * Service provides functionality for authorization,
@@ -255,7 +262,11 @@ public class AuthenticationService {
 		}
 		
 		final String secureToken = this.generateSecureToken();
-	    this.authMapper.updateUserLoginKey(userId, secureToken);
+	    this.authMapper.updateUserLoginKey(
+    		userId,
+    		secureToken,
+    		new Date(System.currentTimeMillis() + SecurityConfiguration.LOGIN_LINK_EXPIRATION_TIME)
+		);
 	    
 	    return secureToken;
 		
@@ -298,7 +309,7 @@ public class AuthenticationService {
 		
 		this.authMapper.resetFailedLoginAttempts(userId);
 		this.authMapper.updateLastLoginDat(userId);
-		this.authMapper.updateUserLoginKey(userId, null);
+		this.authMapper.updateUserLoginKey(userId, null, null);
 		
 	}
 	
@@ -377,24 +388,38 @@ public class AuthenticationService {
 	}
 	
 	/**
-	 * Fetches the JWT secret from the database, used for
-	 * signing the JWT tokens.
-	 * DB-call is cached by mybatis.
+	 * Get the current JWT secret key for the given user.
+	 * @param userId user's id
+	 * @return {@link SecretKey}
+	 * @throws WeakKeyException if the stored user secret is too weak for the used algorithm.
+	 * @throws UnauthorizedException if the given user is not found, no secret is found, or the user is inactivated.
 	 */
-	public byte[] getJWTSecret() {
+	public SecretKey getJWTSecret(final int userId) throws WeakKeyException, UnauthorizedException {
 		
-		return this.authMapper.findSetting(AuthSettings.JWT_SECRET).getBytes(StandardCharsets.UTF_8);
+		final String base64Secret = this.authMapper.findUserTokenSecret(userId);
+		if (base64Secret == null) {
+			throw new UnauthorizedException("Could not find user's login token. (user id = " + userId + ")");
+		}
+		return Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
 		
 	}
 	
 	/**
-	 * Gets the encryption salt for queryable text from the auth settings table.
-	 * DB-call is cached by mybatis.
+	 * Generate a new JWT secret for the given user and store it.
+	 * @param user user to update (from teh security package)
+	 * @return the stored secretkey if it was successfully generated and stored.
+	 * @throws RuntimeException if storing the secret could not be stored.
 	 */
-	public String getQueryableEncryptionSalt() {
+	public SecretKey generateJWTSecret(at.sparklingscience.urbantrees.security.user.User user) {
+		final SecretKey signingKey = Keys.secretKeyFor(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG);
+		final String storeKey = Encoders.BASE64.encode(signingKey.getEncoded());
 		
-		return this.authMapper.findSetting(AuthSettings.QUERYABLE_ENCRYPTION_SALT);
+		final int updatedUsers = this.authMapper.updateUserTokenSecret(user.getId(), storeKey);
+		if (updatedUsers != 1) {
+			throw new RuntimeException("Token secret could not be stored for user " + user.getId() + ", instead " + updatedUsers + " users have been updated.");
+		}
 		
+		return signingKey;
 	}
 	
 }

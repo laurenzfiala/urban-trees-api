@@ -56,6 +56,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	public static final long 				JWT_EXPIRATION_TIME				= 86_400_000; /* 24 hours */
 	
 	/**
+	 * Duration after which a generated login link expire.
+	 * In milliseconds.
+	 */
+	public static final long				LOGIN_LINK_EXPIRATION_TIME		= 86_400_000; /* 24 hours */
+	
+	/**
 	 * Maximum allowed age of token to access admin
 	 * resources (those needing ROLE_ADMIN).
 	 */
@@ -176,7 +182,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	    	.and()
 	    		.addFilterBefore(new ApiKeyFilter(this.authenticationManager(), this.authMapper), UsernamePasswordAuthenticationFilter.class)
 	    		.addFilter(new JWTAuthenticationFilter(this.authenticationManager(), this.authService))
-                .addFilter(new JWTAuthorizationFilter(this.authenticationManager(), this.authMapper));
+                .addFilter(new JWTAuthorizationFilter(this.authenticationManager(), this.authService));
 
     }
     

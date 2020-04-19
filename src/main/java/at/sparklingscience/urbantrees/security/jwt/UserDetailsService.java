@@ -42,10 +42,17 @@ public class UserDetailsService implements org.springframework.security.core.use
 		}
 		
 		LOGGER.trace("User {} found.", user);
+		
 		return this.domainUserToSecUser(user);
 		
 	}
 	
+	/**
+	 * The user provided a login token via a link. Find them and return the security user.
+	 * @param token the given login token (from the login link)
+	 * @return security user (wrapped in UserDetails interface)
+	 * @throws BadCredentialsException if no user with the given key can be found or the key is expired.
+	 */
 	public UserDetails loadUserByLoginKey(String token) throws BadCredentialsException {
 		
 		LOGGER.trace("Searching for user by token in the database.");
@@ -56,10 +63,15 @@ public class UserDetailsService implements org.springframework.security.core.use
 		}
 		
 		LOGGER.trace("User {} found.", user);
+		
 		return this.domainUserToSecUser(user);
 		
 	}
 	
+	/**
+	 * Initialize a new security user instance given the domain user.
+	 * @param domainUser user
+	 */
 	private at.sparklingscience.urbantrees.security.user.User domainUserToSecUser(User domainUser) {
 		return new at.sparklingscience.urbantrees.security.user.User(
 				domainUser.getId(),

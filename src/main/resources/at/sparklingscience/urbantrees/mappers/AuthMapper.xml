@@ -80,6 +80,7 @@
 		    access_data."user" u
 		where
 		    u.secure_login_key = #{token}
+			and secure_login_key_expiration_dat &gt; now()
     </select>
     
     <select id="findUserById" resultMap="UserMap" useCache="false">
@@ -293,13 +294,15 @@
 			access_data."user"
 		where
 			id = #{userId}
+			and secure_login_key_expiration_dat &gt; now()
     </select>
     
     <update id="updateUserLoginKey">
         update
 			access_data."user"
 		set
-			secure_login_key = #{token}
+			secure_login_key = #{token},
+			secure_login_key_expiration_dat = #{tokenExpirationDate}
 		where
 			id = #{userId}
     </update>
@@ -410,5 +413,24 @@
 				and permissions_pin_attempts &lt;= 1
         )
     </select>
+    
+    <select id="findUserTokenSecret" resultType="java.lang.String">
+        select
+			token_secret
+		from
+			access_data."user"
+		where
+			id = #{userId}
+			and is_active = true
+    </select>
+    
+    <update id="updateUserTokenSecret">
+        update
+			access_data."user"
+		set
+			token_secret = #{tokenSecret}
+		where
+			id = #{userId}
+    </update>
     
 </mapper>

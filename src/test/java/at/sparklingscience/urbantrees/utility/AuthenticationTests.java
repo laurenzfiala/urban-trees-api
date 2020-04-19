@@ -14,8 +14,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import at.sparklingscience.urbantrees.mapper.AuthMapper;
+import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.security.user.AuthenticationService;
+import io.jsonwebtoken.io.Encoders;
+import io.jsonwebtoken.security.Keys;
 
 /**
  * Utility tests to execute some logic for internal use.
@@ -32,8 +34,8 @@ public class AuthenticationTests {
 	@Autowired
 	private AuthenticationService authenticationService;
 	
-	@Autowired
-	private AuthMapper authMapper;
+	//@Autowired
+	//private AuthMapper authMapper;
 	
 	@Test
 	@Commit
@@ -81,5 +83,12 @@ public class AuthenticationTests {
 		
 	}
 	*/
+	
+	@Test
+	public void getRandomBase64EncodedJWTSecret() {
+		
+		System.out.println(Encoders.BASE64.encode(Keys.secretKeyFor(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG).getEncoded()));
+		
+	}
 
 }

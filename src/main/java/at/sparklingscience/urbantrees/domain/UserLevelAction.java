@@ -1,6 +1,5 @@
 package at.sparklingscience.urbantrees.domain;
 
-import java.time.Duration;
 
 /**
  * Values of the action-column in user_data.level.

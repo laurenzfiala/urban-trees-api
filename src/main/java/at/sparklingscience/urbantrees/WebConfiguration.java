@@ -21,11 +21,11 @@ public class WebConfiguration implements WebMvcConfigurer {
    */
   @Override
   public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-    configurer.favorPathExtension(false)
-            .ignoreAcceptHeader(true)
-            .useRegisteredExtensionsOnly(true)
-            .defaultContentType(MediaType.APPLICATION_JSON)
-            .mediaType("json", MediaType.APPLICATION_JSON);
+    configurer
+    	.ignoreAcceptHeader(true)
+        .useRegisteredExtensionsOnly(true)
+        .defaultContentType(MediaType.APPLICATION_JSON)
+        .mediaType("json", MediaType.APPLICATION_JSON);
   }
   
   @Override

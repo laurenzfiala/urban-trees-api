@@ -9,6 +9,13 @@ import org.springframework.security.core.GrantedAuthority;
 
 import at.sparklingscience.urbantrees.security.user.User;
 
+/**
+ * DTO for transfering user auth properties from the client-side JWT.
+ * Holds all information and claims needed for authenticating a request.
+ * 
+ * @author Laurenz Fiala
+ * @since 2020/04/19 (doc)
+ */
 public class AuthenticationToken implements Authentication {
 
 	private static final long serialVersionUID = 20190118L;
@@ -19,12 +26,18 @@ public class AuthenticationToken implements Authentication {
 	
 	private String password;
 	
+	/**
+	 * Holds all roles granted to the user.
+	 */
 	private Collection<? extends GrantedAuthority> authorities;
 
 	private boolean isAuthenticated = true;
 	
 	private User details;
 	
+	/**
+	 * Date of JWT creation.
+	 */
 	private Date tokenCreationDate;
 	
 	public AuthenticationToken(String username, String password) {

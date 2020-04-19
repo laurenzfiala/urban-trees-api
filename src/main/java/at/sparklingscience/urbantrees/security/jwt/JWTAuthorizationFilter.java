@@ -24,7 +24,9 @@ import at.sparklingscience.urbantrees.security.AuthSettings;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 
 /**
  * JWT authorization filter to authorize an
@@ -69,12 +71,6 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         
     }
 
-    /**
-     * TODO
-     * @param token
-     * @param request
-     * @return
-     */
     private Authentication getAuthentication(final String token, HttpServletRequest request) {
     	
         if (token == null) {
@@ -83,8 +79,9 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         	
     	Claims jwtClaims;
     	try {
-    		jwtClaims = Jwts.parser()
+    		jwtClaims = Jwts.parserBuilder()
     				.setSigningKey(this.authMapper.findSetting(AuthSettings.JWT_SECRET).getBytes())
+    				.build()
     				.parseClaimsJws(token.replace(SecurityConfiguration.JWT_TOKEN_PREFIX, ""))
     				.getBody();
     	} catch (SignatureException e) {
@@ -92,6 +89,12 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     		return null;
     	} catch (ExpiredJwtException e) {
     		LOGGER.trace("Users' auth token has expired: {}", e.getMessage(), e);
+    		return null;
+    	} catch (UnsupportedJwtException e) {
+    		LOGGER.trace("Users' auth token is unsupported: {}", e.getMessage(), e);
+    		return null;
+    	} catch (MalformedJwtException e) {
+    		LOGGER.trace("Users' auth token is malformed: {}", e.getMessage(), e);
     		return null;
     	}
     	

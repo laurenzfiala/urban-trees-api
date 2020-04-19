@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.crypto.SecretKey;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +32,7 @@ import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 /**
  * Authentication filter used to
@@ -110,7 +112,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		
 		Collection<? extends GrantedAuthority> authorities = null;
 		if (!user.isCredentialsNonExpired()) {
-			// TODO log
+			LOGGER.info("User credentials are expired. Granting temp change role only.");
 			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE));
 		}
 		
@@ -118,10 +120,11 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		
 		this.authService.successfulAuth(user.getId());
 		
+		final SecretKey signingKey = Keys.hmacShaKeyFor(this.authService.getJWTSecret());
 		final String token = Jwts.builder().setSubject(user.getUsername())
 				.setExpiration(new Date(System.currentTimeMillis() + SecurityConfiguration.JWT_EXPIRATION_TIME))
 				.addClaims(this.getUserClaims(user, authorities))
-				.signWith(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG, this.authService.getJWTSecret())
+				.signWith(signingKey, SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG)
 				.compact();
 		
 		res.addHeader("Access-Control-Expose-Headers", SecurityConfiguration.HEADER_KEY);

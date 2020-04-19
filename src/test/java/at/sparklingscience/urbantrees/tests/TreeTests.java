@@ -78,7 +78,7 @@ public class TreeTests {
 		test.setPlantationYear(2017);
 		test.setPlantationYearEstimate(true);
 
-		assertThat(tree).isEqualToComparingFieldByFieldRecursively(test);
+		assertThat(tree).usingRecursiveComparison().isEqualTo(test);
 
 	}
 
@@ -104,7 +104,7 @@ public class TreeTests {
 		test.setCrownWidth(490);
 		test.setObservationDate(new SimpleDateFormat(this.dateFormatPattern).parse("2017-01-01T00-00-00"));
 
-		assertThat(dataset).isEqualToComparingFieldByField(test);
+		assertThat(dataset).usingRecursiveComparison().isEqualTo(test);
 
 	}
 
@@ -154,7 +154,7 @@ public class TreeTests {
 		test.setObservations(Arrays.asList(testObservation));
 		test.setObservationDate(new SimpleDateFormat(this.dateFormatPattern).parse("2017-01-01T00-00-00"));
 
-		assertThat(dataset).isEqualToComparingFieldByFieldRecursively(test);
+		assertThat(dataset).usingRecursiveComparison().isEqualTo(test);
 
 	}
 

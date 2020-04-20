@@ -25,15 +25,16 @@ import at.sparklingscience.urbantrees.security.SecurityUtil;
 /**
  * Custom filter for authentication of api keys through the database.
  * 
+ * Sets the affected resource paths ('/**' means all should be checked). Also
+ * sets a dummy {@link NoOpAuthenticationManager}.
+ * 
+ * @see AbstractAuthenticationProcessingFilter
  * @author Laurenz Fiala
  * @since 2017/12/26
  */
 public final class ApiKeyFilter extends BasicAuthenticationFilter {
-
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger LOGGER = LoggerFactory.getLogger(ApiKeyFilter.class);
+	
+	private static Logger logger = LoggerFactory.getLogger(ApiKeyFilter.class); // TODO
 
 	/**
 	 * HTTP Header key to get the api key from.
@@ -46,13 +47,7 @@ public final class ApiKeyFilter extends BasicAuthenticationFilter {
 	 * @see {@link AuthMapper}
 	 */
 	private AuthMapper authMapper;
-
-	/**
-	 * Sets the affected resource paths ('/**' means all should be checked). Also
-	 * sets a dummy {@link NoOpAuthenticationManager}.
-	 * 
-	 * @see AbstractAuthenticationProcessingFilter
-	 */
+	
 	public ApiKeyFilter(AuthenticationManager authenticationManager, AuthMapper authMapper) {
 		super(authenticationManager);
 		this.authMapper = authMapper;
@@ -62,12 +57,12 @@ public final class ApiKeyFilter extends BasicAuthenticationFilter {
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
 			throws IOException, ServletException {
 
-		LOGGER.trace("Starting API key authentication.");
+		logger.trace("Starting API key authentication.");
 
 		final String apiKey = req.getHeader(ApiKeyFilter.API_KEY_HEADER);
 
 		if (apiKey == null) {
-			LOGGER.trace("Skipping API key authentication, since header is null.");
+			logger.trace("Skipping API key authentication, since header is null.");
 			chain.doFilter(req, res);
 			return;
 		}
@@ -89,14 +84,14 @@ public final class ApiKeyFilter extends BasicAuthenticationFilter {
 		
 		UUID apiKeyUuid = (UUID) UUID.fromString(apiKey);
         if (authMapper.hasValidApiKey(apiKeyUuid) > 0) {
-        	LOGGER.trace("API key valid.");
+        	logger.trace("API key valid.");
             return new PreAuthenticatedAuthenticationToken(
             		apiKeyUuid.toString(),
             		SecurityConfiguration.API_KEY_ACCESS_ROLE,
             		Collections.singletonList(SecurityUtil.grantedAuthority(SecurityConfiguration.API_KEY_ACCESS_ROLE))
     		);
         }
-        LOGGER.info("API key {} invalid.", apiKey);
+        logger.info("API key {} invalid.", apiKey);
         return null;
         
     }

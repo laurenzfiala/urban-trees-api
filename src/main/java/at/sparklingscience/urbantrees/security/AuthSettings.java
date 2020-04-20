@@ -9,14 +9,8 @@ package at.sparklingscience.urbantrees.security;
  */
 public enum AuthSettings {
 
-	JWT_SECRET,
 	MAX_LOGIN_ATTEMPTS,
-	TIMEOUT_LOGIN_ATTEMPTS_SEC,
-	
-	/**
-	 * Salt needs to be at least 8 bytes and must have even number of HEX chars.
-	 */
-	QUERYABLE_ENCRYPTION_SALT;
+	TIMEOUT_LOGIN_ATTEMPTS_SEC;
 	
 	@Override
 	public String toString() {

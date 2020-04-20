@@ -40,11 +40,8 @@ import io.jsonwebtoken.Jwts;
  * @since 2018/06/10
  */
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
+	
+	private static Logger logger = LoggerFactory.getLogger(JWTAuthenticationFilter.class);
 	
 	/**
 	 * Spring integrated auth manager.
@@ -52,7 +49,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 	private AuthenticationManager authenticationManager;
 	
 	private AuthenticationService authService;
-
+	
 	public JWTAuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationService authService) {
 		this.authenticationManager = authenticationManager;
 		this.authService = authService;
@@ -73,7 +70,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		User creds = null;
 		try {
 			creds = new ObjectMapper().readValue(req.getInputStream(), User.class);
-			LOGGER.trace("Got user info for user {}", creds.getUsername());
+			logger.trace("Got user info for user {}", creds.getUsername());
 
 			if (creds.getUsername() != null) {
 				this.authService.increaseFailedLoginAttempts(creds.getUsername());				
@@ -110,11 +107,11 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		
 		Collection<? extends GrantedAuthority> authorities = null;
 		if (!user.isCredentialsNonExpired()) {
-			LOGGER.info("User credentials are expired. Granting temp change role only.");
+			logger.info("User credentials are expired. Granting temp change role only.");
 			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE));
 		}
 		
-		LOGGER.trace("Successful authentication, creating token for user {}.", auth.getPrincipal());
+		logger.trace("Successful authentication, creating token for user {}.", auth.getPrincipal());
 		
 		this.authService.successfulAuth(user.getId());
 		

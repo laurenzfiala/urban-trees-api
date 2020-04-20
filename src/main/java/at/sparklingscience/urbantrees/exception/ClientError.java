@@ -31,7 +31,9 @@ public enum ClientError {
 
 	FAILED_KEY_STORE(50),
 	
-	SAME_USER_PERM_REQUEST(60);
+	SAME_USER_PERM_REQUEST(60),
+	
+	USERNAME_DUPLICATE(70);
 
 	
 	private final int errorCode;

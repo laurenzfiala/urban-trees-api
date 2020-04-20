@@ -201,8 +201,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     	provider.setUserDetailsService(this.userDetailsService);
     	provider.setPasswordEncoder(this.bCryptPasswordEncoder());
         return provider;
-    }
-    
+    }    
 
     @Bean
     public AuthenticationProvider tokenAuthProvider() {

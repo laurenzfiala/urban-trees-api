@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
@@ -50,10 +49,7 @@ import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 @RequestMapping("/admin")
 public class AdminController {
 	
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger LOGGER = LoggerFactory.getLogger(AdminController.class);
+	private static Logger logger;
 	
 	@Autowired
 	private TreeMapper treeMapper;
@@ -76,24 +72,28 @@ public class AdminController {
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
 	
+	public AdminController(Logger classLogger) {
+		logger = classLogger;
+	}
+	
 	@Transactional
 	@RequestMapping(method = RequestMethod.POST, path = "/city")
 	public City postCity(@Validated(ValidationGroups.Update.class) @RequestBody City city, Authentication auth) {
 		
-		LOGGER.info("[[ POST ]] postCity - city: {}", city.getName());
+		logger.info("[[ POST ]] postCity - city: {}", city.getName());
 		
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
 		try {
 			this.treeMapper.insertCity(city, String.valueOf(userId));
 		} catch (DuplicateKeyException ex) {
-			LOGGER.warn("Admin tried to enter duplicate city: {}", ex.getMessage(), ex);
+			logger.warn("Admin tried to enter duplicate city: {}", ex.getMessage(), ex);
 			throw new BadRequestException("There is already a city with given name.", ClientError.CITY_DUPLICATE);
 		} catch (Throwable t) {
-			LOGGER.error("Internal excetion during postCity: {}", t.getMessage(), t);
+			logger.error("Internal excetion during postCity: {}", t.getMessage(), t);
 			throw new InternalException("Internal error encountered while adding city.", ClientError.CITY_INTERNAL_ERROR);
 		}
 		
-		LOGGER.info("[[ POST ]] postCity |END| - city: {}, inserted city id: {}", city.getName(), city.getId());
+		logger.info("[[ POST ]] postCity |END| - city: {}, inserted city id: {}", city.getName(), city.getId());
 		
 		return city;
 		
@@ -103,7 +103,7 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.POST, path = "/beacon")
 	public Beacon postNewBeacon(@Validated(ValidationGroups.Update.class) @RequestBody Beacon beacon, Authentication auth) {
 		
-		LOGGER.info("[[ POST ]] postNewBeacon - deviceId: {}", beacon.getDeviceId());
+		logger.info("[[ POST ]] postNewBeacon - deviceId: {}", beacon.getDeviceId());
 		
 		// initialize default values
 		beacon.setStatus(BeaconStatus.INITIAL);
@@ -116,14 +116,14 @@ public class AdminController {
 			this.beaconMapper.insertBeacon(beacon, String.valueOf(userId));
 			this.beaconMapper.insertBeaconSettings(beacon.getId(), beacon.getSettings(), String.valueOf(userId));
 		} catch (DuplicateKeyException ex) {
-			LOGGER.warn("Admin tried to enter duplicate beacon: {}", ex.getMessage(), ex);
+			logger.warn("Admin tried to enter duplicate beacon: {}", ex.getMessage(), ex);
 			throw new BadRequestException("There is already a beacon with given deviceId or same address.", ClientError.BEACON_DUPLICATE);
 		} catch (Throwable t) {
-			LOGGER.error("Internal exception during postBeacon: {}", t.getMessage(), t);
+			logger.error("Internal exception during postBeacon: {}", t.getMessage(), t);
 			throw new InternalException("Internal error encountered while adding beacon", ClientError.BEACON_INTERNAL_ERROR, t);
 		}
 		
-		LOGGER.info("[[ POST ]] postNewBeacon |END| - deviceId: {}, inserted beacon id: {}", beacon.getDeviceId(), beacon.getId());
+		logger.info("[[ POST ]] postNewBeacon |END| - deviceId: {}, inserted beacon id: {}", beacon.getDeviceId(), beacon.getId());
 		
 		return beacon;
 		
@@ -137,7 +137,7 @@ public class AdminController {
 			Authentication auth) {
 		
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
-		LOGGER.info("[[ POST ]] postBeaconUpdate - tree id: {}, admin uid: {}", beaconId, userId);
+		logger.info("[[ POST ]] postBeaconUpdate - tree id: {}, admin uid: {}", beaconId, userId);
 		
 		try {
 			
@@ -164,11 +164,11 @@ public class AdminController {
 			this.beaconMapper.updateBeaconSettings(newSettings, String.valueOf(userId));
 			
 		} catch (Throwable t) {
-			LOGGER.error("Internal excetion during postBeaconUpdate: {}", t.getMessage(), t);
+			logger.error("Internal excetion during postBeaconUpdate: {}", t.getMessage(), t);
 			throw new BadRequestException("Internal error encountered while updating beacon.", ClientError.BEACON_UPDATE_FAILED);
 		}
 		
-		LOGGER.info("[[ POST ]] postBeaconUpdate |END| - beacon id: {}, admin uid: {}", beaconId, userId);
+		logger.info("[[ POST ]] postBeaconUpdate |END| - beacon id: {}, admin uid: {}", beaconId, userId);
 		
 		return beacon;
 		
@@ -178,7 +178,7 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.POST, path = "/tree")
 	public Tree postTree(@Validated(ValidationGroups.Update.class) @RequestBody Tree tree, Authentication auth) {
 		
-		LOGGER.info("[[ POST ]] postTree");
+		logger.info("[[ POST ]] postTree");
 		
 		final String name = auth.getName();
 		try {
@@ -186,11 +186,11 @@ public class AdminController {
 			this.treeMapper.insertTree(tree, name);
 			this.treeMapper.insertTreeAge(tree, name);
 		} catch (Throwable t) {
-			LOGGER.error("Internal excetion during postTree: {}", t.getMessage(), t);
+			logger.error("Internal excetion during postTree: {}", t.getMessage(), t);
 			throw new BadRequestException("Internal error encountered while adding tree.", ClientError.TREE_INSERT_FAILED);
 		}
 		
-		LOGGER.info("[[ POST ]] postTree |END| - inserted tree id: {}", tree.getId());
+		logger.info("[[ POST ]] postTree |END| - inserted tree id: {}", tree.getId());
 		
 		return tree;
 		
@@ -203,16 +203,16 @@ public class AdminController {
 			@Validated(ValidationGroups.Update.class) @RequestBody Tree tree,
 			Authentication auth) {
 		
-		LOGGER.info("[[ POST ]] postTreeUpdate - tree id: {}", treeId);
+		logger.info("[[ POST ]] postTreeUpdate - tree id: {}", treeId);
 		
 		try {
 			this.treeMapper.updateTree(tree, auth.getName());
 		} catch (Throwable t) {
-			LOGGER.error("Internal excetion during postTreeUpdate: {}", t.getMessage(), t);
+			logger.error("Internal excetion during postTreeUpdate: {}", t.getMessage(), t);
 			throw new BadRequestException("Internal error encountered while updating tree.", ClientError.TREE_UPDATE_FAILED);
 		}
 		
-		LOGGER.info("[[ POST ]] postTreeUpdate |END| - tree id: {}", treeId);
+		logger.info("[[ POST ]] postTreeUpdate |END| - tree id: {}", treeId);
 		
 		return tree;
 		
@@ -222,7 +222,7 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.DELETE, path = "/beacon/{beaconId:\\d+}")
 	public void deleteBeacon(@PathVariable int beaconId, Authentication auth) {
 		
-		LOGGER.info("[[ DELETE ]] deleteBeacon - beaconId: {}", beaconId);
+		logger.info("[[ DELETE ]] deleteBeacon - beaconId: {}", beaconId);
 		
 		BeaconLog log = new BeaconLog(
 				beaconId,
@@ -236,18 +236,18 @@ public class AdminController {
 			this.beaconMapper.updateBeaconStatus(beaconId, BeaconStatus.DELETED);
 			this.beaconMapper.insertBeaconLog(beaconId, log);
 		} catch (Throwable t) {
-			LOGGER.error("Error while deleting beacon: {}", t.getMessage(), t);
+			logger.error("Error while deleting beacon: {}", t.getMessage(), t);
 			throw new InternalException("Failed to delete beacon.", ClientError.BEACON_DELETE_FAILED);
 		}
 		
-		LOGGER.info("[[ DELETE ]] deleteBeacon |END| - beaconId: {}", beaconId);
+		logger.info("[[ DELETE ]] deleteBeacon |END| - beaconId: {}", beaconId);
 		
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/users")
 	public List<UserLight> getUsers() {
 		
-		LOGGER.info("[[ GET ]] getUsers");
+		logger.info("[[ GET ]] getUsers");
 		
 		try {
 			List<UserLight> users = this.authService.getAllUsersLight();
@@ -256,10 +256,10 @@ public class AdminController {
 			}
 			return users;
 		} catch (Throwable t) {
-			LOGGER.error("Could not find users: {}", t.getMessage(), t);
+			logger.error("Could not find users: {}", t.getMessage(), t);
 			throw new InternalException("Failed to find users.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ GET ]] getUsers |END|");
+			logger.info("[[ GET ]] getUsers |END|");
 		}
 		
 	}
@@ -267,79 +267,79 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.DELETE, path = "/users/{userId:\\d+}")
 	public void deleteUser(@PathVariable int userId) {
 		
-		LOGGER.info("[[ DELETE ]] deleteUser - userId: " + userId);
+		logger.info("[[ DELETE ]] deleteUser - userId: " + userId);
 		
 		try {
 			this.authService.deleteUser(userId);
 		} catch (Throwable t) {
-			LOGGER.error("Could not delete user: {}", t.getMessage(), t);
+			logger.error("Could not delete user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to delete user.", ClientError.GENERIC_ERROR);
 		}
 
-		LOGGER.info("[[ DELETE ]] deleteUser |END| - userId: " + userId);
+		logger.info("[[ DELETE ]] deleteUser |END| - userId: " + userId);
 		
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/users/{userId:\\d+}/expireCredentials")
 	public void getExpireCredentials(@PathVariable int userId) {
 		
-		LOGGER.info("[[ GET ]] getExpireCredentials - userId: " + userId);
+		logger.info("[[ GET ]] getExpireCredentials - userId: " + userId);
 		
 		try {
 			this.authService.expireCredentials(userId);
 		} catch (Throwable t) {
-			LOGGER.error("Could not expire credentials: {}", t.getMessage(), t);
+			logger.error("Could not expire credentials: {}", t.getMessage(), t);
 			throw new InternalException("Failed to expire credentials.", ClientError.GENERIC_ERROR);
 		}
 
-		LOGGER.info("[[ GET ]] getExpireCredentials |END| - userId: " + userId);
+		logger.info("[[ GET ]] getExpireCredentials |END| - userId: " + userId);
 		
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/users/{userId:\\d+}/activate")
 	public void getActivate(@PathVariable int userId) {
 		
-		LOGGER.info("[[ GET ]] getInactivate - userId: " + userId);
+		logger.info("[[ GET ]] getInactivate - userId: " + userId);
 		
 		try {
 			this.authService.activate(userId);
 		} catch (Throwable t) {
-			LOGGER.error("Could not activate user: {}", t.getMessage(), t);
+			logger.error("Could not activate user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to activate user.", ClientError.GENERIC_ERROR);
 		}
 
-		LOGGER.info("[[ GET ]] getActivate |END| - userId: " + userId);
+		logger.info("[[ GET ]] getActivate |END| - userId: " + userId);
 		
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/users/{userId:\\d+}/inactivate")
 	public void getInactivate(@PathVariable int userId) {
 		
-		LOGGER.info("[[ GET ]] getInactivate - userId: " + userId);
+		logger.info("[[ GET ]] getInactivate - userId: " + userId);
 		
 		try {
 			this.authService.inactivate(userId);
 		} catch (Throwable t) {
-			LOGGER.error("Could not inactivate user: {}", t.getMessage(), t);
+			logger.error("Could not inactivate user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to inactivate user.", ClientError.GENERIC_ERROR);
 		}
 
-		LOGGER.info("[[ GET ]] getInactivate |END| - userId: " + userId);
+		logger.info("[[ GET ]] getInactivate |END| - userId: " + userId);
 		
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/users/roles")
 	public List<Role> getUserRoles() {
 		
-		LOGGER.info("[[ GET ]] getUserRoles");
+		logger.info("[[ GET ]] getUserRoles");
 		
 		try {
 			return this.authService.getAllUserRoles();
 		} catch (Throwable t) {
-			LOGGER.error("Could not get user roles: {}", t.getMessage(), t);
+			logger.error("Could not get user roles: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get user roles.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ GET ]] getUserRoles |END|");
+			logger.info("[[ GET ]] getUserRoles |END|");
 		}
 		
 	}
@@ -347,15 +347,15 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.GET, path = "/users/{userId:\\d+}/loginkey")
 	public String getLoginKey(@PathVariable int userId) {
 		
-		LOGGER.info("[[ GET ]] getLoginKey - userId: {}", userId);
+		logger.info("[[ GET ]] getLoginKey - userId: {}", userId);
 		
 		try {
 			return this.authService.getLoginKey(userId);
 		} catch (Throwable t) {
-			LOGGER.error("Could not get secure login key for user: {}", t.getMessage(), t);
+			logger.error("Could not get secure login key for user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get secure login key for user.", ClientError.FAILED_KEY_STORE);
 		} finally {
-			LOGGER.info("[[ GET ]] getLoginKey |END| - userId: {}", userId);
+			logger.info("[[ GET ]] getLoginKey |END| - userId: {}", userId);
 		}
 		
 	}
@@ -363,15 +363,15 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.PUT, path = "/user")
 	public void putNewUser(@Validated(ValidationGroups.Update.class) @RequestBody User user, Authentication auth) {
 		
-		LOGGER.info("[[ PUT ]] putNewUser - called by: {}, user to create: {}", auth.getName(), user);
+		logger.info("[[ PUT ]] putNewUser - called by: {}, user to create: {}", auth.getName(), user);
 		
 		try {
 			this.authService.registerUser(user.getUsername(), null, user.getRoles());
 		} catch (Throwable t) {
-			LOGGER.error("Could not create user: {}", t.getMessage(), t);
+			logger.error("Could not create user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to create user.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ PUT ]] putNewUser |END| - called by: {}, user to create: {}", auth.getName(), user);
+			logger.info("[[ PUT ]] putNewUser |END| - called by: {}, user to create: {}", auth.getName(), user);
 		}
 		
 	}
@@ -381,15 +381,15 @@ public class AdminController {
 						   @Validated(ValidationGroups.Update.class) @RequestBody List<Role> roles,
 						   Authentication auth) {
 		
-		LOGGER.info("[[ PUT ]] putAddRole - called by: {}, user to add roles to: {}, roles: {}", auth.getName(), userId, roles);
+		logger.info("[[ PUT ]] putAddRole - called by: {}, user to add roles to: {}, roles: {}", auth.getName(), userId, roles);
 		
 		try {
 			this.authService.modifyRoles(userId, roles, true);
 		} catch (Throwable t) {
-			LOGGER.error("Could not add roles: {}", t.getMessage(), t);
+			logger.error("Could not add roles: {}", t.getMessage(), t);
 			throw new InternalException("Failed to add roles.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ PUT ]] putAddRole |END| - called by: {}, user to add roles to: {}, roles: {}", auth.getName(), userId, roles);
+			logger.info("[[ PUT ]] putAddRole |END| - called by: {}, user to add roles to: {}, roles: {}", auth.getName(), userId, roles);
 		}
 		
 	}
@@ -399,15 +399,15 @@ public class AdminController {
 						      @Validated(ValidationGroups.Update.class) @RequestBody List<Role> roles,
 						      Authentication auth) {
 		
-		LOGGER.info("[[ PUT ]] putRemoveRole - called by: {}, user to remove roles from: {}, roles: {}", auth.getName(), userId, roles);
+		logger.info("[[ PUT ]] putRemoveRole - called by: {}, user to remove roles from: {}, roles: {}", auth.getName(), userId, roles);
 		
 		try {
 			this.authService.modifyRoles(userId, roles, false);
 		} catch (Throwable t) {
-			LOGGER.error("Could not remove roles: {}", t.getMessage(), t);
+			logger.error("Could not remove roles: {}", t.getMessage(), t);
 			throw new InternalException("Failed to remove roles.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ PUT ]] putRemoveRole |END| - called by: {}, user to remove roles from: {}, roles: {}", auth.getName(), userId, roles);
+			logger.info("[[ PUT ]] putRemoveRole |END| - called by: {}, user to remove roles from: {}, roles: {}", auth.getName(), userId, roles);
 		}
 		
 	}
@@ -415,15 +415,15 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.GET, path = "/phenology/types")
 	public List<PhenologyObservationType> getAllPhenologyObservationTypes() {
 		
-		LOGGER.info("[[ GET ]] getAllPhenologyObservationTypes");
+		logger.info("[[ GET ]] getAllPhenologyObservationTypes");
 		
 		try {
 			return this.phenologyMapper.getAllObservationTypes();
 		} catch (Throwable t) {
-			LOGGER.error("Could not get all phenology observation types: {}", t.getMessage(), t);
+			logger.error("Could not get all phenology observation types: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get all phenology observation types.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ GET ]] getAllPhenologyObservationTypes |END|");
+			logger.info("[[ GET ]] getAllPhenologyObservationTypes |END|");
 		}
 		
 	}
@@ -431,15 +431,15 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.GET, path = "/announcements")
 	public List<Announcement> getAllAnnouncements() {
 		
-		LOGGER.info("[[ GET ]] getAllAnnouncements");
+		logger.info("[[ GET ]] getAllAnnouncements");
 		
 		try {
 			return this.uiMapper.getAllAnnouncements();
 		} catch (Throwable t) {
-			LOGGER.error("Could not get all announcements: {}", t.getMessage(), t);
+			logger.error("Could not get all announcements: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get all announcements.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ GET ]] getAllAnnouncements |END|");
+			logger.info("[[ GET ]] getAllAnnouncements |END|");
 		}
 		
 	}
@@ -448,16 +448,16 @@ public class AdminController {
 	public void putAnnouncement(@Validated(ValidationGroups.Update.class) @RequestBody Announcement announcement,
 								Authentication auth) {
 		
-		LOGGER.info("[[ PUT ]] putAnnouncement");
+		logger.info("[[ PUT ]] putAnnouncement");
 		
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
 		try {
 			this.uiMapper.insertAnnouncement(announcement, String.valueOf(userId));
 		} catch (Throwable t) {
-			LOGGER.error("Could not insert announcement: {}", t.getMessage(), t);
+			logger.error("Could not insert announcement: {}", t.getMessage(), t);
 			throw new InternalException("Failed to insert announcement.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ PUT ]] putAnnouncement |END|");
+			logger.info("[[ PUT ]] putAnnouncement |END|");
 		}
 		
 	}
@@ -465,15 +465,15 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.DELETE, path = "/announcement/{announcementId:\\d+}")
 	public void deleteAnnouncement(@PathVariable("announcementId") int announcementId) {
 		
-		LOGGER.info("[[ PUT ]] putAnnouncement");
+		logger.info("[[ PUT ]] putAnnouncement");
 		
 		try {
 			this.uiMapper.deleteAnnouncement(announcementId);
 		} catch (Throwable t) {
-			LOGGER.error("Could not insert announcement: {}", t.getMessage(), t);
+			logger.error("Could not insert announcement: {}", t.getMessage(), t);
 			throw new InternalException("Failed to insert announcement.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ PUT ]] putAnnouncement |END|");
+			logger.info("[[ PUT ]] putAnnouncement |END|");
 		}
 		
 	}
@@ -486,8 +486,8 @@ public class AdminController {
 										 @RequestParam(required = false) String timespanMin,
 										 @RequestParam(required = false) String timespanMax) {
 		
-		if (LOGGER.isTraceEnabled()) {
-			LOGGER.trace("[[ GET ]] getBeaconLogs - beaconId: " + beaconId +
+		if (logger.isTraceEnabled()) {
+			logger.trace("[[ GET ]] getBeaconLogs - beaconId: " + beaconId +
 					", minSeverity: " + minSeverity +
 					", offset: " + offset +
 					", maxLogs: " + maxLogs +
@@ -513,7 +513,7 @@ public class AdminController {
 						severities.add(BeaconLogSeverity.ERROR);
 						break;
 					default:
-						LOGGER.error("User requetsed illegal beacon log severity: " + minSeverity);
+						logger.error("User requetsed illegal beacon log severity: " + minSeverity);
 						throw new BadRequestException("Invalid beacon log serverity given", ClientError.BEACON_LOG_SEVERITY_INVALID);
 				}
 			}
@@ -541,10 +541,10 @@ public class AdminController {
 		} catch (BadRequestException e) {
 			throw e;
 		} catch (Throwable t) {
-			LOGGER.error("Could not get beacon logs for beacon with id {}: {}", beaconId, t.getMessage(), t);
+			logger.error("Could not get beacon logs for beacon with id {}: {}", beaconId, t.getMessage(), t);
 			throw new InternalException("Could not get beacon logs for beacon: " + t.getMessage(), ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.trace("[[ GET ]] getBeaconLogs |END|");
+			logger.trace("[[ GET ]] getBeaconLogs |END|");
 		}
 		
 	}
@@ -558,7 +558,7 @@ public class AdminController {
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
 		
-		LOGGER.debug("[[ GET ]] getReports");
+		logger.debug("[[ GET ]] getReports");
 		
 		if (maxReports == null) {
 			maxReports = -1; // infinite
@@ -583,19 +583,19 @@ public class AdminController {
 	public void putReportRemark(
 			@PathVariable int id,
 			@RequestBody(required = false) String remark) {
-		LOGGER.debug("[[ PUT ]] putReportRemark - id: " + id);
+		logger.debug("[[ PUT ]] putReportRemark - id: " + id);
 		this.appMapper.updateReportRemark(id, remark);
 	}
 	
 	@RequestMapping(method = RequestMethod.PUT, path = "/report/{id:\\d+}/resolve")
 	public void putReportResolve(@PathVariable int id) {
-		LOGGER.debug("[[ PUT ]] putReportResolve - id: " + id);
+		logger.debug("[[ PUT ]] putReportResolve - id: " + id);
 		this.appMapper.updateReportResolved(id, true);
 	}
 	
 	@RequestMapping(method = RequestMethod.PUT, path = "/report/{id:\\d+}/unresolve")
 	public void putReportUnresolve(@PathVariable int id) {
-		LOGGER.debug("[[ PUT ]] putReportUnresolve - id: " + id);
+		logger.debug("[[ PUT ]] putReportUnresolve - id: " + id);
 		this.appMapper.updateReportResolved(id, false);
 	}
 	

@@ -3,7 +3,6 @@ package at.sparklingscience.urbantrees.controller;
 import java.util.List;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -29,10 +28,7 @@ import at.sparklingscience.urbantrees.mapper.UiMapper;
 @RequestMapping("/ui")
 public class UiController {
 	
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger LOGGER = LoggerFactory.getLogger(UiController.class);
+	private static Logger logger;
 	
 	@Autowired
     private UiMapper uiMapper;
@@ -40,12 +36,16 @@ public class UiController {
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
 	
+	public UiController(Logger classLogger) {
+		logger = classLogger;
+	}
+	
 	@RequestMapping(method = RequestMethod.GET, path = "/phenology/observation/result/{treeSpeciesId:\\d+}/{resultId:\\d+}/img")
 	public Image getPhenologyObservationResultImage(
 			@PathVariable int treeSpeciesId,
 			@PathVariable int resultId) {
 		
-		LOGGER.debug("[[ GET ]] getPhenologyObservationResultImage - treeSpeciesId: {}, resultId: {}", treeSpeciesId, resultId);
+		logger.debug("[[ GET ]] getPhenologyObservationResultImage - treeSpeciesId: {}, resultId: {}", treeSpeciesId, resultId);
 		
 		Image img = this.uiMapper.findImageForPhenologyObservationResult(treeSpeciesId, resultId);
 		
@@ -63,7 +63,7 @@ public class UiController {
 	@RequestMapping(method = RequestMethod.GET, path = "/announcements")
 	public List<Announcement> getCurrentAnnouncements() {
 		
-		LOGGER.trace("[[ GET ]] getCurrentAnnouncements");
+		logger.trace("[[ GET ]] getCurrentAnnouncements");
 		
 		return this.uiMapper.getCurrentAnnouncements();
 		
@@ -75,7 +75,7 @@ public class UiController {
 	@RequestMapping(method = RequestMethod.GET, path = "/statistics/system")
 	public SystemStatistics getSystemStatistics() {
 		
-		LOGGER.trace("[[ GET ]] getSystemStatistics");
+		logger.trace("[[ GET ]] getSystemStatistics");
 		
 	    SystemStatistics stats = this.uiMapper.getSystemStatistics();
 	    stats.setBeaconReadouts(this.uiMapper.getBeaconReadoutDaily());
@@ -91,7 +91,7 @@ public class UiController {
 	@RequestMapping(method = RequestMethod.GET, path = "/statistics/measurements")
 	public MeasurementStatistics getMeasurementStatistics() {
 		
-		LOGGER.trace("[[ GET ]] getMeasurementStatistics");
+		logger.trace("[[ GET ]] getMeasurementStatistics");
 		
 	    return this.uiMapper.getMeasurementStatistics();
 	

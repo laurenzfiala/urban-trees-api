@@ -1,0 +1,211 @@
+package at.sparklingscience.urbantrees.service;
+
+import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import at.sparklingscience.urbantrees.SecurityConfiguration;
+import at.sparklingscience.urbantrees.domain.PasswordReset;
+import at.sparklingscience.urbantrees.domain.User;
+import at.sparklingscience.urbantrees.domain.UserIdentity;
+import at.sparklingscience.urbantrees.domain.UserPermission;
+import at.sparklingscience.urbantrees.domain.UserPermissionRequest;
+import at.sparklingscience.urbantrees.domain.UsernameChange;
+import at.sparklingscience.urbantrees.exception.BadRequestException;
+import at.sparklingscience.urbantrees.exception.ClientError;
+import at.sparklingscience.urbantrees.exception.InternalException;
+import at.sparklingscience.urbantrees.exception.UnauthorizedException;
+import at.sparklingscience.urbantrees.mapper.AuthMapper;
+import at.sparklingscience.urbantrees.security.SecurityUtil;
+import at.sparklingscience.urbantrees.security.user.AuthenticationService;
+
+/**
+ * Service for user account-related actions.
+ * 
+ * @author Laurenz Fiala
+ * @since 2020/04/19
+ */
+@Service
+public class AccountService {
+	
+	private static Logger logger;
+	
+	@Autowired
+	private BCryptPasswordEncoder bCryptPasswordEncoder;
+	
+	@Autowired
+	private AuthenticationService authService;
+	
+	@Autowired
+	private AuthMapper authMapper;
+	
+	public AccountService(Logger classLogger) {
+		logger = classLogger;
+	}
+	
+	/**
+	 * Change the passwor dof the given user.
+	 * If the user has the temporary change password role assigned, they may change their
+	 * password without the old password.
+	 * @param userId user to change password of
+	 * @param authorities granted roles of the given user
+	 * @param passwordReset password reset dto (holds old and new password)
+	 */
+	public void changePassword(final int userId, final Collection<? extends GrantedAuthority> authorities, final PasswordReset passwordReset) {
+		
+		boolean changeWithoutOldPw = false;
+		if (authorities.contains(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE))) {
+			changeWithoutOldPw = true;
+		}
+		boolean pwChanged = this.changePassword(userId, passwordReset.getOldPassword(), passwordReset.getNewPassword(), changeWithoutOldPw);
+		
+		if (!pwChanged) {
+			throw new BadRequestException("Old password is incorrect or invalid user id was given.");
+		}
+		
+		logger.trace("Successfully changed password for user " + userId);
+		
+	}
+	
+	/**
+	 * Update a users' password to newPassword
+	 * if oldPassword matches the previously stored password.
+	 * @param userId id of user to update
+	 * @param oldPassword Previous password
+	 * @param newPassword New password to be stored
+	 * @param changeWithoutOldPw If true, don't check the previous password for
+	 * 							 validity.
+	 * @return true if the password change was successful, false otherwise
+	 */
+	@Transactional
+	private boolean changePassword(final int userId, final String oldPassword, final String newPassword, final boolean changeWithoutOldPw) {
+		
+		final User user = this.authMapper.findUserById(userId);
+		if (user == null) {
+			logger.error("Given user not found by id. Please investigate, this should be handled internally.");
+			return false;
+		}
+		
+		boolean oldPasswordMatches;
+		if (changeWithoutOldPw || user.getPassword() == null) {
+			oldPasswordMatches = true;
+		} else {
+			oldPasswordMatches = this.bCryptPasswordEncoder.matches(oldPassword, user.getPassword());
+		}
+		final String hashedNewPassword = this.bCryptPasswordEncoder.encode(newPassword);
+		
+		if (oldPasswordMatches) {
+			final int updatedRows = this.authMapper.updateUserPassword(userId, hashedNewPassword);
+			return updatedRows == 1;
+		}
+		
+		logger.info("Given old password did not match database. Password not updated.");
+		return false;
+		
+	}
+	
+	/**
+	 * Update a users' username to {@link UsernameChange#getUsername()}.
+	 * @param userId the user to be affected
+	 * @param usernameChange the new username
+	 */
+	@Transactional
+	public void changeUsername(final int userId, final UsernameChange usernameChange) {
+		
+		logger.debug("Upding username for user " + userId + "...");
+		
+		final String newUsername = usernameChange.getUsername();
+		if (newUsername == null || newUsername.isBlank() || newUsername.length() < 5) {
+			throw new BadRequestException("Username does not meet requirements: length >= 5"); 
+		}
+		
+		int updatedRows;
+		try {
+			updatedRows = this.authMapper.updateUsername(userId, newUsername);
+		} catch (Throwable t) {
+			throw new BadRequestException("Duplicate username.", ClientError.USERNAME_DUPLICATE);
+		}
+		
+		if (updatedRows == 0) {
+			logger.info("Failed to update usename for unknown reason. Please investigate.");
+			throw new InternalException("Failed to update username.");
+		}
+		logger.debug("Username for " + userId + " successfully updated.");
+		
+	}
+	
+	/**
+	 * Add a user-permission to toUserId. If the credentials of the user in permRequest is valid,
+	 * this user grants the requested permission to toUserId.
+	 * @param permRequest user to grant permission and type of permission
+	 * @param toUserId user to receive permission
+	 * @return the granting users' identity, which is now granted to be shown to user with toUserId.
+	 */
+	public UserIdentity requestUserPermission(final UserPermissionRequest permRequest, final int toUserId) {
+		
+		final User fromUser = this.authService.findUser(permRequest.getUsername());
+		if (fromUser == null) {
+			throw new UnauthorizedException("Permission Request: Username or password wrong");
+		}
+		
+		if (toUserId == fromUser.getId()) {
+			throw new BadRequestException("Permission Request: User may not request permission from themself", ClientError.SAME_USER_PERM_REQUEST);
+		}
+		
+		final boolean fromUserAuthValid = this.authService.isPermissionPINValid(fromUser.getId(), permRequest.getPpin());
+		final boolean fromUserOk = this.authService.isUserNonLocked(fromUser);
+		
+		if (!fromUserAuthValid) {
+			try {
+				this.authService.increaseFailedLoginAttempts(fromUser.getId());
+			} catch (Throwable t) {}
+			throw new UnauthorizedException("Permission Request: Username or password wrong");
+		}
+		
+		if (!fromUserOk) {
+			throw new UnauthorizedException("Permission Request: Username or password wrong");
+		}
+		
+		this.authService.successfulAuth(fromUser.getId());
+		this.authService.addUserPermission(fromUser.getId(), toUserId, permRequest.getPermission());
+		
+		return UserIdentity.fromUser(fromUser);
+		
+	}
+
+	/**
+	 * Get all users that have given the receivingUser the specified permission
+	 * @param receivingUserId User ID of permission receiving user (getting permission)
+	 * @param permission type of permission
+	 * @return list of users that have given the receivingUser the specified permission
+	 */
+	@Transactional
+	public List<UserIdentity> getUsersGrantingPermission(int receivingUserId, UserPermission permission) {
+		return this.authMapper.findUserIdentitiesGrantingPermission(receivingUserId, permission.name());
+	}
+	
+	/**
+	 * Set a new permissions PIN and return it.
+	 * Also resets the attempts in the DB.
+	 */
+	@Transactional
+	public String newPermissionsPIN(final int userId) {
+		
+		final SecureRandom sr = new SecureRandom();
+		final int pinNum = sr.nextInt((int) Math.pow(10, SecurityConfiguration.PERMISSIONS_PIN_LENGTH));
+		final String pin = String.format("%0" + SecurityConfiguration.PERMISSIONS_PIN_LENGTH + "d", pinNum);
+		
+		this.authMapper.setPermissionsPIN(userId, pin);
+		
+		return pin;
+		
+	}
+
+}

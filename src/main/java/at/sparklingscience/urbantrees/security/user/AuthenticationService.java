@@ -10,7 +10,6 @@ import java.util.Random;
 import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.User;
-import at.sparklingscience.urbantrees.domain.UserIdentity;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
@@ -41,10 +39,7 @@ import io.jsonwebtoken.security.WeakKeyException;
 @Service
 public class AuthenticationService {
 	
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
+	private static Logger logger;
 	
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -54,6 +49,10 @@ public class AuthenticationService {
 	
 	@Autowired
 	private UserService userService;
+	
+	public AuthenticationService(Logger classLogger) {
+		logger = classLogger;
+	}
 	
 	/**
 	 * Searches for a user with the given username.
@@ -154,61 +153,7 @@ public class AuthenticationService {
 		
 	}
 
-	/**
-	 * Update a users' password to newPassword
-	 * if oldPassword matches the previously stored password.
-	 * @param userId id of user to update
-	 * @param oldPassword Previous password
-	 * @param newPassword New password to be stored
-	 * @param changeWithoutOldPw If true, don't check the previous password for
-	 * 							 validity.
-	 * @return true if the password change was successful, false otherwise
-	 */
-	@Transactional
-	public boolean changePassword(final int userId, final String oldPassword, final String newPassword, final boolean changeWithoutOldPw) {
-		
-		final User user = this.authMapper.findUserById(userId);
-		if (user == null) {
-			LOGGER.error("Given user not found by id. Please investigate, this should be handled internally.");
-			return false;
-		}
-		
-		boolean oldPasswordMatches;
-		if (changeWithoutOldPw || user.getPassword() == null) {
-			oldPasswordMatches = true;
-		} else {
-			oldPasswordMatches = this.bCryptPasswordEncoder.matches(oldPassword, user.getPassword());
-		}
-		final String hashedNewPassword = this.bCryptPasswordEncoder.encode(newPassword);
-		
-		if (oldPasswordMatches) {
-			final int updatedRows = this.authMapper.updateUserPassword(userId, hashedNewPassword);
-			return updatedRows == 1;
-		}
-		
-		LOGGER.info("Given old password did not match database. Password not updated.");
-		return false;
-		
-	}
-
-	/**
-	 * Update a users' username to newUsername.
-	 * @param userId userId
-	 * @param newUsername new username (raw)
-	 * @return true if successful; false otherwise
-	 */
-	@Transactional
-	public boolean changeUsername(final int userId, final String newUsername) {
-		
-		final int updatedRows = this.authMapper.updateUsername(userId, newUsername);
-		if (updatedRows == 1) {
-			return true;
-		} else {
-			LOGGER.info("Failed to update usename for unknown reason. Please investigate.");
-			return false;
-		}
-		
-	}
+	
 
 	/**
 	 * Check the DB user againt the given raw password.
@@ -295,6 +240,11 @@ public class AuthenticationService {
 	}
 	
 	@Transactional
+	public void increaseFailedLoginAttempts(final int userId) {
+		this.authMapper.increaseFailedLoginAttempts(userId);
+	}
+	
+	@Transactional
 	public void increaseFailedLoginAttempts(final String username) {
 		this.authMapper.increaseFailedLoginAttemptsByUsername(username);
 	}
@@ -340,34 +290,6 @@ public class AuthenticationService {
 	@Transactional
 	public boolean hasUserPermission(int grantingUserId, int receivingUserId, UserPermission permission) {
 		return this.authMapper.hasUserPermission(grantingUserId, receivingUserId, permission.name()) > 0;
-	}
-
-	/**
-	 * Get all users that have given the receivingUser the specified permission
-	 * @param receivingUserId User ID of permission receiving user (getting permission)
-	 * @param permission type of permission
-	 * @return list of users that have given the receivingUser the specified permission
-	 */
-	@Transactional
-	public List<UserIdentity> getUsersGrantingPermission(int receivingUserId, UserPermission permission) {
-		return this.authMapper.findUserIdentitiesGrantingPermission(receivingUserId, permission.name());
-	}
-	
-	/**
-	 * Set a new permissions PIN and return it.
-	 * Also resets the attempts in the DB.
-	 */
-	@Transactional
-	public String newPermissionsPIN(final int userId) {
-		
-		final SecureRandom sr = new SecureRandom();
-		final int pinNum = sr.nextInt((int) Math.pow(10, SecurityConfiguration.PERMISSIONS_PIN_LENGTH));
-		final String pin = String.format("%0" + SecurityConfiguration.PERMISSIONS_PIN_LENGTH + "d", pinNum);
-		
-		this.authMapper.setPermissionsPIN(userId, pin);
-		
-		return pin;
-		
 	}
 	
 	/**

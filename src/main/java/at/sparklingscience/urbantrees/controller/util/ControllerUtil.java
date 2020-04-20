@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 
 import at.sparklingscience.urbantrees.exception.BadRequestException;
@@ -20,10 +20,8 @@ import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
  */
 public class ControllerUtil {
 	
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger LOGGER = LoggerFactory.getLogger(ControllerUtil.class);
+	@Autowired
+	private static Logger logger;
 
 	/**
 	 * 
@@ -38,19 +36,19 @@ public class ControllerUtil {
 			Date timespanMinDate = null;
 			if (timespanMin != null) {
 				timespanMinDate = dateFormat.parse(timespanMin);
-				LOGGER.debug("Using timespan min of {}", timespanMin);
+				logger.debug("Using timespan min of {}", timespanMin);
 			}
 
 			Date timespanMaxDate = null;
 			if (timespanMax != null) {
 				timespanMaxDate = dateFormat.parse(timespanMax);
-				LOGGER.debug("Using timespan max of {}", timespanMax);
+				logger.debug("Using timespan max of {}", timespanMax);
 			}
 
 			return new Timespan(timespanMinDate, timespanMaxDate);
 
 		} catch (ParseException e) {
-			LOGGER.error("Timestamps could not be parsed: " + e.getMessage(), e);
+			logger.error("Timestamps could not be parsed: " + e.getMessage(), e);
 			throw new BadRequestException("Timestamps could not be parsed.");
 		}
 

@@ -195,6 +195,15 @@
 			id = #{userId}
 	</update>
     
+    <update id="increaseFailedLoginAttempts">
+        update
+			access_data."user"
+		set
+			failed_login_attempts = failed_login_attempts + 1
+		where
+			username = #{userId}
+	</update>
+    
     <update id="increaseFailedLoginAttemptsByUsername">
         update
 			access_data."user"

@@ -23,10 +23,7 @@ import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 @Service
 public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 	
-	/**
-	 * Logger for this class.
-	 */
-	private static final Logger LOGGER = LoggerFactory.getLogger(UserDetailsService.class);
+	private static Logger logger = LoggerFactory.getLogger(UserDetailsService.class); // TODO
 	
 	@Autowired
 	private AuthenticationService authenticationService;
@@ -34,14 +31,14 @@ public class UserDetailsService implements org.springframework.security.core.use
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		
-		LOGGER.trace("Searching for user {} in the database.", username);
+		logger.trace("Searching for user {} in the database.", username);
 		User user = this.authenticationService.findUser(username);
 		if (user == null) {
-			LOGGER.trace("Could not find user {}.", user);
+			logger.trace("Could not find user {}.", user);
 			throw new UsernameNotFoundException("Could not find user with name " + user);
 		}
 		
-		LOGGER.trace("User {} found.", user);
+		logger.trace("User {} found.", user);
 		
 		return this.domainUserToSecUser(user);
 		
@@ -55,14 +52,14 @@ public class UserDetailsService implements org.springframework.security.core.use
 	 */
 	public UserDetails loadUserByLoginKey(String token) throws BadCredentialsException {
 		
-		LOGGER.trace("Searching for user by token in the database.");
+		logger.trace("Searching for user by token in the database.");
 		User user = this.authenticationService.findUserByLoginKey(token);
 		if (user == null) {
-			LOGGER.trace("Could not find user {}.", user);
+			logger.trace("Could not find user {}.", user);
 			throw new BadCredentialsException("Could not find user with name " + user);
 		}
 		
-		LOGGER.trace("User {} found.", user);
+		logger.trace("User {} found.", user);
 		
 		return this.domainUserToSecUser(user);
 		

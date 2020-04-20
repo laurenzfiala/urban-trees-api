@@ -11,7 +11,8 @@ import at.sparklingscience.urbantrees.security.jwt.TokenAuthenticationToken;
 import at.sparklingscience.urbantrees.security.jwt.UserDetailsService;
 
 /**
- * TODO
+ * Authenticates a user by their login link token.
+ * 
  * @author Laurenz Fiala
  * @since 2019/02/04
  */

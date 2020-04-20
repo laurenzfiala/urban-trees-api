@@ -108,10 +108,14 @@ public interface AuthMapper {
 	void updateLastLoginDat(@Param("userId") int userId);
 	
 	/**
-	 * Increase failed user login attempts by 1 and if 
-	 * the attempts is equal or greater to MAX_LOGIN_ATTEMPTS in
-	 * access_data.settings, set credentials_non_expired to true.
-	 * @param username Users' username (hashed).
+	 * Increase failed user login attempts by 1.
+	 * @param userId Users' id.
+	 */
+	void increaseFailedLoginAttempts(@Param("userId") int userId);
+	
+	/**
+	 * Increase failed user login attempts by 1.
+	 * @param username Users' username.
 	 */
 	void increaseFailedLoginAttemptsByUsername(@Param("username") String username);
 

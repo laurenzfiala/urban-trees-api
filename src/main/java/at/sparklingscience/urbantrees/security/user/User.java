@@ -2,8 +2,6 @@ package at.sparklingscience.urbantrees.security.user;
 
 import java.util.Collection;
 
-import javax.crypto.SecretKey;
-
 import org.springframework.security.core.GrantedAuthority;
 
 /**
@@ -20,9 +18,9 @@ public class User extends org.springframework.security.core.userdetails.User {
 	private int id;
 	
 	/**
-	 * The users' token {@link SecretKey} to use for this request,
+	 * Whether or not the user is currently using a OTP.
 	 */
-	private SecretKey tokenSecret; // TODO remove
+	private boolean isUsingOtp;
 
 	public User(
 			int id,
@@ -32,18 +30,11 @@ public class User extends org.springframework.security.core.userdetails.User {
 			boolean accountNonExpired,
 			boolean credentialsNonExpired,
 			boolean accountNonLocked,
-			Collection<? extends GrantedAuthority> authorities) {
+			Collection<? extends GrantedAuthority> authorities,
+			boolean isUsingOtp) {
 		super(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
 		this.setId(id);
-	}
-
-	public User(
-			int id,
-			String username,
-			String password,
-			Collection<? extends GrantedAuthority> authorities) {
-		super(username, password, authorities);
-		this.setId(id);
+		this.setUsingOtp(isUsingOtp);
 	}
 	
 	@Override
@@ -59,8 +50,12 @@ public class User extends org.springframework.security.core.userdetails.User {
 		this.id = id;
 	}
 
-	public SecretKey getTokenSecret() {
-		return tokenSecret;
+	public boolean isUsingOtp() {
+		return isUsingOtp;
+	}
+
+	public void setUsingOtp(boolean isUsingOtp) {
+		this.isUsingOtp = isUsingOtp;
 	}
 	
 }

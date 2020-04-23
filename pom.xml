@@ -39,7 +39,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- JWT Security -->
+		<!-- Security -->
 		<!-- IMPORTANT: KEEP STABLE RELEASES UP-TO-DATE -->
 		<dependency>
 		    <groupId>io.jsonwebtoken</groupId>
@@ -57,6 +57,20 @@
 		    <artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
 		    <version>0.11.1</version>
 		    <scope>runtime</scope>
+		</dependency>
+		
+		<!-- QR Code Generation -->
+		<dependency>
+		    <groupId>io.nayuki</groupId>
+		    <artifactId>qrcodegen</artifactId>
+		    <version>1.6.0</version>
+		</dependency>
+		
+		<!-- En-/decoding -->
+		<dependency>
+		    <groupId>commons-codec</groupId>
+		    <artifactId>commons-codec</artifactId>
+		    <!-- version managed by spring boot parent -->
 		</dependency>
 		
 		<!-- Spring Boot -->

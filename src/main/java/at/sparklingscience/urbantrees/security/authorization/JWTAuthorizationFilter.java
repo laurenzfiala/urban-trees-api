@@ -1,4 +1,4 @@
-package at.sparklingscience.urbantrees.security.jwt;
+package at.sparklingscience.urbantrees.security.authorization;
 
 import java.io.IOException;
 import java.security.Key;
@@ -20,7 +20,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
-import at.sparklingscience.urbantrees.security.user.AuthenticationService;
+import at.sparklingscience.urbantrees.security.authentication.jwt.JWTAuthenticationToken;
+import at.sparklingscience.urbantrees.service.AuthenticationService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwsHeader;
@@ -83,7 +84,8 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     			@Override
 				public Key resolveSigningKey(@SuppressWarnings("rawtypes") JwsHeader header, Claims claims) {
     				final int userId = claims.get(SecurityConfiguration.JWT_CLAIMS_USERID_KEY, Integer.class);
-    				return authService.getJWTSecret(userId);
+    				final long authId = claims.get(SecurityConfiguration.JWT_CLAIMS_AUTHID_KEY, Long.class);
+    				return authService.getJWTSecret(userId, authId);
 				}
 			};
     		
@@ -107,6 +109,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     	}
     	
     	final int userId = jwtClaims.get(SecurityConfiguration.JWT_CLAIMS_USERID_KEY, Integer.class);
+    	final long authId = jwtClaims.get(SecurityConfiguration.JWT_CLAIMS_AUTHID_KEY, Long.class);
         final String username = jwtClaims.getSubject();
         final List<GrantedAuthority> roles = AuthorityUtils.commaSeparatedStringToAuthorityList(jwtClaims.get(SecurityConfiguration.JWT_CLAIMS_ROLES_KEY, String.class));
         final Date tokenExpirationDate = jwtClaims.getExpiration();
@@ -114,7 +117,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         
         if (username != null) {
         	logger.trace("Setting username/password auth token for user {}.", username);
-            return new AuthenticationToken(userId, username, roles, tokenCreationDate);
+            return new JWTAuthenticationToken(userId, authId, username, roles, tokenCreationDate);
         }
         return null;
         

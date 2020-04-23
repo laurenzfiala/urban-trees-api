@@ -1,4 +1,4 @@
-package at.sparklingscience.urbantrees.security.apikey;
+package at.sparklingscience.urbantrees.security.authentication.apikey;
 
 import org.springframework.security.core.AuthenticationException;
 

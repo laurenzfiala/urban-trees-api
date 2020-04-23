@@ -11,7 +11,7 @@ import at.sparklingscience.urbantrees.domain.UserContentTag;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.UserContentMapper;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
-import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 
 /**
  * Service for user-content actions.

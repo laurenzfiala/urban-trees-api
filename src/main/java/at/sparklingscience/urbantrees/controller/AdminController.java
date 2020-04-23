@@ -43,7 +43,7 @@ import at.sparklingscience.urbantrees.mapper.BeaconMapper;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.TreeMapper;
 import at.sparklingscience.urbantrees.mapper.UiMapper;
-import at.sparklingscience.urbantrees.security.user.AuthenticationService;
+import at.sparklingscience.urbantrees.service.AuthenticationService;
 
 @RestController
 @RequestMapping("/admin")

@@ -16,13 +16,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfiguration implements WebMvcConfigurer {
 
   /**
-   * Ignore "Accepts"-header and set json as default.
-   * Also ignore file endings.
+   * Set json as default and disallow unregistered extensions.
    */
   @Override
   public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
     configurer
-    	.ignoreAcceptHeader(true)
         .useRegisteredExtensionsOnly(true)
         .defaultContentType(MediaType.APPLICATION_JSON)
         .mediaType("json", MediaType.APPLICATION_JSON);

@@ -8,12 +8,14 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.http.HttpRequest;
 
+import at.sparklingscience.urbantrees.domain.OtpCredentials;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserIdentity;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.security.AuthSettings;
-import at.sparklingscience.urbantrees.security.apikey.ApiKeyFilter;
+import at.sparklingscience.urbantrees.security.authentication.apikey.ApiKeyFilter;
+import at.sparklingscience.urbantrees.security.authentication.jwt.JWTUserAuthentication;
 
 /**
  * Mybatis mapping interface.
@@ -255,16 +257,53 @@ public interface AuthMapper {
 	/**
 	 * Find the given users' token secret.
 	 * @param userId users' id
+	 * @param userId current session id
 	 * @return token secret
 	 */
-	String findUserTokenSecret(@Param("userId") int userId);
+	String findUserTokenSecret(@Param("userId") int userId, @Param("authId") long authId);
 	
 	/**
-	 * Set the users' token secret.
-	 * @param userId users' id
-	 * @param tokenSecret Token secret in string form. The DB field has no limitation in size (text field).
-	 * @return amount of rows affected (must be 1)
+	 * Update the users' authentication.
+	 * After the call, the given {@link JWTUserAuthentication} instance has its
+	 * id set.
+	 * @param auth user authentication with populated user id and secret
+	 * @return number of rows updated
 	 */
-	int updateUserTokenSecret(@Param("userId") int userId, @Param("tokenSecret") String tokenSecret);
+	int upsertUserAuthentication(@Param("auth") JWTUserAuthentication auth);
+	
+	/**
+	 * Delete all sessions of the given user.
+	 * @param userId users' id
+	 * @return number of rows deleted
+	 */
+	int deleteAllUserSessions(@Param("userId") int userId);
+	
+	/**
+	 * Whether or not the given user has OTP enabled or not.
+	 * @param userId users' id
+	 * @return true if OTP is currently enabled; false otherwise
+	 */
+	boolean isUserUsingOtp(@Param("userId") int userId);
+	
+	/**
+	 * Update the given users' OTP setting. (Turn on or off)
+	 * @param userId user id
+	 * @param active true to set active; false to disable OTP
+	 */
+	void updateUserUsingOtp(@Param("userId") int userId, @Param("active") boolean active);
+	
+	/**
+	 * Set the given users' OTP credentials.
+	 * @param userId user id
+	 * @param creds credentials to set
+	 */
+	void updateUserOtpCredentials(@Param("userId") int userId, @Param("creds") OtpCredentials creds);
+	
+	/**
+	 * Find the users' current OTP credentials.
+	 * @param userId user id
+	 * @return {@link OtpCredentials} if found
+	 */
+	OtpCredentials findUserOtpCredentials(@Param("userId") int userId);
 	
 }

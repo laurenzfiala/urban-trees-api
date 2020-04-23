@@ -24,6 +24,7 @@
         <result column="last_login_attempt_dat" 	property="lastLoginAttemptDate" />
         <result column="last_login_dat" 			property="lastLoginDate" />
         <result column="secure_login_key" 			property="secureLoginKey" />
+        <result column="is_using_otp" 				property="isUsingOtp" />
         
         <collection
 	        column="id"
@@ -39,6 +40,7 @@
         <result column="failed_login_attempts"		property="failedloginAttempts" />
         <result column="last_login_attempt_dat" 	property="lastLoginAttemptDate" />
         <result column="last_login_dat" 			property="lastLoginDate" />
+        <result column="is_using_otp" 				property="isUsingOtp" />
         
         <collection
 	        column="id"
@@ -54,6 +56,13 @@
     <resultMap id="RoleMap" type="at.sparklingscience.urbantrees.domain.Role">
         <id column="id" 							property="id" />
         <result column="name"						property="name" />
+    </resultMap>
+    
+    <resultMap id="OtpCredentialsMap" type="at.sparklingscience.urbantrees.domain.OtpCredentials">
+        <result column="otp_secret"					property="secret" />
+        <result column="otp_scratch_code_1"			property="scratchCode1" />
+        <result column="otp_scratch_code_2"			property="scratchCode2" />
+        <result column="otp_scratch_code_3"			property="scratchCode3" />
     </resultMap>
 
     <select id="hasValidApiKey" resultMap="AuthResultMap" useCache="true">
@@ -75,7 +84,8 @@
 			u.failed_login_attempts,
 			u.last_login_attempt_dat,
 			u.last_login_dat,
-			u.secure_login_key
+			u.secure_login_key,
+			u.is_using_otp
 		from 
 		    access_data."user" u
 		where
@@ -93,7 +103,8 @@
 			u.failed_login_attempts,
 			u.last_login_attempt_dat,
 			u.last_login_dat,
-			u.secure_login_key
+			u.secure_login_key,
+			u.is_using_otp
 		from
 			access_data."user" u
 		where
@@ -110,7 +121,8 @@
 			u.failed_login_attempts,
 			u.last_login_attempt_dat,
 			u.last_login_dat,
-			u.secure_login_key
+			u.secure_login_key,
+			u.is_using_otp
 		from
 			access_data."user" u
 		where
@@ -131,7 +143,7 @@
 		    	now(),
 		    	user,
 		    	user
-	       );
+	       )
 	</insert>
 	
 	<insert id="insertUserRoles">
@@ -201,7 +213,7 @@
 		set
 			failed_login_attempts = failed_login_attempts + 1
 		where
-			username = #{userId}
+			id = #{userId}
 	</update>
     
     <update id="increaseFailedLoginAttemptsByUsername">
@@ -271,7 +283,8 @@
 			u.is_credentials_non_expired,
 			u.failed_login_attempts,
 			u.last_login_attempt_dat,
-			u.last_login_dat
+			u.last_login_dat,
+			u.is_using_otp
 		from
 			access_data."user" u
 		order by
@@ -425,21 +438,78 @@
     
     <select id="findUserTokenSecret" resultType="java.lang.String">
         select
-			token_secret
+			secret
+		from
+			access_data.user_auth
+		where
+			id = #{authId}
+			and user_id = #{userId}
+    </select>
+    
+    <update id="upsertUserAuthentication" useGeneratedKeys="true" keyColumn="id" keyProperty="auth.id">
+        insert into
+			access_data.user_auth
+			(user_id, secret, cre_dat)
+		values
+			(
+				#{auth.userId},
+				#{auth.secretAsString},
+				now()
+			)
+		on conflict
+			(user_id) do update
+		set
+			secret = #{auth.secretAsString},
+			cre_dat = now()
+    </update>
+    
+    <delete id="deleteAllUserSessions">
+    	delete from
+    		access_data.user_auth
+   		where
+   			user_id = #{userId}
+    </delete>
+    
+    <select id="isUserUsingOtp" resultType="java.lang.Boolean">
+        select
+			is_using_otp
 		from
 			access_data."user"
 		where
 			id = #{userId}
-			and is_active = true
     </select>
     
-    <update id="updateUserTokenSecret">
+    <update id="updateUserUsingOtp">
         update
 			access_data."user"
 		set
-			token_secret = #{tokenSecret}
+			is_using_otp = #{active}
 		where
 			id = #{userId}
     </update>
+    
+    <update id="updateUserOtpCredentials">
+        update
+			access_data."user"
+		set
+			otp_secret = #{creds.secret},
+			otp_scratch_code_1 = #{creds.scratchCode1},
+			otp_scratch_code_2 = #{creds.scratchCode2},
+			otp_scratch_code_3 = #{creds.scratchCode3}
+		where
+			id = #{userId}
+    </update>
+    
+    <select id="findUserOtpCredentials" resultMap="OtpCredentialsMap">
+        select
+			otp_secret,
+			otp_scratch_code_1,
+			otp_scratch_code_2,
+			otp_scratch_code_3
+		from
+			access_data."user"
+		where
+			id = #{userId}
+    </select>
     
 </mapper>

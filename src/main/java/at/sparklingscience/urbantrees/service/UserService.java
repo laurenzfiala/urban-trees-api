@@ -9,7 +9,6 @@ import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
 import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.mapper.UserMapper;
-import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 
 /**
  * Service for user-related actions..

@@ -1,4 +1,4 @@
-package at.sparklingscience.urbantrees.security.user;
+package at.sparklingscience.urbantrees.service;
 
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
+import at.sparklingscience.urbantrees.domain.OtpCredentials;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserLight;
@@ -23,9 +24,10 @@ import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
-import at.sparklingscience.urbantrees.service.UserService;
+import at.sparklingscience.urbantrees.security.authentication.jwt.JWTUserAuthentication;
+import at.sparklingscience.urbantrees.security.authentication.otp.OtpValidationException;
+import at.sparklingscience.urbantrees.security.authentication.otp.Totp;
 import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.WeakKeyException;
 
@@ -121,6 +123,7 @@ public class AuthenticationService {
 	public void inactivate(final int userId) {
 		
 		this.authMapper.updateActive(userId, false);
+		this.authMapper.deleteAllUserSessions(userId);
 		
 	}
 	
@@ -312,13 +315,14 @@ public class AuthenticationService {
 	/**
 	 * Get the current JWT secret key for the given user.
 	 * @param userId user's id
+	 * @param authId id of the current session
 	 * @return {@link SecretKey}
 	 * @throws WeakKeyException if the stored user secret is too weak for the used algorithm.
 	 * @throws UnauthorizedException if the given user is not found, no secret is found, or the user is inactivated.
 	 */
-	public SecretKey getJWTSecret(final int userId) throws WeakKeyException, UnauthorizedException {
+	public SecretKey getJWTSecret(final int userId, final long authId) throws WeakKeyException, UnauthorizedException {
 		
-		final String base64Secret = this.authMapper.findUserTokenSecret(userId);
+		final String base64Secret = this.authMapper.findUserTokenSecret(userId, authId);
 		if (base64Secret == null) {
 			throw new UnauthorizedException("Could not find user's login token. (user id = " + userId + ")");
 		}
@@ -328,20 +332,41 @@ public class AuthenticationService {
 	
 	/**
 	 * Generate a new JWT secret for the given user and store it.
-	 * @param user user to update (from teh security package)
-	 * @return the stored secretkey if it was successfully generated and stored.
+	 * @param user user to update (from the security package)
+	 * @return the stored auth session if it was successfully inserted or updated
 	 * @throws RuntimeException if storing the secret could not be stored.
 	 */
-	public SecretKey generateJWTSecret(at.sparklingscience.urbantrees.security.user.User user) {
-		final SecretKey signingKey = Keys.secretKeyFor(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG);
-		final String storeKey = Encoders.BASE64.encode(signingKey.getEncoded());
+	public JWTUserAuthentication newSession(at.sparklingscience.urbantrees.security.user.User user) {
 		
-		final int updatedUsers = this.authMapper.updateUserTokenSecret(user.getId(), storeKey);
+		final SecretKey signingKey = Keys.secretKeyFor(SecurityConfiguration.JWT_AUTHENTICATION_SIG_ALG);
+		final JWTUserAuthentication auth = new JWTUserAuthentication(user.getId(), signingKey);
+		
+		final int updatedUsers = this.authMapper.upsertUserAuthentication(auth);
 		if (updatedUsers != 1) {
 			throw new RuntimeException("Token secret could not be stored for user " + user.getId() + ", instead " + updatedUsers + " users have been updated.");
 		}
 		
-		return signingKey;
+		return auth;
+		
+	}
+	
+	@Transactional
+	public void validateOtp(final int userId, final String inputCode) throws OtpValidationException {
+		
+		logger.trace("Validating OTP for user {}...", userId);
+		OtpCredentials otpCreds = this.authMapper.findUserOtpCredentials(userId);
+		
+		try {
+			Totp totp = new Totp(otpCreds.getSecret(), otpCreds.getScratchCodes())
+					.verify(inputCode);
+			this.authMapper.updateUserOtpCredentials(userId, otpCreds.scratchCodes(totp.scratchCodes()));
+		} catch (OtpValidationException e) {
+			logger.warn("OTP validation failed for user {}", userId, e);
+			throw e;
+		}
+		
+		logger.trace("Successfully validated OTP for user {}.", userId);
+		
 	}
 	
 }

@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import at.sparklingscience.urbantrees.domain.EventSeverity;
+import at.sparklingscience.urbantrees.security.authentication.otp.IncorrectOtpTokenException;
 import at.sparklingscience.urbantrees.service.ApplicationService;
 
 /**
@@ -101,13 +102,10 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		return buildResponseEntity(apiError);
 	}
 	
-	@ExceptionHandler(UnauthorizedException.class)
-	protected ResponseEntity<Object> handleUnauthorized(UnauthorizedException ex) {
-		LOGGER.trace("handleUnauthorized: {}", ex.getMessage());
-		ApiError apiError = new ApiError(HttpStatus.UNAUTHORIZED);
-		apiError.setMessage(ex.getMessage());
-		apiError.setClientErrorCodeFromClientError(ex.getClientError());
-		return buildResponseEntity(apiError);
+	@ExceptionHandler(IncorrectOtpTokenException.class)
+	protected ResponseEntity<Object> handleInvalidToken(IncorrectOtpTokenException ex) {
+		LOGGER.trace("handleInvalidToken: {}", ex.getMessage());
+		return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 	}
 	
 	@ExceptionHandler(ResponseStatusException.class)

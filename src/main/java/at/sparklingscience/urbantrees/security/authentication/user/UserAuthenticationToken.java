@@ -1,23 +1,34 @@
-package at.sparklingscience.urbantrees.security.jwt;
+package at.sparklingscience.urbantrees.security.authentication.user;
 
 import java.util.Collection;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
-public class TokenAuthenticationToken implements Authentication {
+/**
+ * TODO
+ * 
+ * @author Laurenz Fiala
+ * @since 2020/04/23
+ */
+public class UserAuthenticationToken implements Authentication {
 
-	private static final long serialVersionUID = 20190118L;
-
-	private String token;
+	private static final long serialVersionUID = 20200423L;
 	
-	public TokenAuthenticationToken(String token) {
-		this.setToken(token);
+	private boolean isAuthenticated = false;
+
+	private String username;
+
+	private String password;
+	
+	public UserAuthenticationToken(String username, String password) {
+		this.username = username;
+		this.password = password;
 	}
 
 	@Override
 	public String getName() {
-		return null;
+		return this.username;
 	}
 
 	@Override
@@ -27,7 +38,7 @@ public class TokenAuthenticationToken implements Authentication {
 
 	@Override
 	public Object getCredentials() {
-		return this.getToken();
+		return this.password;
 	}
 
 	@Override
@@ -42,19 +53,12 @@ public class TokenAuthenticationToken implements Authentication {
 
 	@Override
 	public boolean isAuthenticated() {
-		return false;
+		return this.isAuthenticated;
 	}
 
 	@Override
 	public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-	}
-
-	public String getToken() {
-		return token;
-	}
-
-	public void setToken(String token) {
-		this.token = token;
+		this.isAuthenticated = isAuthenticated;
 	}
 	
 }

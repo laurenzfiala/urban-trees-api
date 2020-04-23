@@ -1,4 +1,4 @@
-package at.sparklingscience.urbantrees.security.jwt;
+package at.sparklingscience.urbantrees.security.user;
 
 import java.util.stream.Collectors;
 
@@ -12,7 +12,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import at.sparklingscience.urbantrees.domain.User;
-import at.sparklingscience.urbantrees.security.user.AuthenticationService;
+import at.sparklingscience.urbantrees.security.authentication.otp.OtpValidationException;
+import at.sparklingscience.urbantrees.service.AuthenticationService;
 
 /**
  * Checks the database for valid credentials.
@@ -23,7 +24,7 @@ import at.sparklingscience.urbantrees.security.user.AuthenticationService;
 @Service
 public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 	
-	private static Logger logger = LoggerFactory.getLogger(UserDetailsService.class); // TODO
+	private static Logger logger = LoggerFactory.getLogger(UserDetailsService.class);
 	
 	@Autowired
 	private AuthenticationService authenticationService;
@@ -66,6 +67,20 @@ public class UserDetailsService implements org.springframework.security.core.use
 	}
 	
 	/**
+	 * Check validity of given OTP against credentials stored in the DB.
+	 * It is guaranteed that, if no excpetion is thrown by this method, the OTP was valid.
+	 * @param userId users' id
+	 * @param otp user-entered OTP code
+	 * @throws OtpValidationException if the validation failed
+	 * @see AuthenticationService#validateOtp(int, String)
+	 */
+	public void validateUserOtp(final int userId, final String otp) throws OtpValidationException {
+		
+		this.authenticationService.validateOtp(userId, otp);
+		
+	}
+	
+	/**
 	 * Initialize a new security user instance given the domain user.
 	 * @param domainUser user
 	 */
@@ -78,7 +93,8 @@ public class UserDetailsService implements org.springframework.security.core.use
 				true,
 				domainUser.isCredentialsNonExpired(),
 				this.authenticationService.isUserNonLocked(domainUser),
-				domainUser.getRoles().stream().map(u -> new SimpleGrantedAuthority(u.getName())).collect(Collectors.toList())
+				domainUser.getRoles().stream().map(u -> new SimpleGrantedAuthority(u.getName())).collect(Collectors.toList()),
+				domainUser.isUsingOtp()
 				);
 	}
 

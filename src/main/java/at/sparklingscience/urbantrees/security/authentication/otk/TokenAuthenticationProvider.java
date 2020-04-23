@@ -1,4 +1,4 @@
-package at.sparklingscience.urbantrees.security.user;
+package at.sparklingscience.urbantrees.security.authentication.otk;
 
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -6,9 +6,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.util.Assert;
 
-import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
-import at.sparklingscience.urbantrees.security.jwt.TokenAuthenticationToken;
-import at.sparklingscience.urbantrees.security.jwt.UserDetailsService;
+import at.sparklingscience.urbantrees.security.authentication.jwt.JWTAuthenticationToken;
+import at.sparklingscience.urbantrees.security.user.User;
+import at.sparklingscience.urbantrees.security.user.UserDetailsService;
 
 /**
  * Authenticates a user by their login link token.
@@ -33,12 +33,12 @@ public class TokenAuthenticationProvider extends DaoAuthenticationProvider {
 			throw new BadCredentialsException("Token invalid.");
 		}
 		
-		AuthenticationToken authToken = new AuthenticationToken(
+		JWTAuthenticationToken authToken = new JWTAuthenticationToken(
 				user.getId(),
 				user.getUsername(),
-				user.getAuthorities()
+				user.getAuthorities(),
+				user
 			);
-		authToken.setDetails(user);
 		
 		return authToken;
 		

@@ -60,6 +60,11 @@ public class User extends UserIdentity implements Serializable {
 	private String secureLoginKey;
 	
 	/**
+	 * Whether the user is currently using an OTP.
+	 */
+	private boolean isUsingOtp;
+	
+	/**
 	 * All roles assigned to this user.
 	 */
 	@NotNull(groups = {ValidationGroups.Read.class})
@@ -132,6 +137,14 @@ public class User extends UserIdentity implements Serializable {
 
 	public void setSecureLoginKey(String secureLoginKey) {
 		this.secureLoginKey = secureLoginKey;
+	}
+
+	public boolean isUsingOtp() {
+		return isUsingOtp;
+	}
+
+	public void setUsingOtp(boolean isUsingOtp) {
+		this.isUsingOtp = isUsingOtp;
 	}
 
 }

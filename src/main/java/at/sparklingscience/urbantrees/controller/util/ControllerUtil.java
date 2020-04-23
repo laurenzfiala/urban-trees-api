@@ -6,11 +6,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
 
 import at.sparklingscience.urbantrees.exception.BadRequestException;
-import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
+import at.sparklingscience.urbantrees.security.authentication.jwt.JWTAuthenticationToken;
 
 /**
  * Contains utility methods for the controllers.
@@ -18,10 +19,14 @@ import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
  * @author Laurenz Fiala
  * @since 2017/12/30
  */
+@Component
 public class ControllerUtil {
 	
-	@Autowired
 	private static Logger logger;
+	
+	public ControllerUtil(Logger classLogger) {
+		logger = classLogger;
+	}
 
 	/**
 	 * 
@@ -60,7 +65,7 @@ public class ControllerUtil {
 	 * @return true if the given user is anonymously logged-in; false otherwise.
 	 */
 	public static boolean isUserAnonymous(Authentication authentication) {
-		return authentication == null || !(authentication instanceof AuthenticationToken);
+		return authentication == null || !(authentication instanceof JWTAuthenticationToken);
 	}
 
 	public static AuthenticationToken getAuthToken(Authentication authentication) {

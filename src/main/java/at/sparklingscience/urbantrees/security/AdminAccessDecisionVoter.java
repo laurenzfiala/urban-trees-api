@@ -9,7 +9,8 @@ import org.springframework.security.web.access.expression.WebExpressionVoter;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
-import at.sparklingscience.urbantrees.security.jwt.AuthenticationToken;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
+import at.sparklingscience.urbantrees.security.authentication.jwt.JWTAuthenticationToken;
 
 /**
  * Decides if access should be granted to the admin.
@@ -30,7 +31,7 @@ public class AdminAccessDecisionVoter extends WebExpressionVoter {
 		
 		final boolean resourceNeedsAdminRole = expressions.indexOf(SecurityUtil.role(SecurityConfiguration.ADMIN_ACCESS_ROLE)) != -1;
 		
-		if (!(authentication instanceof AuthenticationToken) || !resourceNeedsAdminRole) {
+		if (!(authentication instanceof JWTAuthenticationToken) || !resourceNeedsAdminRole) {
 			return ACCESS_ABSTAIN;
 		}
 		

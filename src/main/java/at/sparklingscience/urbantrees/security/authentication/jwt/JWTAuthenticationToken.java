@@ -1,26 +1,30 @@
-package at.sparklingscience.urbantrees.security.jwt;
+package at.sparklingscience.urbantrees.security.authentication.jwt;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.security.user.User;
 
 /**
- * DTO for transfering user auth properties from the client-side JWT.
+ * DTO for transferring user auth properties from the client-side JWT.
  * Holds all information and claims needed for authenticating a request.
+ * 
+ * Also used for constructing JWT tokens.
  * 
  * @author Laurenz Fiala
  * @since 2020/04/19 (doc)
  */
-public class AuthenticationToken implements Authentication {
+public class JWTAuthenticationToken implements AuthenticationToken {
 
 	private static final long serialVersionUID = 20190118L;
 
 	private int id;
+
+	private long authId;
 
 	private String username;
 	
@@ -40,25 +44,25 @@ public class AuthenticationToken implements Authentication {
 	 */
 	private Date tokenCreationDate;
 	
-	public AuthenticationToken(String username, String password) {
-		this.username = username;
-		this.password = password;
+	public JWTAuthenticationToken(int id, String username, Collection<? extends GrantedAuthority> authorities) {
+		this(id, 0, username, authorities, null, null);
 	}
 	
-	public AuthenticationToken(int id, String username, Collection<? extends GrantedAuthority> authorities) {
-		this(id, username, authorities, null);
+	public JWTAuthenticationToken(int id, String username, Collection<? extends GrantedAuthority> authorities, User details) {
+		this(id, 0, username, authorities, details, null);
+	}
+	
+	public JWTAuthenticationToken(int id, long authId, String username, Collection<? extends GrantedAuthority> authorities, Date tokenCreationDate) {
+		this(id, authId, username, authorities, null, tokenCreationDate);
 	}
 
-	public AuthenticationToken(int id, String username, Collection<? extends GrantedAuthority> authorities, Date tokenCreationDate) {
+	public JWTAuthenticationToken(int id, long authId, String username, Collection<? extends GrantedAuthority> authorities, User details, Date tokenCreationDate) {
 		this.id = id;
+		this.authId = authId;
 		this.username = username;
 		this.authorities = authorities;
+		this.details = details;
 		this.tokenCreationDate = tokenCreationDate;
-	}
-	
-	public AuthenticationToken(String username, String password, Collection<? extends GrantedAuthority> authorities) {
-		this(-1, username, authorities);
-		this.password = password;
 	}
 	
 	public void updateByUser(User user) {
@@ -125,7 +129,7 @@ public class AuthenticationToken implements Authentication {
 		this.details = details;
 	}
 
-	public AuthenticationToken withAuthorities(GrantedAuthority ...authorities) {
+	public JWTAuthenticationToken withAuthorities(GrantedAuthority ...authorities) {
 		this.setAuthorities(Arrays.asList(authorities));
 		return this;
 	}
@@ -136,6 +140,14 @@ public class AuthenticationToken implements Authentication {
 
 	public void setTokenCreationDate(Date tokenCreationDate) {
 		this.tokenCreationDate = tokenCreationDate;
+	}
+
+	public long getAuthId() {
+		return authId;
+	}
+
+	public void setAuthId(long authId) {
+		this.authId = authId;
 	}
 	
 }

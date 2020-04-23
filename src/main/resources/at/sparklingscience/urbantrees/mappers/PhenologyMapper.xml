@@ -118,7 +118,7 @@
             tree_data.phenology
             (tree_id, observers, observers_ref, observe_dat, user_remark, cre_dat, mod_dat, cre_usr, mod_usr)
 		values 
-		    (#{treeId}, #{observers}, #{observersRef}, #{observationDate}, #{remark}, now(), now(), user, user);
+		    (#{treeId}, #{observers}, #{observersRef}, #{observationDate}, #{remark}, now(), now(), user, user)
 	</insert>
 	
     <insert id="insertPhenologyObservation">

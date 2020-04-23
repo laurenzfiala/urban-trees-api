@@ -19,7 +19,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsChecker;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
@@ -28,13 +27,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import at.sparklingscience.urbantrees.controller.AdminController;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AdminAccessDecisionVoter;
-import at.sparklingscience.urbantrees.security.apikey.ApiKeyFilter;
-import at.sparklingscience.urbantrees.security.jwt.JWTAuthenticationFilter;
-import at.sparklingscience.urbantrees.security.jwt.JWTAuthorizationFilter;
-import at.sparklingscience.urbantrees.security.user.AuthenticationService;
-import at.sparklingscience.urbantrees.security.user.PostAuthenticationChecks;
-import at.sparklingscience.urbantrees.security.user.StandardAuthenticationProvider;
-import at.sparklingscience.urbantrees.security.user.TokenAuthenticationProvider;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationFilter;
+import at.sparklingscience.urbantrees.security.authentication.apikey.ApiKeyFilter;
+import at.sparklingscience.urbantrees.security.authentication.otk.TokenAuthenticationProvider;
+import at.sparklingscience.urbantrees.security.authentication.otp.OtpAuthenticationServiceWrapper;
+import at.sparklingscience.urbantrees.security.authentication.otp.UserOtpAuthenticationProvider;
+import at.sparklingscience.urbantrees.security.authentication.user.UserAuthenticationProvider;
+import at.sparklingscience.urbantrees.security.authorization.JWTAuthorizationFilter;
+import at.sparklingscience.urbantrees.service.AuthenticationService;
 import io.jsonwebtoken.SignatureAlgorithm;
 
 /**
@@ -81,6 +81,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	 * Claims key for the user id.
 	 */
 	public static final String 				JWT_CLAIMS_USERID_KEY			= "uid";
+
+	/**
+	 * Claims key for the authentication id.
+	 */
+	public static final String 				JWT_CLAIMS_AUTHID_KEY			= "aid";
 	
 	/**
 	 * Claims key for the users' roles.
@@ -178,10 +183,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    	.anyRequest().authenticated()
 		    	.accessDecisionManager(this.accessDecisionManager())
 	    	.and()
-		    	.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+		    	.sessionManagement()
+		    	.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 	    	.and()
 	    		.addFilterBefore(new ApiKeyFilter(this.authenticationManager(), this.authMapper), UsernamePasswordAuthenticationFilter.class)
-	    		.addFilter(new JWTAuthenticationFilter(this.authenticationManager(), this.authService))
+	    		.addFilter(new AuthenticationFilter(this.authenticationManager(), this.authService))
                 .addFilter(new JWTAuthorizationFilter(this.authenticationManager(), this.authService));
 
     }
@@ -189,30 +195,34 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
     	
-        auth.authenticationProvider(this.standardAuthProvider())
+        auth.authenticationProvider(this.userAuthProvider())
+        	.authenticationProvider(this.userOtpAuthProvider())
         	.authenticationProvider(this.tokenAuthProvider());
         
     }
     
     @Bean
-    public AuthenticationProvider standardAuthProvider() {
-    	StandardAuthenticationProvider provider = new StandardAuthenticationProvider();
-    	provider.setPostAuthenticationChecks(this.postAuthChecks());
+    public AuthenticationProvider userAuthProvider() {
+    	UserAuthenticationProvider provider = new UserAuthenticationProvider();
     	provider.setUserDetailsService(this.userDetailsService);
     	provider.setPasswordEncoder(this.bCryptPasswordEncoder());
         return provider;
-    }    
+    }
+    
+    @Bean
+    public AuthenticationProvider userOtpAuthProvider() {
+    	UserOtpAuthenticationProvider provider = new UserOtpAuthenticationProvider();
+    	provider.setUserDetailsService(this.userDetailsService);
+    	provider.setPasswordEncoder(this.bCryptPasswordEncoder());
+    	provider.setAuthService(new OtpAuthenticationServiceWrapper(this.authService));
+        return provider;
+    }  
 
     @Bean
     public AuthenticationProvider tokenAuthProvider() {
     	TokenAuthenticationProvider provider = new TokenAuthenticationProvider();
     	provider.setUserDetailsService(this.userDetailsService);
         return provider;
-    }
-
-    @Bean
-    public UserDetailsChecker postAuthChecks() {
-        return new PostAuthenticationChecks();
     }
     
 	@Bean

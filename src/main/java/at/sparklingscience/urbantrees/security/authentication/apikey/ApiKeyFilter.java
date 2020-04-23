@@ -1,4 +1,4 @@
-package at.sparklingscience.urbantrees.security.apikey;
+package at.sparklingscience.urbantrees.security.authentication.apikey;
 
 import java.io.IOException;
 import java.util.Collections;

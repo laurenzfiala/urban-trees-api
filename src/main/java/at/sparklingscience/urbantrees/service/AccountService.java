@@ -6,12 +6,14 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
+import at.sparklingscience.urbantrees.domain.OtpCredentials;
 import at.sparklingscience.urbantrees.domain.PasswordReset;
 import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserIdentity;
@@ -24,7 +26,8 @@ import at.sparklingscience.urbantrees.exception.InternalException;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
-import at.sparklingscience.urbantrees.security.user.AuthenticationService;
+import at.sparklingscience.urbantrees.security.authentication.otp.OtpValidationException;
+import at.sparklingscience.urbantrees.security.authentication.otp.Totp;
 
 /**
  * Service for user account-related actions.
@@ -205,6 +208,73 @@ public class AccountService {
 		this.authMapper.setPermissionsPIN(userId, pin);
 		
 		return pin;
+		
+	}
+	
+	@Transactional
+	public boolean isUsingOtp(final int userId) {
+		
+		return this.authMapper.findUserById(userId).isUsingOtp();
+		
+	}
+	
+	@Transactional
+	public String initNewOtp(final int userId) throws AccessDeniedException {
+		
+		logger.trace("Initializing new OTP for user {}...", userId);
+		
+		if (this.authMapper.isUserUsingOtp(userId)) {
+			throw new AccessDeniedException("User may not request new OTP when one is already active. user: " + userId);
+		}
+		
+		Totp totp = new Totp();
+		this.authMapper.updateUserOtpCredentials(userId, new OtpCredentials(totp.secret(), totp.scratchCodes()));
+		
+		logger.trace("Successfully generated new OTP credentials for user {}...", userId);
+		
+		return totp.secret();
+		
+	}
+	
+	@Transactional
+	public String[] validateNewOtp(final int userId, final String inputCode) throws OtpValidationException {
+		
+		logger.trace("Validating new OTP for user {}...", userId);
+		OtpCredentials otpCreds = this.authMapper.findUserOtpCredentials(userId);
+		
+		if (this.authMapper.isUserUsingOtp(userId)) {
+			logger.warn("User requested to activate OTP when it was already active. user: {}", userId);
+			throw new OtpValidationException("You may not activate OTP if it is already activated.");
+		}
+		
+		try {
+			new Totp(otpCreds.getSecret(), otpCreds.getScratchCodes())
+				.verifySecretOnly(inputCode);
+		} catch (OtpValidationException e) {
+			logger.warn("Failed to validate OTP for user {}.", userId, e);
+			this.authMapper.updateUserUsingOtp(userId, false);
+			//this.authMapper.increaseFailedLoginAttempts(userId); user is assumed to be trusted here, so don't increase
+			throw e;
+		}
+		
+		this.authMapper.updateUserUsingOtp(userId, true);
+		logger.trace("Successfully validated new OTP for user {} and activated OTP.", userId);
+		
+		return otpCreds.getScratchCodes();
+		
+	}
+	
+	@Transactional
+	public void deactivateOtp(final int userId, final String inputCode) throws OtpValidationException {
+		
+		logger.trace("Deactivating OTP for user {}...", userId);
+		OtpCredentials otpCreds = this.authMapper.findUserOtpCredentials(userId);
+		
+		new Totp(otpCreds.getSecret(), otpCreds.getScratchCodes())
+			.verify(inputCode);
+		
+		this.authMapper.updateUserUsingOtp(userId, false);
+		logger.trace("Successfully deactivated OTP for user {}.", userId);
 		
 	}
 

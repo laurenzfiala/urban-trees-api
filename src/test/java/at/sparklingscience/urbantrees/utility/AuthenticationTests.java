@@ -15,7 +15,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
-import at.sparklingscience.urbantrees.security.user.AuthenticationService;
+import at.sparklingscience.urbantrees.service.AuthenticationService;
 import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 

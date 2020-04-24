@@ -3,6 +3,7 @@ package at.sparklingscience.urbantrees.security.authentication.otp;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.SecureRandom;
 
 import javax.crypto.Mac;
@@ -15,10 +16,17 @@ import org.apache.commons.codec.binary.Hex;
  * Handles time-based one-time passwords.
  * Generates secret and verifies passwords.
  * 
+ * Important: Validation has only been tested with {@link Settings#DEFAULT_SIGNING_ALG}.
+ * 
  * @author Laurenz Fiala
  * @since 2020/04/22
  */
 public class Totp {
+	
+	/**
+	 * @see SigningAlgorithm
+	 */
+	private final SigningAlgorithm signingAlgorithm;
 	
 	/**
 	 * Holds the TOTP secret.
@@ -31,20 +39,44 @@ public class Totp {
 	private final String[] scratchCodes;
 	
 	/**
-	 * Generate a new TOTP secret and scratch codes.
+	 * Generate a new TOTP secret and scratch codes using {@value Settings#DEFAULT_SIGNING_ALG}.
 	 */
-	public Totp() {		
+	public Totp() {
+		this(Settings.DEFAULT_SIGNING_ALG);
+	}
+	
+	/**
+	 * Generate a new TOTP secret and scratch codes using the
+	 * given signing algorithm.
+	 */
+	public Totp(SigningAlgorithm signingAlg) {
+		this.signingAlgorithm = signingAlg;
 		this.secret = this.generateSecret();
 		this.scratchCodes = this.generateScratchCodes();
+	}
+	
+
+	
+	/**
+	 * Populate the TOTP with the given secret and scratch codes.
+	 * This should be used for existing users.
+	 * Uses {@value Settings#DEFAULT_SIGNING_ALG} for hashing.
+	 * @param secret the base32 encoded secret (output of {@link #secret()})
+	 * @param scratchCodes users' scratch codes
+	 */
+	public Totp(String secret, String[] scratchCodes) {
+		this(Settings.DEFAULT_SIGNING_ALG, secret, scratchCodes);
 	}
 	
 	/**
 	 * Populate the TOTP with the given secret and scratch codes.
 	 * This should be used for existing users.
+	 * @param signingAlg signing config to use
 	 * @param secret the base32 encoded secret (output of {@link #secret()})
 	 * @param scratchCodes users' scratch codes
 	 */
-	public Totp(String secret, String[] scratchCodes) {
+	public Totp(SigningAlgorithm signingAlg, String secret, String[] scratchCodes) {
+		this.signingAlgorithm = signingAlg;
 		this.secret = new Base32().decode(secret);
 		this.scratchCodes = scratchCodes;
 	}
@@ -95,7 +127,7 @@ public class Totp {
 	 * @return this
 	 * @throws OtpValidationException if validation fails
 	 */
-	public Totp verifySecretOnly(final String inputCode) throws OtpValidationException {
+	public Totp verifyTotpOnly(final String inputCode) throws OtpValidationException {
 		return this.verify(inputCode, false);
 	}
 	
@@ -161,8 +193,8 @@ public class Totp {
 		
 		final byte[] timeData = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(time).array();
 		
-		SecretKeySpec signKey = new SecretKeySpec(this.secret, Settings.SIGNING_ALG);
-		Mac mac = Mac.getInstance(Settings.SIGNING_ALG);
+		SecretKeySpec signKey = new SecretKeySpec(this.secret, this.signingAlgorithm.algorithm());
+		Mac mac = Mac.getInstance(this.signingAlgorithm.algorithm());
 		mac.init(signKey);
 		
 		final byte[] hash = mac.doFinal(timeData);
@@ -210,7 +242,7 @@ public class Totp {
 	 */
 	private byte[] generateSecret() {
 		
-		byte[] secret = new byte[Settings.SECRET_BYTES];
+		byte[] secret = new byte[this.signingAlgorithm.secretByteAmount()];
 		
 		SecureRandom random = new SecureRandom();
 		random.nextBytes(secret);
@@ -239,12 +271,27 @@ public class Totp {
 		
 	}
 	
+	/**
+	 * Holds constants for TOTP handling.
+	 */
 	private static class Settings {
 		
 		/**
 		 * This is the signing algorithm the OTP-apps use.
 		 */
-		private static final String SIGNING_ALG = "HmacSha1";
+		private static final SigningAlgorithm DEFAULT_SIGNING_ALG = new SigningAlgorithm() {
+			
+			@Override
+			public int secretByteAmount() {
+				return 20;
+			}
+			
+			@Override
+			public String algorithm() {
+				return "HmacSha1";
+			}
+			
+		};
 		
 		/**
 		 * The TOTP password interval in seconds.
@@ -264,13 +311,6 @@ public class Totp {
 		private static final long CODE_LENGTH = 6;
 		
 		/**
-		 * Specify the length of the secret in bytes.
-		 * Note: 	more than 10 bytes do not make a difference, because we only
-		 * 			use the last 4 bits as offset (so max. 15 offset).
-		 */
-		private static final int SECRET_BYTES = 10;
-		
-		/**
 		 * How many scratch codes to generate.
 		 */
 		private static final int SCRATCH_CODE_AMOUNT = 3;
@@ -280,6 +320,36 @@ public class Totp {
 		 * Must be an even number.
 		 */
 		private static final int SCRATCH_CODE_LENGTH = 10;
+		
+	}
+	
+	/**
+	 * Specify the length of the secret in bytes.
+	 * Note: Use the recommended length of secret for the chosen {@link #SIGNING_ALG}.
+	 */
+	public interface SigningAlgorithm {
+		
+		/**
+		 * Should return the name of the signing algorithm to use.
+		 * Must be an existsing {@link Provider} in your environment.
+		 * Example: "HmacSha1"
+		 */
+		String algorithm();
+		
+		/**
+		 * Should return the amount of bytes to be used
+		 * for the secret generation.
+		 * Note: Use at least the recommended size of secret for the chosen signingAlg.
+		 * 		 Examples:
+		 * 		 	- HmacSha1: 	20 bytes (160 bits)
+		 * 		 	- HmacSha256:	64 bytes (512 bits)
+		 * 		 	- HmacSha512:	128 bytes (1024 bits)
+		 * Note: Support for different signature algorithms other than
+		 * 		 {@value Settings#DEFAULT_SIGNING_ALG} may be limited in
+		 * 		 TOTP Auth-Apps and has to be communicated using the
+		 * 		 otpauth://totp/ URI field "algorithm".
+		 */
+		int secretByteAmount();
 		
 	}
 

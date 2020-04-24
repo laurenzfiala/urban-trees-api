@@ -249,7 +249,7 @@ public class AccountService {
 		
 		try {
 			new Totp(otpCreds.getSecret(), otpCreds.getScratchCodes())
-				.verifySecretOnly(inputCode);
+				.verifyTotpOnly(inputCode);
 		} catch (OtpValidationException e) {
 			logger.warn("Failed to validate OTP for user {}.", userId, e);
 			this.authMapper.updateUserUsingOtp(userId, false);

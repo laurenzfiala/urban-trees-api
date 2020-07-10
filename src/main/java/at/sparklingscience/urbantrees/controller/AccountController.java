@@ -156,7 +156,7 @@ public class AccountController {
 		try {
 			return qrCode.toSvgString(0);
 		} finally {
-			logger.debug("[[ GET ]] getPermissionsPIN |END| Successfully generated new OTP credentials & svg for user: {}", userId);
+			logger.debug("[[ GET ]] getNewOtp |END| Successfully generated new OTP credentials & svg for user: {}", userId);
 		}
 		
 	}

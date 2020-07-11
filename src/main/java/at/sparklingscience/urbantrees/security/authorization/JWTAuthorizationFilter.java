@@ -41,7 +41,7 @@ import io.jsonwebtoken.security.SignatureException;
  */
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 	
-	private static Logger logger = LoggerFactory.getLogger(JWTAuthorizationFilter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(JWTAuthorizationFilter.class);
 	
 	private AuthenticationService authService;
 
@@ -55,12 +55,12 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
                                     HttpServletResponse res,
                                     FilterChain chain) throws IOException, ServletException {
     	
-    	logger.trace("Starting token authentication.");
+    	LOGGER.trace("Starting token authentication.");
     	
         final String header = req.getHeader(SecurityConfiguration.HEADER_KEY);
 
         if (header == null || !header.startsWith(SecurityConfiguration.JWT_TOKEN_PREFIX)) {
-        	logger.trace("Skipping token authentication, since header is {}.", header);
+        	LOGGER.trace("Skipping token authentication, since header is {}.", header);
             chain.doFilter(req, res);
             return;
         }
@@ -95,16 +95,16 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     				.parseClaimsJws(token.replace(SecurityConfiguration.JWT_TOKEN_PREFIX, ""))
     				.getBody();
     	} catch (SignatureException e) {
-    		logger.warn("Users' auth token is untrusted {}", e.getMessage(), e);
+    		LOGGER.warn("Users' auth token is untrusted {}", e.getMessage(), e);
     		return null;
     	} catch (ExpiredJwtException e) {
-    		logger.trace("Users' auth token has expired: {}", e.getMessage(), e);
+    		LOGGER.trace("Users' auth token has expired: {}", e.getMessage(), e);
     		return null;
     	} catch (UnsupportedJwtException e) {
-    		logger.trace("Users' auth token is unsupported: {}", e.getMessage(), e);
+    		LOGGER.trace("Users' auth token is unsupported: {}", e.getMessage(), e);
     		return null;
     	} catch (MalformedJwtException e) {
-    		logger.trace("Users' auth token is malformed: {}", e.getMessage(), e);
+    		LOGGER.trace("Users' auth token is malformed: {}", e.getMessage(), e);
     		return null;
     	}
     	
@@ -116,7 +116,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
         final Date tokenCreationDate = new Date(tokenExpirationDate.getTime() - SecurityConfiguration.JWT_EXPIRATION_TIME);
         
         if (username != null) {
-        	logger.trace("Setting username/password auth token for user {}.", username);
+        	LOGGER.trace("Setting username/password auth token for user {}.", username);
             return new JWTAuthenticationToken(userId, authId, username, roles, tokenCreationDate);
         }
         return null;

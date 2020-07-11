@@ -8,6 +8,7 @@ import org.springframework.util.Assert;
 import at.sparklingscience.urbantrees.security.authentication.jwt.JWTAuthenticationToken;
 import at.sparklingscience.urbantrees.security.authentication.otk.TokenAuthenticationProvider;
 import at.sparklingscience.urbantrees.security.authentication.user.UserAuthenticationProvider;
+import at.sparklingscience.urbantrees.security.user.UserDetailsService;
 
 /**
  * Authenticates a user by their username, password and OTP.
@@ -20,8 +21,6 @@ import at.sparklingscience.urbantrees.security.authentication.user.UserAuthentic
  * @since 2020/04/23
  */
 public class UserOtpAuthenticationProvider extends UserAuthenticationProvider {
-	
-	private OtpAuthenticationServiceWrapper authService;
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -34,7 +33,7 @@ public class UserOtpAuthenticationProvider extends UserAuthenticationProvider {
 		JWTAuthenticationToken userAuth = (JWTAuthenticationToken) super.authenticate(authentication);
 		
 		try {
-			this.authService.validateOtp(userAuth.getId(), authToken.getOtp());
+			((UserDetailsService) super.getUserDetailsService()).validateUserOtp(userAuth.getId(), authToken.getOtp());
 		} catch (OtpValidationException e) {
 			throw new BadCredentialsException("Invalid OTP.");
 		}
@@ -47,11 +46,5 @@ public class UserOtpAuthenticationProvider extends UserAuthenticationProvider {
 	public boolean supports(Class<?> authentication) {
 		return UserOtpAuthenticationToken.class.isAssignableFrom(authentication);
 	}
-
-	public void setAuthService(OtpAuthenticationServiceWrapper authService) {
-		this.authService = authService;
-	}
-	
-	
 	
 }

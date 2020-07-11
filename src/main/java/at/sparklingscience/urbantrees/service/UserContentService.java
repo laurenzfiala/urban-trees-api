@@ -3,6 +3,7 @@ package at.sparklingscience.urbantrees.service;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,19 +22,15 @@ import at.sparklingscience.urbantrees.security.authentication.AuthenticationToke
  */
 @Service
 public class UserContentService {
-	
-	private static Logger logger;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(UserContentService.class);
 	
 	@Autowired
     private UserContentMapper contentMapper;
 	
-	public UserContentService(Logger classLogger) {
-		logger = classLogger;
-	}
-	
 	public UserContent getContent(AuthenticationToken authToken, int id) {
 		
-		logger.debug("get user content with id ", id);
+		LOGGER.debug("get user content with id ", id);
 		
 		UserContent uc = this.contentMapper.findContent(id, null).get(0);
 		
@@ -47,7 +44,7 @@ public class UserContentService {
 	
 	public List<UserContent> getContent(AuthenticationToken authToken, UserContentTag tag) {
 		
-		logger.debug("get user content with tag ", tag);
+		LOGGER.debug("get user content with tag ", tag);
 		if (!tag.allowUserAnonymous() &&
 			!SecurityUtil.hasAllAuthorities(authToken.getAuthorities(), tag.getAuthoritiesNeeded())) {
 			throw new UnauthorizedException("User is not allowed to access user-generated content with tag " + tag);

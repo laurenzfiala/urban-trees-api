@@ -34,9 +34,6 @@ import at.sparklingscience.urbantrees.service.ApplicationService;
 @RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	
-	/**
-	 * Logger for this class.
-	 */
 	private static final Logger LOGGER = LoggerFactory.getLogger(RestExceptionHandler.class);
 	
 	@Autowired

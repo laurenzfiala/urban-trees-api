@@ -10,6 +10,7 @@ import java.util.Random;
 import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,20 +42,22 @@ import io.jsonwebtoken.security.WeakKeyException;
 @Service
 public class AuthenticationService {
 	
-	private static Logger logger;
-	
-	@Autowired
-	private BCryptPasswordEncoder bCryptPasswordEncoder;
+	private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
+
+	/**
+	 * NOTE:
+	 * Something is fucked up on PROD and it thinks there's a circular dep?!
+	 * This does not happen locally though, so due to time-restraints this
+	 * workaround is used.
+	 */
+	//@Autowired
+	private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 	
 	@Autowired
 	private AuthMapper authMapper;
 	
 	@Autowired
 	private UserService userService;
-	
-	public AuthenticationService(Logger classLogger) {
-		logger = classLogger;
-	}
 	
 	/**
 	 * Searches for a user with the given username.
@@ -353,7 +356,7 @@ public class AuthenticationService {
 	@Transactional
 	public void validateOtp(final int userId, final String inputCode) throws OtpValidationException {
 		
-		logger.trace("Validating OTP for user {}...", userId);
+		LOGGER.trace("Validating OTP for user {}...", userId);
 		OtpCredentials otpCreds = this.authMapper.findUserOtpCredentials(userId);
 		
 		try {
@@ -361,11 +364,11 @@ public class AuthenticationService {
 					.verify(inputCode);
 			this.authMapper.updateUserOtpCredentials(userId, otpCreds.scratchCodes(totp.scratchCodes()));
 		} catch (OtpValidationException e) {
-			logger.warn("OTP validation failed for user {}", userId, e);
+			LOGGER.warn("OTP validation failed for user {}", userId, e);
 			throw e;
 		}
 		
-		logger.trace("Successfully validated OTP for user {}.", userId);
+		LOGGER.trace("Successfully validated OTP for user {}.", userId);
 		
 	}
 	

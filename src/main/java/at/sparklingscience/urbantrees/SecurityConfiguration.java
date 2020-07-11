@@ -30,7 +30,6 @@ import at.sparklingscience.urbantrees.security.AdminAccessDecisionVoter;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationFilter;
 import at.sparklingscience.urbantrees.security.authentication.apikey.ApiKeyFilter;
 import at.sparklingscience.urbantrees.security.authentication.otk.TokenAuthenticationProvider;
-import at.sparklingscience.urbantrees.security.authentication.otp.OtpAuthenticationServiceWrapper;
 import at.sparklingscience.urbantrees.security.authentication.otp.UserOtpAuthenticationProvider;
 import at.sparklingscience.urbantrees.security.authentication.user.UserAuthenticationProvider;
 import at.sparklingscience.urbantrees.security.authorization.JWTAuthorizationFilter;
@@ -214,7 +213,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     	UserOtpAuthenticationProvider provider = new UserOtpAuthenticationProvider();
     	provider.setUserDetailsService(this.userDetailsService);
     	provider.setPasswordEncoder(this.bCryptPasswordEncoder());
-    	provider.setAuthService(new OtpAuthenticationServiceWrapper(this.authService));
         return provider;
     }  
 
@@ -237,6 +235,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
       return new UnanimousBased(decisionVoters);
     }
     
+	/**
+	 * NOTE:
+	 * There is anyother instance of this encoder in {@link AuthenticationService}
+	 * which des not use this bean.
+	 * @see AuthenticationService#bCryptPasswordEncoder
+	 */
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();

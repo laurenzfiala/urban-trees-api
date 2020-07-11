@@ -60,7 +60,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 	 */
 	private static final String INCOMPLETE_HEADER_KEY = "Authentication-Requires";
 	
-	private static Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFilter.class);
 	
 	/**
 	 * Spring integrated auth manager.
@@ -90,7 +90,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 		try {
 			
 			creds = new ObjectMapper().readValue(req.getInputStream(), UserCredentials.class);
-			logger.trace("Got user info for user {}", creds.getUsername());
+			LOGGER.trace("Got user info for user {}", creds.getUsername());
 
 			Authentication auth;
 			if (creds.getSecureLoginKey() != null) {
@@ -113,7 +113,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} catch (IncorrectTokenException e) {
-			logger.trace("Incorrect token given");
+			LOGGER.trace("Incorrect token given");
 			throw e;
 		} catch (Throwable e) {
 			if (creds != null && creds.getUsername() != null) {
@@ -137,11 +137,11 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 		
 		Collection<? extends GrantedAuthority> authorities = null;
 		if (!user.isCredentialsNonExpired()) {
-			logger.info("User credentials are expired. Granting temp change role only.");
+			LOGGER.info("User credentials are expired. Granting temp change role only.");
 			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE));
 		}
 		
-		logger.trace("Successful authentication, creating token for user {}.", auth.getPrincipal());
+		LOGGER.trace("Successful authentication, creating token for user {}.", auth.getPrincipal());
 		
 		this.authService.successfulAuth(user.getId());
 		
@@ -194,7 +194,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 	public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException exception) throws IOException, ServletException {
 		
-		logger.trace("Incorrect token given, responding with appropriate header.");
+		LOGGER.trace("Incorrect token given, responding with appropriate header.");
 		if (exception instanceof IncorrectOtpTokenException) {
 			response.addHeader("Access-Control-Expose-Headers", INCOMPLETE_HEADER_KEY);
 			response.addHeader(INCOMPLETE_HEADER_KEY, ((IncorrectOtpTokenException) exception).flag());

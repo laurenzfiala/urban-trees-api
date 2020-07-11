@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.service;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -18,8 +19,8 @@ import at.sparklingscience.urbantrees.mapper.UserMapper;
  */
 @Service
 public class UserService {
-	
-	private static Logger logger;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 	
 	@Autowired
     private ApplicationService appService;
@@ -29,10 +30,6 @@ public class UserService {
 	
 	@Autowired
     private UserMapper userMapper;
-	
-	public UserService(Logger classLogger) {
-		logger = classLogger;
-	}
 	
 	/**
 	 * Increase experience points for a single user, namely the one thats logged in.
@@ -46,14 +43,14 @@ public class UserService {
 		}
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
 		
-		logger.debug("increase XP for user - user: {}, action: {}, xp: {}", userId, action, action.getRewardXp());
+		LOGGER.debug("increase XP for user - user: {}, action: {}, xp: {}", userId, action, action.getRewardXp());
 		
 		try {
 			this.increaseXp(action, userId);
 			
-			logger.debug("successfully increased XP for user - user: {}, action: {}, xp: {}", userId, action, action.getRewardXp());
+			LOGGER.debug("successfully increased XP for user - user: {}, action: {}, xp: {}", userId, action, action.getRewardXp());
 		} catch (Throwable t) {
-			logger.error("Failed to increase XP for user: {}", t.getMessage(), t);
+			LOGGER.error("Failed to increase XP for user: {}", t.getMessage(), t);
 			this.appService.logExceptionEvent("Failed to increase XP for user: " + t.getMessage(), t);
 		}
 		
@@ -71,7 +68,7 @@ public class UserService {
 		
 		final int ownUserId = ControllerUtil.getAuthToken(auth).getId();
 		final int singleUserXp = (int) Math.floor(action.getRewardXp() / userIds.length);
-		logger.debug(
+		LOGGER.debug(
 				"increase XP for users - users: {}, action: {}, xp: {}, single user xp: {}, permission: {}",
 				userIds,
 				action,
@@ -92,7 +89,7 @@ public class UserService {
 				}
 			}
 
-			logger.debug(
+			LOGGER.debug(
 					"XP successfully increased for users - users: {}, action: {}, xp: {}, single user xp: {}",
 					userIds,
 					action,
@@ -101,7 +98,7 @@ public class UserService {
 					);
 			
 		} catch (Throwable t) {
-			logger.error("Failed to increase XP for user: {}", t.getMessage(), t);
+			LOGGER.error("Failed to increase XP for user: {}", t.getMessage(), t);
 			this.appService.logExceptionEvent("Failed to increase XP for user: " + t.getMessage(), t);
 		}
 		
@@ -132,7 +129,7 @@ public class UserService {
 	
 	public void prepareXp(int userId, boolean upgrade) {
 		
-		logger.debug("insert initial XP for user - user: {}", userId);
+		LOGGER.debug("insert initial XP for user - user: {}", userId);
 		
 		UserLevelAction action = UserLevelAction.INITIAL;
 		if (upgrade) {
@@ -142,11 +139,11 @@ public class UserService {
 		try {
 			this.userMapper.insertLevel(userId, action.getRewardXp(), action.toString());			
 		} catch (Throwable t) {
-			logger.error("Failed to insert XP for user {}: {}", userId, t.getMessage(), t);
+			LOGGER.error("Failed to insert XP for user {}: {}", userId, t.getMessage(), t);
 			this.appService.logExceptionEvent("Failed to insert XP for user " + userId + ": " + t.getMessage(), t);
 		}
 		
-		logger.debug("XP successfully inserted for user - user: {}", userId);
+		LOGGER.debug("XP successfully inserted for user - user: {}", userId);
 		
 	}
 

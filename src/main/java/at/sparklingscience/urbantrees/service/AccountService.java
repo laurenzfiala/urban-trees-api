@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
@@ -38,8 +39,8 @@ import at.sparklingscience.urbantrees.security.authentication.otp.Totp;
 @Service
 public class AccountService {
 	
-	private static Logger logger;
-	
+	private static final Logger LOGGER = LoggerFactory.getLogger(AccountService.class);
+
 	@Autowired
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
 	
@@ -48,10 +49,6 @@ public class AccountService {
 	
 	@Autowired
 	private AuthMapper authMapper;
-	
-	public AccountService(Logger classLogger) {
-		logger = classLogger;
-	}
 	
 	/**
 	 * Change the passwor dof the given user.
@@ -73,7 +70,7 @@ public class AccountService {
 			throw new BadRequestException("Old password is incorrect or invalid user id was given.");
 		}
 		
-		logger.trace("Successfully changed password for user " + userId);
+		LOGGER.trace("Successfully changed password for user " + userId);
 		
 	}
 	
@@ -92,7 +89,7 @@ public class AccountService {
 		
 		final User user = this.authMapper.findUserById(userId);
 		if (user == null) {
-			logger.error("Given user not found by id. Please investigate, this should be handled internally.");
+			LOGGER.error("Given user not found by id. Please investigate, this should be handled internally.");
 			return false;
 		}
 		
@@ -109,7 +106,7 @@ public class AccountService {
 			return updatedRows == 1;
 		}
 		
-		logger.info("Given old password did not match database. Password not updated.");
+		LOGGER.info("Given old password did not match database. Password not updated.");
 		return false;
 		
 	}
@@ -122,7 +119,7 @@ public class AccountService {
 	@Transactional
 	public void changeUsername(final int userId, final UsernameChange usernameChange) {
 		
-		logger.debug("Upding username for user " + userId + "...");
+		LOGGER.debug("Upding username for user " + userId + "...");
 		
 		final String newUsername = usernameChange.getUsername();
 		if (newUsername == null || newUsername.isBlank() || newUsername.length() < 5) {
@@ -137,10 +134,10 @@ public class AccountService {
 		}
 		
 		if (updatedRows == 0) {
-			logger.info("Failed to update usename for unknown reason. Please investigate.");
+			LOGGER.info("Failed to update usename for unknown reason. Please investigate.");
 			throw new InternalException("Failed to update username.");
 		}
-		logger.debug("Username for " + userId + " successfully updated.");
+		LOGGER.debug("Username for " + userId + " successfully updated.");
 		
 	}
 	
@@ -221,7 +218,7 @@ public class AccountService {
 	@Transactional
 	public String initNewOtp(final int userId) throws AccessDeniedException {
 		
-		logger.trace("Initializing new OTP for user {}...", userId);
+		LOGGER.trace("Initializing new OTP for user {}...", userId);
 		
 		if (this.authMapper.isUserUsingOtp(userId)) {
 			throw new AccessDeniedException("User may not request new OTP when one is already active. user: " + userId);
@@ -230,7 +227,7 @@ public class AccountService {
 		Totp totp = new Totp();
 		this.authMapper.updateUserOtpCredentials(userId, new OtpCredentials(totp.secret(), totp.scratchCodes()));
 		
-		logger.trace("Successfully generated new OTP credentials for user {}...", userId);
+		LOGGER.trace("Successfully generated new OTP credentials for user {}...", userId);
 		
 		return totp.secret();
 		
@@ -239,11 +236,11 @@ public class AccountService {
 	@Transactional
 	public String[] validateNewOtp(final int userId, final String inputCode) throws OtpValidationException {
 		
-		logger.trace("Validating new OTP for user {}...", userId);
+		LOGGER.trace("Validating new OTP for user {}...", userId);
 		OtpCredentials otpCreds = this.authMapper.findUserOtpCredentials(userId);
 		
 		if (this.authMapper.isUserUsingOtp(userId)) {
-			logger.warn("User requested to activate OTP when it was already active. user: {}", userId);
+			LOGGER.warn("User requested to activate OTP when it was already active. user: {}", userId);
 			throw new OtpValidationException("You may not activate OTP if it is already activated.");
 		}
 		
@@ -251,14 +248,14 @@ public class AccountService {
 			new Totp(otpCreds.getSecret(), otpCreds.getScratchCodes())
 				.verifyTotpOnly(inputCode);
 		} catch (OtpValidationException e) {
-			logger.warn("Failed to validate OTP for user {}.", userId, e);
+			LOGGER.warn("Failed to validate OTP for user {}.", userId, e);
 			this.authMapper.updateUserUsingOtp(userId, false);
 			//this.authMapper.increaseFailedLoginAttempts(userId); user is assumed to be trusted here, so don't increase
 			throw e;
 		}
 		
 		this.authMapper.updateUserUsingOtp(userId, true);
-		logger.trace("Successfully validated new OTP for user {} and activated OTP.", userId);
+		LOGGER.trace("Successfully validated new OTP for user {} and activated OTP.", userId);
 		
 		return otpCreds.getScratchCodes();
 		
@@ -267,14 +264,14 @@ public class AccountService {
 	@Transactional
 	public void deactivateOtp(final int userId, final String inputCode) throws OtpValidationException {
 		
-		logger.trace("Deactivating OTP for user {}...", userId);
+		LOGGER.trace("Deactivating OTP for user {}...", userId);
 		OtpCredentials otpCreds = this.authMapper.findUserOtpCredentials(userId);
 		
 		new Totp(otpCreds.getSecret(), otpCreds.getScratchCodes())
 			.verify(inputCode);
 		
 		this.authMapper.updateUserUsingOtp(userId, false);
-		logger.trace("Successfully deactivated OTP for user {}.", userId);
+		LOGGER.trace("Successfully deactivated OTP for user {}.", userId);
 		
 	}
 

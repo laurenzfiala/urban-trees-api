@@ -34,7 +34,7 @@ import at.sparklingscience.urbantrees.security.SecurityUtil;
  */
 public final class ApiKeyFilter extends BasicAuthenticationFilter {
 	
-	private static Logger logger = LoggerFactory.getLogger(ApiKeyFilter.class); // TODO
+	private static final Logger LOGGER = LoggerFactory.getLogger(ApiKeyFilter.class);
 
 	/**
 	 * HTTP Header key to get the api key from.
@@ -57,12 +57,12 @@ public final class ApiKeyFilter extends BasicAuthenticationFilter {
 	protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
 			throws IOException, ServletException {
 
-		logger.trace("Starting API key authentication.");
+		LOGGER.trace("Starting API key authentication.");
 
 		final String apiKey = req.getHeader(ApiKeyFilter.API_KEY_HEADER);
 
 		if (apiKey == null) {
-			logger.trace("Skipping API key authentication, since header is null.");
+			LOGGER.trace("Skipping API key authentication, since header is null.");
 			chain.doFilter(req, res);
 			return;
 		}
@@ -84,14 +84,14 @@ public final class ApiKeyFilter extends BasicAuthenticationFilter {
 		
 		UUID apiKeyUuid = (UUID) UUID.fromString(apiKey);
         if (authMapper.hasValidApiKey(apiKeyUuid) > 0) {
-        	logger.trace("API key valid.");
+        	LOGGER.trace("API key valid.");
             return new PreAuthenticatedAuthenticationToken(
             		apiKeyUuid.toString(),
             		SecurityConfiguration.API_KEY_ACCESS_ROLE,
             		Collections.singletonList(SecurityUtil.grantedAuthority(SecurityConfiguration.API_KEY_ACCESS_ROLE))
     		);
         }
-        logger.info("API key {} invalid.", apiKey);
+        LOGGER.info("API key {} invalid.", apiKey);
         return null;
         
     }

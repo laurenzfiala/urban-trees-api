@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,8 +44,8 @@ import at.sparklingscience.urbantrees.service.UserService;
 @RestController
 @RequestMapping("/user")
 public class UserController {
-	
-	private static Logger logger;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
 	@Autowired
     private UserMapper userMapper;
@@ -61,10 +62,6 @@ public class UserController {
 	@Autowired
     private ApplicationService appService;
 	
-	public UserController(Logger classLogger) {
-		logger = classLogger;
-	}
-	
 	@RequestMapping(method = RequestMethod.POST, path = "/phenology/observation/{phenologyId:\\d+}/image")
 	@Transactional
 	public void postPhenologyImage(
@@ -72,11 +69,11 @@ public class UserController {
 			@RequestParam("file") MultipartFile image,
 			Authentication auth) {
 		
-		logger.debug("[[ POST ]] postPhenologyObservation - phenologyId: {}", phenologyId);
+		LOGGER.debug("[[ POST ]] postPhenologyObservation - phenologyId: {}", phenologyId);
 		
 		final String originalFilename = image.getOriginalFilename();
 		if (originalFilename == null) {
-			logger.warn("User tried to upload file with filename: " + originalFilename);
+			LOGGER.warn("User tried to upload file with filename: " + originalFilename);
 			throw new BadRequestException("Upload filename must be set.", ClientError.PHENOLOGY_IMAGE_UPLOAD_NO_FILENAME);
 		}
 		
@@ -88,11 +85,11 @@ public class UserController {
 		try {
 			this.userMapper.insertPhenologyImage(phenologyId, image.getBytes(), fileType);
 		} catch (IOException e) {
-			logger.error("Could not upload phenology user image: " + e.getMessage(), e);
+			LOGGER.error("Could not upload phenology user image: " + e.getMessage(), e);
 			throw new BadRequestException("Failed to retrieve image from client");
 		}
 		
-		logger.debug("[[ POST ]] postPhenologyImage |END| Successfully uploaded user image - phenologyId: {}", phenologyId);
+		LOGGER.debug("[[ POST ]] postPhenologyImage |END| Successfully uploaded user image - phenologyId: {}", phenologyId);
 		
 		PhenologyDataset phenology = this.phenologyMapper.findPhenologyById(phenologyId);
 		this.userService.increaseXp(
@@ -108,11 +105,11 @@ public class UserController {
 	public UserAchievements getAchievements(Authentication auth) {
 		
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
-		logger.debug("[[ GET ]] getAchievements - user: {}", userId);
+		LOGGER.debug("[[ GET ]] getAchievements - user: {}", userId);
 		
 		UserAchievements achievements = this.userMapper.findAchievementsForUserId(userId);
 		
-		logger.debug("[[ GET ]] getAchievements |END| Successfully fetched achievements - user: {}", userId);
+		LOGGER.debug("[[ GET ]] getAchievements |END| Successfully fetched achievements - user: {}", userId);
 		return achievements;
 		
 	}
@@ -121,7 +118,7 @@ public class UserController {
 	public UserData getUserData(Authentication auth) {
 		
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
-		logger.debug("[[ GET ]] getUserData - user: {}", userId);
+		LOGGER.debug("[[ GET ]] getUserData - user: {}", userId);
 		
 		return this.userMapper.findUserData(userId);
 		
@@ -131,11 +128,11 @@ public class UserController {
 	public void deleteUser(Authentication auth) {
 		
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
-		logger.info("[[ DELETE ]] deleteUser - user: {}", userId);
+		LOGGER.info("[[ DELETE ]] deleteUser - user: {}", userId);
 		
 		this.authMapper.deleteUser(userId);
 		
-		logger.info("[[ DELETE ]] deleteUser |END| Successfully deleted user - user: {}", userId);
+		LOGGER.info("[[ DELETE ]] deleteUser |END| Successfully deleted user - user: {}", userId);
 		
 	}
 	
@@ -143,7 +140,7 @@ public class UserController {
 	public List<Report> getReport(Authentication auth) {
 		
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
-		logger.info("[[ PUT ]] getReport - user: {}", userId);
+		LOGGER.info("[[ PUT ]] getReport - user: {}", userId);
 		
 		return this.appService.getUserReports(auth);
 		
@@ -154,7 +151,7 @@ public class UserController {
 						  Authentication auth) {
 		
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
-		logger.info("[[ PUT ]] putReport - user: {}", userId);
+		LOGGER.info("[[ PUT ]] putReport - user: {}", userId);
 		
 		Report re = new Report();
 		re.setMessage(report.getMessage());
@@ -163,7 +160,7 @@ public class UserController {
 		re.setReportDate(new Date());
 		this.appService.report(re);
 		
-		logger.info("[[ PUT ]] putReport |END| Successfully added report- user: {}", userId);
+		LOGGER.info("[[ PUT ]] putReport |END| Successfully added report- user: {}", userId);
 		
 	}
 

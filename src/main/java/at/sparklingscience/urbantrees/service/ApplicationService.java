@@ -3,6 +3,7 @@ package at.sparklingscience.urbantrees.service;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -23,14 +24,10 @@ import at.sparklingscience.urbantrees.mapper.ApplicationMapper;
 @Service
 public class ApplicationService {
 	
-	private static Logger logger;
+	private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationService.class);
 	
 	@Autowired
     private ApplicationMapper appMapper;
-	
-	public ApplicationService(Logger classLogger) {
-		logger = classLogger;
-	}
 	
 	/**
 	 * TODO
@@ -80,7 +77,7 @@ public class ApplicationService {
 			ev.setSeverity(severity);
 			this.appMapper.insertEvent(ev);
 			if (ev.getId() <= 0) {
-				logger.error("+++ COULD NOT LOG EVENT - INSERT FAILED +++");
+				LOGGER.error("+++ COULD NOT LOG EVENT - INSERT FAILED +++");
 				return;
 			}
 			if (severity.isAutoCreateReport()) {
@@ -91,7 +88,7 @@ public class ApplicationService {
 				this.appMapper.insertReport(re);
 			}
 		} catch(Throwable t) {
-			logger.error("+++ COULD NOT LOG EVENT - " + t.getMessage(), t);
+			LOGGER.error("+++ COULD NOT LOG EVENT - " + t.getMessage(), t);
 		}
 		
 	}

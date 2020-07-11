@@ -4,6 +4,7 @@ import java.security.Principal;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
@@ -41,8 +42,8 @@ import at.sparklingscience.urbantrees.service.UserService;
 @RestController
 @RequestMapping("/tree")
 public class TreeController {
-	
-	private static Logger logger;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(TreeController.class);
 	
 	@Autowired
 	private UserService userService;
@@ -62,14 +63,10 @@ public class TreeController {
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
 	
-	public TreeController(Logger classLogger) {
-		logger = classLogger;
-	}
-	
 	@RequestMapping(method = RequestMethod.GET, path = "")
 	public List<Tree> getAllTrees(Principal principal) {
 		
-		logger.debug("[[ GET ]] getAllTrees");
+		LOGGER.debug("[[ GET ]] getAllTrees");
 		return this.treeMapper.getAllTrees();
 		
 	}
@@ -77,7 +74,7 @@ public class TreeController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{treeId:\\d+}")
 	public Tree getTree(@PathVariable int treeId) {
 		
-		logger.debug("[[ GET ]] getTree - treeId: {}", treeId);
+		LOGGER.debug("[[ GET ]] getTree - treeId: {}", treeId);
 		
 		Tree tree = this.treeMapper.findTreeById(treeId);
 		if (tree == null) {
@@ -94,7 +91,7 @@ public class TreeController {
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
 		
-		logger.debug("[[ GET ]] getTreePhysiognomy - treeId: {}", treeId);
+		LOGGER.debug("[[ GET ]] getTreePhysiognomy - treeId: {}", treeId);
 		
 		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
 		
@@ -119,7 +116,7 @@ public class TreeController {
 			@PathVariable int treeId,
 			@Validated(ValidationGroups.Update.class) @RequestBody PhysiognomyDataset dataset) {
 		
-		logger.info("[[ POST ]] postTreePhysiognomyDataset - treeId: {}", treeId);
+		LOGGER.info("[[ POST ]] postTreePhysiognomyDataset - treeId: {}", treeId);
 		
 		if (treeId != dataset.getTreeId()) {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
@@ -128,11 +125,11 @@ public class TreeController {
 		try {
 			this.physiognomyMapper.insertPhysiognomyDataset(dataset);
 		} catch (DuplicateKeyException ex) {
-			logger.debug("User tried to enter duplicate key: {}", ex.getMessage(), ex);
+			LOGGER.debug("User tried to enter duplicate key: {}", ex.getMessage(), ex);
 			throw new BadRequestException("There is already an observation with given observationDate.", ClientError.PHENOLOGY_DUPLICATE);
 		}
 		
-		logger.info("[[ POST ]] postTreePhysiognomyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
+		LOGGER.info("[[ POST ]] postTreePhysiognomyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
 		
 		return dataset;
 		
@@ -144,7 +141,7 @@ public class TreeController {
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
 		
-		logger.debug("[[ GET ]] getTreePhenology - treeId: {}", treeId);
+		LOGGER.debug("[[ GET ]] getTreePhenology - treeId: {}", treeId);
 		
 		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
 
@@ -166,7 +163,7 @@ public class TreeController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{speciesId:\\d+}/phenology/spec")
 	public List<PhenologyObservationType> getPhenologyObservationSpecForSpeciesId(@PathVariable int speciesId) {
 		
-		logger.debug("[[ GET ]] getPhenologyObservationSpecForSpeciesId - speciesId: {}", speciesId);
+		LOGGER.debug("[[ GET ]] getPhenologyObservationSpecForSpeciesId - speciesId: {}", speciesId);
 		
 		final List<PhenologyObservationType> spec = this.phenologyMapper.getObservationTypesForTreeSpeciesId(speciesId);
 		
@@ -185,7 +182,7 @@ public class TreeController {
 			@Validated(ValidationGroups.Update.class) @RequestBody PhenologyDataset dataset,
 			Authentication auth) {
 		
-		logger.info("[[ POST ]] postTreePhenologyDataset - treeId: {}", treeId);
+		LOGGER.info("[[ POST ]] postTreePhenologyDataset - treeId: {}", treeId);
 		
 		if (treeId != dataset.getTreeId()) {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
@@ -206,11 +203,11 @@ public class TreeController {
 			this.phenologyMapper.insertPhenology(dataset);
 			this.phenologyMapper.insertPhenologyObservation(dataset);
 		} catch (DuplicateKeyException ex) {
-			logger.debug("User tried to enter duplicate key: {}", ex.getMessage(), ex);
+			LOGGER.debug("User tried to enter duplicate key: {}", ex.getMessage(), ex);
 			throw new BadRequestException("There is already an observation with given observationDate.", ClientError.PHENOLOGY_DUPLICATE);
 		}
 		
-		logger.info("[[ POST ]] postTreePhenologyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
+		LOGGER.info("[[ POST ]] postTreePhenologyDataset |END| - treeId: {}, inserted dataset id: {}", treeId, dataset.getId());
 		
 		this.userService.increaseXp(
 			UserLevelAction.PHENOLOGY_OBSERVATION,
@@ -226,7 +223,7 @@ public class TreeController {
 	@RequestMapping(method = RequestMethod.GET, path = "/cities")
 	public List<City> getCities() {
 		
-		logger.info("[[ GET ]] getCities");
+		LOGGER.info("[[ GET ]] getCities");
 		
 		final List<City> cities = this.treeMapper.getCities();
 		
@@ -234,7 +231,7 @@ public class TreeController {
 			throw new InternalException("Could not find cities.");
 		}
 		
-		logger.info("[[ GET ]] getCities |END|");
+		LOGGER.info("[[ GET ]] getCities |END|");
 		
 		return cities;
 		
@@ -243,7 +240,7 @@ public class TreeController {
 	@RequestMapping(method = RequestMethod.GET, path = "/species")
 	public List<TreeSpecies> getSpecies() {
 		
-		logger.info("[[ GET ]] getSpecies");
+		LOGGER.info("[[ GET ]] getSpecies");
 		
 		final List<TreeSpecies> species = this.treeMapper.getSpecies();
 		
@@ -251,7 +248,7 @@ public class TreeController {
 			throw new InternalException("Could not find tree species.");
 		}
 		
-		logger.info("[[ GET ]] getSpecies |END|");
+		LOGGER.info("[[ GET ]] getSpecies |END|");
 		
 		return species;
 		

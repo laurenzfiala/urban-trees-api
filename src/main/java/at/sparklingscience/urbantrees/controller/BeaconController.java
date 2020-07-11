@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -40,8 +41,8 @@ import at.sparklingscience.urbantrees.service.UserService;
 @RestController
 @RequestMapping("/beacon")
 public class BeaconController {
-	
-	private static Logger logger;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(BeaconController.class);
 	
 	@Autowired
 	private UserService userService;
@@ -52,21 +53,17 @@ public class BeaconController {
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
 	
-	public BeaconController(Logger classLogger) {
-		logger = classLogger;
-	}
-	
 	@RequestMapping(method = RequestMethod.GET)
 	public List<Beacon> getAllBeaconsActive() {
 		
-		logger.debug("[[ GET ]] getAllBeaconsActive");
+		LOGGER.debug("[[ GET ]] getAllBeaconsActive");
 		
 		List<Beacon> beacons = this.beaconMapper.findAllBeaconsActive();
 		if (beacons == null) {
 			throw new NotFoundException("No beacon found.");
 		}
 		
-		logger.debug("[[ GET ]] getAllBeaconsActive |END|");
+		LOGGER.debug("[[ GET ]] getAllBeaconsActive |END|");
 		
 		return beacons;
 		
@@ -77,7 +74,7 @@ public class BeaconController {
 		
 		final BeaconStatus status = BeaconStatus.valueOf(beaconStatus);
 		
-		logger.debug("[[ GET ]] getAllBeaconsByStatus - status: {}", status);
+		LOGGER.debug("[[ GET ]] getAllBeaconsByStatus - status: {}", status);
 		
 		List<Beacon> beacons = this.beaconMapper.findAllBeaconsByStatus(status);		
 		if (beacons == null) {
@@ -93,7 +90,7 @@ public class BeaconController {
 		
 		final BeaconStatus status = BeaconStatus.valueOf(beaconStatus);
 		
-		logger.debug("[[ PUT ]] putBeaconStatus - beaconId: {}, status: {}", beaconId, status);
+		LOGGER.debug("[[ PUT ]] putBeaconStatus - beaconId: {}, status: {}", beaconId, status);
 		
 		try {
 			this.beaconMapper.updateBeaconStatus(beaconId, status);					
@@ -101,7 +98,7 @@ public class BeaconController {
 			throw new InternalError("Update of beacon " + beaconId + " to status " + status + " failed.");			
 		}
 		
-		logger.info("[[ POST ]] putBeaconStatus |END| - beaconId: {}, status: {}", beaconId, status);
+		LOGGER.info("[[ POST ]] putBeaconStatus |END| - beaconId: {}, status: {}", beaconId, status);
 		
 	}
 	
@@ -109,7 +106,7 @@ public class BeaconController {
 	public Beacon getBeacon(@PathVariable int beaconId,
 							Authentication auth) {
 		
-		logger.debug("[[ GET ]] getBeacon - beaconId: {}", beaconId);
+		LOGGER.debug("[[ GET ]] getBeacon - beaconId: {}", beaconId);
 		
 		Beacon beacon = this.beaconMapper.findBeaconById(beaconId);
 		if (beacon == null) {
@@ -123,7 +120,7 @@ public class BeaconController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{beaconAddress:(?:[\\d\\w]{2}\\:){5}(?:[\\d\\w]{2})}")
 	public Beacon getBeaconByAddress(@PathVariable String beaconAddress) {
 		
-		logger.debug("[[ GET ]] getBeaconByAddress - beaconAddress: {}", beaconAddress);
+		LOGGER.debug("[[ GET ]] getBeaconByAddress - beaconAddress: {}", beaconAddress);
 		
 		Beacon beacon = this.beaconMapper.findBeaconByAddress(beaconAddress);
 		if (beacon == null) {
@@ -141,7 +138,7 @@ public class BeaconController {
 			@RequestParam(required = false) String timespanMin,
 			@RequestParam(required = false) String timespanMax) {
 		
-		logger.debug("[[ GET ]] getBeaconData - beaconId: {}", beaconId);
+		LOGGER.debug("[[ GET ]] getBeaconData - beaconId: {}", beaconId);
 		
 		if (maxDatapoints == null) {
 			maxDatapoints = -1; // infinite
@@ -168,7 +165,7 @@ public class BeaconController {
 			@Validated(ValidationGroups.Update.class) @RequestBody BeaconReadoutResult result,
 			Authentication auth) {
 		
-		logger.info("[[ PUT ]] putBeaconReadoutResult - beaconId: {}", beaconId);
+		LOGGER.info("[[ PUT ]] putBeaconReadoutResult - beaconId: {}", beaconId);
 		
 		if (result == null || result.getDatasets() == null || result.getSettings() == null) {
 			throw new BadRequestException("Beacon data/settings is null, can't continue with putBeaconData for beaconId: " + beaconId);
@@ -192,7 +189,7 @@ public class BeaconController {
 		this.beaconMapper.updateBeaconStatus(beaconId, BeaconStatus.OK);
 		this.userService.increaseXp(UserLevelAction.BEACON_READOUT, auth);
 		
-		logger.info("[[ PUT ]] postBeaconputBeaconReadoutResultData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
+		LOGGER.info("[[ PUT ]] postBeaconputBeaconReadoutResultData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
 		
 	}
 	
@@ -203,7 +200,7 @@ public class BeaconController {
 			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconDataset> datasets,
 			Authentication auth) {
 		
-		logger.info("[[ PUT ]] putBeaconData - beaconId: {}", beaconId);
+		LOGGER.info("[[ PUT ]] putBeaconData - beaconId: {}", beaconId);
 		
 		if (datasets == null) {
 			throw new BadRequestException("Beacon datasets are null, can't continue with postBeaconData for beaconId: " + beaconId);
@@ -211,7 +208,7 @@ public class BeaconController {
 		
 		this.beaconMapper.insertBeaconDatasets(beaconId, datasets);
 		
-		logger.info("[[ PUT ]] putBeaconData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
+		LOGGER.info("[[ PUT ]] putBeaconData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
 		
 		this.userService.increaseXp(UserLevelAction.BEACON_READOUT, auth);
 		
@@ -221,14 +218,14 @@ public class BeaconController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{beaconId:\\d+}/settings")
 	public BeaconSettings getLatestBeaconSettings(@PathVariable int beaconId) {
 		
-		logger.info("[[ GET ]] getLatestBeaconSettings - beaconId: {}", beaconId);
+		LOGGER.info("[[ GET ]] getLatestBeaconSettings - beaconId: {}", beaconId);
 		
 		final BeaconSettings latestSettings = this.beaconMapper.findLatestBeaconSettingsByBeaconId(beaconId);
 		if (latestSettings == null) {
 			throw new NotFoundException("Could not find beacon settings for beacon " + beaconId);
 		}
 		
-		logger.info("[[ GET ]] getLatestBeaconSettings |END| - beaconId: {}, settings id: {}", beaconId, latestSettings.getId());
+		LOGGER.info("[[ GET ]] getLatestBeaconSettings |END| - beaconId: {}, settings id: {}", beaconId, latestSettings.getId());
 		
 		return latestSettings;
 		
@@ -241,7 +238,7 @@ public class BeaconController {
 			@Validated(ValidationGroups.Update.class) @RequestBody BeaconSettings settings,
 			Principal principal) {
 		
-		logger.info("[[ PUT ]] putBeaconSettings - beaconId: {}", beaconId);
+		LOGGER.info("[[ PUT ]] putBeaconSettings - beaconId: {}", beaconId);
 		
 		if (settings == null) {
 			throw new BadRequestException("Beacon settings are null, can't continue with putBeaconSettings for beaconId: " + beaconId);
@@ -250,7 +247,7 @@ public class BeaconController {
 		this.beaconMapper.insertBeaconSettings(beaconId, settings, null);
 		this.beaconMapper.updateBeaconStatus(beaconId, BeaconStatus.OK);
 		
-		logger.info("[[ PUT ]] putBeaconSettings |END| - beaconId: {}, inserted settings", beaconId);
+		LOGGER.info("[[ PUT ]] putBeaconSettings |END| - beaconId: {}, inserted settings", beaconId);
 		
 	}
 	
@@ -259,11 +256,11 @@ public class BeaconController {
 	public void putBeaconLogs(@Validated(ValidationGroups.Update.class)
 							  @RequestBody List<BeaconLog> logs) {
 		
-		logger.info("[[ PUT ]] putBeaconLogs - inserting {} logs", logs.size());
+		LOGGER.info("[[ PUT ]] putBeaconLogs - inserting {} logs", logs.size());
 		
 		this.beaconMapper.insertBeaconLogs(logs);
 		
-		logger.info("[[ PUT ]] putBeaconLogs |END| - successfully inserted {} logs", logs.size());
+		LOGGER.info("[[ PUT ]] putBeaconLogs |END| - successfully inserted {} logs", logs.size());
 		
 	}
 

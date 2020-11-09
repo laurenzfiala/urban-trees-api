@@ -135,7 +135,8 @@
 			  <artifactId>maven-release-plugin</artifactId>
 			  <version>3.0.0-M1</version>
 	          <configuration>
-	            <arguments>-DskipTests</arguments> <!-- Remove once tests have been refactored -->
+	            <arguments>-Dmaven.deploy.skip=true -DskipTests</arguments>
+	            <!-- Remove skipTests once tests have been refactored -->
 	          </configuration>
 			</plugin>
 		</plugins>

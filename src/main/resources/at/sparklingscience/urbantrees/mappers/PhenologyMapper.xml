@@ -21,6 +21,14 @@
 				    select="at.sparklingscience.urbantrees.mapper.ApplicationMapper.findUserIdsByRefId" />
     </resultMap>
 
+    <resultMap id="PhenologyWithTreeResultMap"
+    		   type="at.sparklingscience.urbantrees.domain.PhenologyDatasetWithTree"
+    		   extends="PhenologyResultMap">
+	    <collection column="tree_id"
+				    property="tree"
+				    select="at.sparklingscience.urbantrees.mapper.TreeMapper.findTreeById" />
+    </resultMap>
+
     <resultMap id="PhenologyObservationMap" type="at.sparklingscience.urbantrees.domain.PhenologyObservation">
 	    <id column="id" 				property="id" />
 	    
@@ -85,6 +93,25 @@
 		    tree_data.phenology p
 		where
 		    p.id = #{phenologyId}
+    </select>
+
+    <select id="findPhenologyByUserId" resultMap="PhenologyWithTreeResultMap">
+        select
+		    p.id,
+		    p.tree_id,
+		    p.observers,
+		    p.observers_ref,
+		    p.observe_dat,
+		    p.user_remark
+		from
+		    tree_data.phenology p,
+		    application.user_ref ur
+		where
+		    p.observers_ref = ur.ref_id
+		    and ur.user_id = #{userId}
+	    order by
+	    	p.observe_dat desc
+	    limit #{limit}
     </select>
 
     <select id="findPhenologyObservationsByPhenologyId"

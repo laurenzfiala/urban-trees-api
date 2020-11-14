@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
+import at.sparklingscience.urbantrees.domain.PhenologyDatasetWithTree;
 import at.sparklingscience.urbantrees.domain.PhenologyObservationType;
 
 /**
@@ -27,6 +28,11 @@ public interface PhenologyMapper {
 	
 	PhenologyDataset findPhenologyById(
 			@Param("phenologyId") int phenologyId
+			);
+	
+	List<PhenologyDatasetWithTree> findPhenologyByUserId(
+			@Param("userId") int userId,
+			@Param("limit") int limit
 			);
 	
 	void insertPhenology(PhenologyDataset dataset);

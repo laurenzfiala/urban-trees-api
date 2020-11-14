@@ -189,13 +189,13 @@ public interface AuthMapper {
 							  @Param("permission") String permission);
 	
 	/**
-	 * Check if receivingUser has the given permission granted by grantingUser.
+	 * Check if receivingUser has the given permission granted by all grantingUsers.
 	 * @param grantingUserId User ID of permission granting user (gave permission)
 	 * @param receivingUserId User ID of permission receiving user (got permission)
 	 * @param permission type of permission (as string)
-	 * @return amount of active & matching user permissions
+	 * @return true if receivingUserId has permission granted by ALL grantingUserIds
 	 */
-	Integer hasUserPermission(@Param("grantingUserId") int grantingUserId,
+	boolean hasUserPermission(@Param("grantingUserIds") int[] grantingUserIds,
 							  @Param("receivingUserId") int receivingUserId,
 							  @Param("permission") String permission);
 	

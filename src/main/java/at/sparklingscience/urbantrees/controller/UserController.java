@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
+import at.sparklingscience.urbantrees.domain.PhenologyDatasetWithTree;
 import at.sparklingscience.urbantrees.domain.Report;
 import at.sparklingscience.urbantrees.domain.UserAchievements;
 import at.sparklingscience.urbantrees.domain.UserData;
@@ -29,10 +30,11 @@ import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.ClientError;
-import at.sparklingscience.urbantrees.mapper.AuthMapper;
+import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.UserMapper;
 import at.sparklingscience.urbantrees.service.ApplicationService;
+import at.sparklingscience.urbantrees.service.AuthenticationService;
 import at.sparklingscience.urbantrees.service.UserService;
 
 /**
@@ -54,7 +56,7 @@ public class UserController {
     private PhenologyMapper phenologyMapper;
 
 	@Autowired
-    private AuthMapper authMapper;
+    private AuthenticationService authService;
 	
 	@Autowired
     private UserService userService;
@@ -101,6 +103,22 @@ public class UserController {
 		
 	}
 	
+	@RequestMapping(method = RequestMethod.GET, path = "/{userId:\\d+}/phenology")
+	public List<PhenologyDatasetWithTree> getPhenologyHistory(@PathVariable int userId, Authentication auth) {
+		
+		final int currentUserId = ControllerUtil.getAuthToken(auth).getId();
+		if (!this.authService.hasUserPermission(userId, currentUserId, UserPermission.PHENOLOGY_OBSERVATION_HISTORY)) {
+			throw new UnauthorizedException("You are not allowed to request the given users' phenology history.");
+		}
+		LOGGER.debug("[[ GET ]] getPhenologyHistory - user: {}", userId);
+		
+		List<PhenologyDatasetWithTree> datasets = this.phenologyMapper.findPhenologyByUserId(userId, 10);
+		
+		LOGGER.debug("[[ GET ]] getPhenologyHistory |END| Successfully fetched phenology history - user: {}", userId);
+		return datasets;
+		
+	}
+	
 	@RequestMapping(method = RequestMethod.GET, path = "/achievements")
 	public UserAchievements getAchievements(Authentication auth) {
 		
@@ -130,7 +148,7 @@ public class UserController {
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
 		LOGGER.info("[[ DELETE ]] deleteUser - user: {}", userId);
 		
-		this.authMapper.deleteUser(userId);
+		this.authService.deleteUser(userId);
 		
 		LOGGER.info("[[ DELETE ]] deleteUser |END| Successfully deleted user - user: {}", userId);
 		

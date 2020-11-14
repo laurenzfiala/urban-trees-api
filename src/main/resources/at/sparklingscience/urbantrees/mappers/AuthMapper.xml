@@ -356,13 +356,18 @@
             )
 	</insert>
 	
-	<select id="hasUserPermission" resultType="java.lang.Integer" useCache="false">
+	<select id="hasUserPermission" resultType="java.lang.Boolean" useCache="false">
+		<bind name="grantingUserIdsLength" value="grantingUserIds.length" />
+		
         select
-			count(0)
+			count(0) = #{grantingUserIdsLength}
 		from
 			access_data.user_permission
 		where
-			granting_user_id = #{grantingUserId}
+			granting_user_id in
+			<foreach item="grantingUserId" collection="grantingUserIds" index="index" open="(" separator="," close=")">
+	        	#{grantingUserId}
+		    </foreach>
 			and receiving_user_id = #{receivingUserId}
 			and permission = #{permission}
 			and

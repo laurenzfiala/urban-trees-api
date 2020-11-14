@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.service;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Date;
@@ -288,14 +289,38 @@ public class AuthenticationService {
 	}
 
 	/**
-	 * Whether the receivingUser has the given permission from the given grantingUser.
+	 * Whether the receivingUser has the given permission from the grantingUser.
+	 * If grantingUserId equals receivingUserId, this method always returns true.
+	 * @param grantingUserId User ID of permission granting user (giving permission)
+	 * @param receivingUserId User ID of permission receiving user (getting permission)
+	 * @param permission type of permission
+	 * @see #hasUserPermission(int[], int, UserPermission)
+	 */
+	@Transactional
+	public boolean hasUserPermission(int grantingUserId, int receivingUserId, UserPermission permission) {
+		if (grantingUserId == receivingUserId) {
+			return true;
+		}
+		return this.hasUserPermission(new int[] {grantingUserId}, receivingUserId, permission);
+	}
+
+	/**
+	 * Whether the receivingUser has the given permission from all grantingUsers.
+	 * If grantingUserIds contains receivingUserId, it is removed from the array.
+	 * If grantingUserIds only contains receivingUserId, this method always returns true.
 	 * @param grantingUserId User ID of permission granting user (giving permission)
 	 * @param receivingUserId User ID of permission receiving user (getting permission)
 	 * @param permission type of permission
 	 */
 	@Transactional
-	public boolean hasUserPermission(int grantingUserId, int receivingUserId, UserPermission permission) {
-		return this.authMapper.hasUserPermission(grantingUserId, receivingUserId, permission.name()) > 0;
+	public boolean hasUserPermission(int[] grantingUserIds, int receivingUserId, UserPermission permission) {
+		final int[] grantingUserIdsWOReceivingUser = Arrays.stream(grantingUserIds)
+				.filter((id) -> id != receivingUserId)
+				.toArray();
+		if (grantingUserIdsWOReceivingUser.length == 0) {
+			return true;
+		}
+		return this.authMapper.hasUserPermission(grantingUserIdsWOReceivingUser, receivingUserId, permission.name());
 	}
 	
 	/**

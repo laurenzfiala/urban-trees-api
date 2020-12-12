@@ -72,7 +72,7 @@ public class ApplicationService {
 		
 		try {
 			Event ev = new Event();
-			ev.setMessage(message);
+			ev.setMessage(message == null ? "(null)" : message);
 			ev.setDetails(details);
 			ev.setSeverity(severity);
 			this.appMapper.insertEvent(ev);

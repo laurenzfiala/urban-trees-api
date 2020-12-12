@@ -6,15 +6,12 @@ import javax.validation.constraints.NotNull;
  * A language for {@link UserContent}.
  * 
  * @author Laurenz Fiala
- * @since 2018/03/13
+ * @since 2020/12/10 (doc)
  */
 public class UserContentLanguage {
 
 	@NotNull
 	private String id;
-	
-	@NotNull
-	private String name;
 
 	public String getId() {
 		return id;
@@ -22,14 +19,6 @@ public class UserContentLanguage {
 
 	public void setId(String id) {
 		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 }

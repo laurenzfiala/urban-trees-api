@@ -82,7 +82,7 @@ public class AccountController {
 			authToken.getName()
 		);
 
-		UserIdentity ui = this.accountService.requestUserPermission(permRequest, authToken.getId());
+		UserIdentity ui = this.accountService.requestUserPermission(permRequest, authToken);
 		
 		LOGGER.debug(
 			"[[ POST ]] postUserPermissionRequest |END| Successfully added permission: {} from user: {} to user: {}",

@@ -4,40 +4,214 @@
 
 <mapper namespace="at.sparklingscience.urbantrees.mapper.UserContentMapper">
 
-    <resultMap id="UserContentResultMap" type="at.sparklingscience.urbantrees.domain.UserContent">
-        <id 	column="id"			property="id" />
-        <result column="content"	property="content" />
-        <result column="tag"		property="tag" />
-        <result column="mod_dat"	property="modDate" />
+    <resultMap id="UserContentMetadataResultMap" type="at.sparklingscience.urbantrees.domain.UserContentMetadata">
+        <id 	column="id"				property="id" />
+        <result column="content_id"		property="contentId" />
+        <result column="content_title"	property="contentTitle" />
+        <result column="is_draft"		property="isDraft" />
+        <result column="save_dat"		property="saveDate" />
+        <result column="approve_dat"	property="approveDate" />
         
-        <association property="language">
-        	<id 	column="lang"		property="id"/>
-        	<result column="lang_name"	property="name"/>
+        <association property="contentLanguage" javaType="at.sparklingscience.urbantrees.domain.UserContentLanguage" >
+            <id column="content_lang" 	property="id" />
         </association>
+	    <association column="user_id"
+				     property="user"
+				     select="at.sparklingscience.urbantrees.mapper.AuthMapper.findUserIdentityById" />
+	    <association column="approve_user_id"
+				     property="approveUser"
+				     select="at.sparklingscience.urbantrees.mapper.AuthMapper.findUserIdentityById" />
     </resultMap>
+
+    <resultMap id="UserContentResultMap"
+    		   type="at.sparklingscience.urbantrees.domain.UserContent"
+    		   extends="UserContentMetadataResultMap">
+        <result column="content"		property="content" />
+    </resultMap>
+    
+    <!--  TODO save new content = flushCache="true" -->
 	
-	<select id="findContent" resultMap="UserContentResultMap">
+	<select id="findAllContent" resultMap="UserContentResultMap">
 		select
 			c.id,
-			c.content,
-			l.id lang,
-			l."name" lang_name,
-			c.tag,
-			c.mod_dat
+			c.content_id,
+			c.content_title,
+			c.content_lang,
+			c."content",
+			c.is_draft,
+			c.save_dat,
+			c.user_id,
+			c.approve_dat,
+			c.approve_user_id
 		from
-			user_data.content_generic c,
-			user_data.content_generic_lang l
+			user_data."content" c
 		where
-			<if test="id != null">
-				c.id = #{id}
+			c.content_id = #{contentId}
+			and c.approve_dat is not null
+			and (
+				select
+					count(*)
+				from
+					user_data."content"
+				where
+					history_id = c.id
+			) = 0
+		order by
+			c.content_order
+	</select>
+	
+	<select id="findContentHistory" resultMap="UserContentResultMap">
+		with recursive content_rec as (
+		    select
+				*
+			from
+				user_data."content"
+			where
+				content_id = #{contentId}
+				and content_order = #{contentOrder}
+		  union
+		  	select
+				c.*
+			from
+				user_data."content" c
+			inner join content_rec cr
+		  		on cr.history_id = c.id
+		)
+		SELECT 
+			c.id,
+			c.content_id,
+			c.content_title,
+			c.content_lang,
+			c."content",
+			c.is_draft,
+			c.save_dat,
+			c.user_id,
+			c.approve_dat,
+			c.approve_user_id,
+			c.mod_dat,
+			c.cre_dat
+		FROM content_rec c
+	</select>
+	
+	<select id="findContentUserHistory" resultMap="UserContentMetadataResultMap">
+		select
+			c.id,
+			c.content_id,
+			c.content_title,
+			c.content_lang,
+			c."content",
+			c.is_draft,
+			c.save_dat,
+			c.user_id,
+			c.approve_dat,
+			c.approve_user_id,
+			c.mod_dat,
+			c.cre_dat
+		from
+			user_data."content" c,
+			user_data.content_registry cr
+		where
+			c.user_id = #{userId}
+			and cr.content_id = c.content_id 
+			<if test="contentIdPrefix != null">
+				and c.content_id like #{contentIdPrefix} || '%'
 			</if>
-			<if test="id != null and tag != null">
-				and
+			and c.save_dat = (
+				select
+					max(c2.save_dat)
+				from
+					user_data."content" c2
+				where
+					c.content_id = c2.content_id
+			)
+		order by
+			c.save_dat desc
+		limit #{limit}
+	</select>
+	
+	<select id="canViewContent" resultType="java.lang.Boolean">
+		with help as (
+			select
+				cr.enabled as enabled,
+				cr.anon_allow_view as allow_view,
+				cr.anon_allow_edit as allow_edit
+			from
+				user_data.content_registry cr
+			where
+				cr.content_id = #{contentId}
+			<if test="grantedAuthorities != null">
+				union all
+				select
+					null,
+					cr.user_allow_view as allow_view,
+					cr.user_allow_edit as allow_edit
+				from
+					user_data.content_registry cr
+				where
+					cr.content_id = #{contentId}
 			</if>
-			<if test="tag != null">
-				c.tag = #{tag}
+			<if test="grantedAuthorities != null and grantedAuthorities.size() > 0">
+				union all
+				select
+					null,
+					car.allow_view,
+					car.allow_edit 
+				from
+					user_data.content_access_role car,
+					access_data."role" r
+				where
+					car.content_id = #{contentId}
+					and car.role_id = r.id
+					and r."name" in
+					<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
+						#{ga.authority}
+					</foreach>
 			</if>
-			and c.lang = l.id
+		)
+		select coalesce(bool_and(enabled), bool_or(allow_view), false)
+		from
+			help h
+	</select>
+	
+	<select id="canEditContent" resultType="java.lang.Boolean">
+		with help as (
+			select
+				cr.enabled as enabled,
+				cr.anon_allow_view as allow_view,
+				cr.anon_allow_edit as allow_edit
+			from
+				user_data.content_registry cr
+			where
+				cr.content_id = #{contentId}
+			<if test="grantedAuthorities != null">
+				union all
+				select
+					null,
+					cr.user_allow_view as allow_view,
+					cr.user_allow_edit as allow_edit
+				from
+					user_data.content_registry cr
+				where
+					cr.content_id = #{contentId}
+			</if>
+			<if test="grantedAuthorities != null and grantedAuthorities.size() > 0">
+				union all
+				select
+					null,
+					car.allow_view,
+					car.allow_edit 
+				from
+					user_data.content_access_role car
+				where
+					car.content_id = #{contentId}
+					and car.role_id in
+					<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
+						#{ga.authority}
+					</foreach>
+			</if>
+		)
+		select coalesce(bool_and(enabled), bool_or(allow_edit), false)
+		from help
 	</select>
 
 </mapper>

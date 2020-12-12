@@ -63,6 +63,13 @@ public interface AuthMapper {
 	List<String> findRolesByUserId(@Param("id") int id);
 	
 	/**
+	 * Find the user identity for the given user id.
+	 * @param id user id
+	 * @return user identity of user with given id
+	 */
+	UserIdentity findUserIdentityById(@Param("id") int id);
+	
+	/**
 	 * Find all existing users.
 	 * @return List of users.
 	 */

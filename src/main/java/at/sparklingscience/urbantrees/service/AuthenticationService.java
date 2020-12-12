@@ -26,6 +26,7 @@ import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.security.authentication.jwt.JWTUserAuthentication;
 import at.sparklingscience.urbantrees.security.authentication.otp.OtpValidationException;
 import at.sparklingscience.urbantrees.security.authentication.otp.Totp;
@@ -292,6 +293,19 @@ public class AuthenticationService {
 	 * Whether the receivingUser has the given permission from the grantingUser.
 	 * If grantingUserId equals receivingUserId, this method always returns true.
 	 * @param grantingUserId User ID of permission granting user (giving permission)
+	 * @param receivingUser Permission receiving user (getting permission)
+	 * @param permission type of permission
+	 * @see #hasUserPermission(int[], int, UserPermission)
+	 */
+	@Transactional
+	public boolean hasUserPermission(int grantingUserId, AuthenticationToken receivingUser, UserPermission permission) {
+		return this.hasUserPermission(grantingUserId, receivingUser.getId(), permission);
+	}
+
+	/**
+	 * Whether the receivingUser has the given permission from the grantingUser.
+	 * If grantingUserId equals receivingUserId, this method always returns true.
+	 * @param grantingUserId User ID of permission granting user (giving permission)
 	 * @param receivingUserId User ID of permission receiving user (getting permission)
 	 * @param permission type of permission
 	 * @see #hasUserPermission(int[], int, UserPermission)
@@ -352,7 +366,7 @@ public class AuthenticationService {
 		
 		final String base64Secret = this.authMapper.findUserTokenSecret(userId, authId);
 		if (base64Secret == null) {
-			throw new UnauthorizedException("Could not find user's login token. (user id = " + userId + ")");
+			throw new UnauthorizedException("Could not find user's login token. (user id = " + userId + ")", null);
 		}
 		return Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
 		

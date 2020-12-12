@@ -1,6 +1,5 @@
 package at.sparklingscience.urbantrees.controller;
 
-import java.security.Principal;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -37,6 +36,7 @@ import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.PhysiognomyMapper;
 import at.sparklingscience.urbantrees.mapper.TreeMapper;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.service.ApplicationService;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
 import at.sparklingscience.urbantrees.service.UserService;
@@ -69,7 +69,7 @@ public class TreeController {
 	private String dateFormatPattern;
 	
 	@RequestMapping(method = RequestMethod.GET, path = "")
-	public List<Tree> getAllTrees(Principal principal) {
+	public List<Tree> getAllTrees() {
 		
 		LOGGER.debug("[[ GET ]] getAllTrees");
 		return this.treeMapper.getAllTrees();
@@ -192,9 +192,9 @@ public class TreeController {
 		if (treeId != dataset.getTreeId()) {
 			throw new BadRequestException("Datasets' tree id does not match the paths' tree id.");
 		}
-		final int currentUserId = ControllerUtil.getAuthToken(auth).getId();
-		if (!this.authService.hasUserPermission(dataset.getObserversUserIds(), currentUserId, UserPermission.PHENOLOGY_OBSERVATION)) {
-			throw new UnauthorizedException("You are not allowed to share phenology observations with given users.");
+		final AuthenticationToken currentUser = ControllerUtil.getAuthToken(auth);
+		if (!this.authService.hasUserPermission(dataset.getObserversUserIds(), currentUser.getId(), UserPermission.PHENOLOGY_OBSERVATION)) {
+			throw new UnauthorizedException("You are not allowed to share phenology observations with given users.", currentUser);
 		}
 		
 		int[] assocUsers = null;

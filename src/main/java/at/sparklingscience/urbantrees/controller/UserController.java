@@ -24,6 +24,7 @@ import at.sparklingscience.urbantrees.domain.PhenologyDataset;
 import at.sparklingscience.urbantrees.domain.PhenologyDatasetWithTree;
 import at.sparklingscience.urbantrees.domain.Report;
 import at.sparklingscience.urbantrees.domain.UserAchievements;
+import at.sparklingscience.urbantrees.domain.UserContentMetadata;
 import at.sparklingscience.urbantrees.domain.UserData;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
 import at.sparklingscience.urbantrees.domain.UserPermission;
@@ -33,8 +34,10 @@ import at.sparklingscience.urbantrees.exception.ClientError;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.UserMapper;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.service.ApplicationService;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
+import at.sparklingscience.urbantrees.service.UserContentService;
 import at.sparklingscience.urbantrees.service.UserService;
 
 /**
@@ -63,6 +66,9 @@ public class UserController {
 
 	@Autowired
     private ApplicationService appService;
+
+	@Autowired
+    private UserContentService contentService;
 	
 	@RequestMapping(method = RequestMethod.POST, path = "/phenology/observation/{phenologyId:\\d+}/image")
 	@Transactional
@@ -106,9 +112,9 @@ public class UserController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{userId:\\d+}/phenology")
 	public List<PhenologyDatasetWithTree> getPhenologyHistory(@PathVariable int userId, Authentication auth) {
 		
-		final int currentUserId = ControllerUtil.getAuthToken(auth).getId();
-		if (!this.authService.hasUserPermission(userId, currentUserId, UserPermission.PHENOLOGY_OBSERVATION_HISTORY)) {
-			throw new UnauthorizedException("You are not allowed to request the given users' phenology history.");
+		final AuthenticationToken currentUser = ControllerUtil.getAuthToken(auth);
+		if (!this.authService.hasUserPermission(userId, currentUser.getId(), UserPermission.PHENOLOGY_OBSERVATION_HISTORY)) {
+			throw new UnauthorizedException("You are not allowed to request the given users' phenology history.", currentUser);
 		}
 		LOGGER.debug("[[ GET ]] getPhenologyHistory - user: {}", userId);
 		
@@ -116,6 +122,22 @@ public class UserController {
 		
 		LOGGER.debug("[[ GET ]] getPhenologyHistory |END| Successfully fetched phenology history - user: {}", userId);
 		return datasets;
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/{userId:\\d+}/content")
+	public List<UserContentMetadata> getContentHistory(
+			@PathVariable int userId,
+			@RequestParam(required = false) String prefix,
+			Authentication auth) {
+		
+		final AuthenticationToken currentUser = ControllerUtil.getAuthToken(auth);
+		LOGGER.debug("[[ GET ]] getContentHistory - of user: {}, access by user: {}", userId, currentUser.getId());
+		
+		List<UserContentMetadata> history = this.contentService.getContentUserHistory(currentUser, userId, prefix);
+		
+		LOGGER.debug("[[ GET ]] getContentHistory |END| Successfully fetched content history - user: {}", userId);
+		return history;
 		
 	}
 	

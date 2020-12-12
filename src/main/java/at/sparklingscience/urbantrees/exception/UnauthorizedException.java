@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.exception;
 
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
+
 /**
  * Exception class.
  * Used for exceptions where the client did not meet necessary auth requirements.
@@ -14,12 +16,32 @@ public class UnauthorizedException extends GenericException {
 	 */
 	private static final long serialVersionUID = 20190314L;
 	
-	public UnauthorizedException(String message) {
+	/**
+	 * Origin user of this exception (if they exist).
+	 */
+	private AuthenticationToken authToken;
+	
+	public UnauthorizedException(String message, AuthenticationToken authToken) {
 		super(message);
+		this.authToken = authToken;
+	}
+	
+	@Override
+	public String getMessage() {
+		
+		String msg = "";
+		if (this.authToken != null) {
+			msg += "[User ID: " + this.authToken.getId() +
+				   ", User Name: " + this.authToken.getName() +
+				   ", Auth ID: " + this.authToken.getAuthId() + "] ";
+		}
+		
+		return msg + super.getMessage();
+		
 	}
 
-	public UnauthorizedException(String message, ClientError clientError) {
-		super(message, clientError);
+	public AuthenticationToken getAuthToken() {
+		return authToken;
 	}
 
 }

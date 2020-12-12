@@ -105,6 +105,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 	}
 	
+	@ExceptionHandler(UnauthorizedException.class)
+	protected ResponseEntity<Object> handleUnauthorized(UnauthorizedException ex) {
+		LOGGER.trace("handleUnauthorized: {}", ex.getMessage());
+		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
+		return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+	}
+	
 	@ExceptionHandler(ResponseStatusException.class)
 	protected ResponseEntity<Object> handleResponseStatus(ResponseStatusException ex) {
 		LOGGER.trace("handleResponseStatus: {}", ex.getMessage());

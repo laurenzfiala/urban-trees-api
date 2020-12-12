@@ -263,6 +263,7 @@
 		where
 			ur.user_id = #{id}
 			and ur.role_id = r.id
+			and r.is_active = true
     </select>
 	
 	<select id="findSetting" resultType="java.lang.String" useCache="true">
@@ -272,6 +273,16 @@
 			access_data.settings
 		where
 			key = #{key}
+    </select>
+    
+    <select id="findUserIdentityById" resultMap="UserIdentityMap" useCache="false">
+        select
+			u.id,
+			u.username
+		from
+			access_data."user" u
+		where
+			u.id = #{id}
     </select>
     
     <select id="findAllUsersLight" resultMap="UserLightMap" useCache="false">

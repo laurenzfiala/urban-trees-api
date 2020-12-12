@@ -9,6 +9,8 @@ package at.sparklingscience.urbantrees.domain;
 public enum UserPermission {
 
 	PHENOLOGY_OBSERVATION,
-	PHENOLOGY_OBSERVATION_HISTORY
+	PHENOLOGY_OBSERVATION_HISTORY,
+	CONTENT_HISTORY,
+	DISPLAY_USERNAME
 	
 }

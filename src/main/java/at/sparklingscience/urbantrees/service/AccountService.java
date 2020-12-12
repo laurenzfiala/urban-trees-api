@@ -27,6 +27,7 @@ import at.sparklingscience.urbantrees.exception.InternalException;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.security.authentication.otp.OtpValidationException;
 import at.sparklingscience.urbantrees.security.authentication.otp.Totp;
 
@@ -145,17 +146,17 @@ public class AccountService {
 	 * Add a user-permission to toUserId. If the credentials of the user in permRequest is valid,
 	 * this user grants the requested permission to toUserId.
 	 * @param permRequest user to grant permission and type of permission
-	 * @param toUserId user to receive permission
+	 * @param toUser user to receive permission
 	 * @return the granting users' identity, which is now granted to be shown to user with toUserId.
 	 */
-	public UserIdentity requestUserPermission(final UserPermissionRequest permRequest, final int toUserId) {
+	public UserIdentity requestUserPermission(final UserPermissionRequest permRequest, final AuthenticationToken toUser) {
 		
 		final User fromUser = this.authService.findUser(permRequest.getUsername());
 		if (fromUser == null) {
-			throw new UnauthorizedException("Permission Request: Username or password wrong");
+			throw new UnauthorizedException("Permission Request: Username or password wrong", toUser);
 		}
 		
-		if (toUserId == fromUser.getId()) {
+		if (toUser.getId() == fromUser.getId()) {
 			throw new BadRequestException("Permission Request: User may not request permission from themself", ClientError.SAME_USER_PERM_REQUEST);
 		}
 		
@@ -166,15 +167,15 @@ public class AccountService {
 			try {
 				this.authService.increaseFailedLoginAttempts(fromUser.getId());
 			} catch (Throwable t) {}
-			throw new UnauthorizedException("Permission Request: Username or password wrong");
+			throw new UnauthorizedException("Permission Request: Username or password wrong", toUser);
 		}
 		
 		if (!fromUserOk) {
-			throw new UnauthorizedException("Permission Request: Username or password wrong");
+			throw new UnauthorizedException("Permission Request: Username or password wrong", toUser);
 		}
 		
 		this.authService.successfulAuth(fromUser.getId());
-		this.authService.addUserPermission(fromUser.getId(), toUserId, permRequest.getPermission());
+		this.authService.addUserPermission(fromUser.getId(), toUser.getId(), permRequest.getPermission());
 		
 		return UserIdentity.fromUser(fromUser);
 		

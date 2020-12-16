@@ -158,38 +158,37 @@
 	
 	<select id="canViewContent" resultType="java.lang.Boolean">
 		with help as (
-			select
-				cr.anon_allow_view as allow_view,
-				cr.anon_allow_edit as allow_edit
-			from
-				user_data.content_registry cr
-			where
-				cr.content_id = #{contentId}
-			<if test="grantedAuthorities != null">
-				union all
+			<if test="grantedAuthorities == null">
 				select
-					cr.user_allow_view as allow_view,
-					cr.user_allow_edit as allow_edit
+					cr.anon_allow_view as allow_view
 				from
 					user_data.content_registry cr
 				where
 					cr.content_id = #{contentId}
 			</if>
-			<if test="grantedAuthorities != null and grantedAuthorities.size() > 0">
-				union all
+			<if test="grantedAuthorities != null">
 				select
-					car.allow_view,
-					car.allow_edit 
+					cr.user_allow_view as allow_view
 				from
-					user_data.content_access_role car,
-					access_data."role" r
+					user_data.content_registry cr
 				where
-					car.content_id = #{contentId}
-					and car.role_id = r.id
-					and r."name" in
-					<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
-						#{ga.authority}
-					</foreach>
+					cr.content_id = #{contentId}
+					and cr.user_allow_view = true
+				<if test="grantedAuthorities.size() > 0">
+					union all
+					select
+						car.allow_view
+					from
+						user_data.content_access_role car,
+						access_data."role" r
+					where
+						car.content_id = #{contentId}
+						and car.role_id = r.id
+						and r."name" in
+						<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
+							#{ga.authority}
+						</foreach>
+				</if>
 			</if>
 		)
 		select bool_or(allow_view)
@@ -199,38 +198,37 @@
 	
 	<select id="canEditContent" resultType="java.lang.Boolean">
 		with help as (
-			select
-				cr.anon_allow_view as allow_view,
-				cr.anon_allow_edit as allow_edit
-			from
-				user_data.content_registry cr
-			where
-				cr.content_id = #{contentId}
-			<if test="grantedAuthorities != null">
-				union all
+			<if test="grantedAuthorities == null">
 				select
-					cr.user_allow_view as allow_view,
-					cr.user_allow_edit as allow_edit
+					cr.anon_allow_edit as allow_edit
 				from
 					user_data.content_registry cr
 				where
 					cr.content_id = #{contentId}
 			</if>
-			<if test="grantedAuthorities != null and grantedAuthorities.size() > 0">
-				union all
+			<if test="grantedAuthorities != null">
 				select
-					car.allow_view,
-					car.allow_edit 
+					cr.user_allow_edit as allow_edit
 				from
-					user_data.content_access_role car,
-					access_data."role" r
+					user_data.content_registry cr
 				where
-					car.content_id = #{contentId}
-					and car.role_id = r.id
-					and r."name" in
-					<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
-						#{ga.authority}
-					</foreach>
+					cr.content_id = #{contentId}
+					and cr.user_allow_edit = true
+				<if test="grantedAuthorities.size() > 0">
+					union all
+					select
+						car.allow_edit 
+					from
+						user_data.content_access_role car,
+						access_data."role" r
+					where
+						car.content_id = #{contentId}
+						and car.role_id = r.id
+						and r."name" in
+						<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
+							#{ga.authority}
+						</foreach>
+				</if>
 			</if>
 		)
 		select bool_or(allow_edit)
@@ -253,7 +251,6 @@
 					</foreach>
 			</if>
 			<if test="editorRoles != null">
-				union all
 				select
 					true as allow_approval
 				from
@@ -265,8 +262,6 @@
 						#{ga.authority}
 					</foreach>
 				union all
-			</if>
-			<if test="editorRoles != null">
 				select
 					(
 						select

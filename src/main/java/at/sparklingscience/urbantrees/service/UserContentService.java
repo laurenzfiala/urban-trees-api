@@ -3,16 +3,21 @@ package at.sparklingscience.urbantrees.service;
 import java.util.Collection;
 import java.util.List;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.UserContent;
 import at.sparklingscience.urbantrees.domain.UserContentMetadata;
 import at.sparklingscience.urbantrees.domain.UserIdentity;
 import at.sparklingscience.urbantrees.domain.UserPermission;
+import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.UserContentMapper;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
@@ -35,6 +40,19 @@ public class UserContentService {
     private UserContentMapper contentMapper;
 	
 	/**
+	 * Check that the given content is enabled.
+	 * @param contentId content id
+	 * @throws BadRequestException if the content is disabled.
+	 */
+	private void assertContentEnabled(String contentId) throws BadRequestException {
+		
+		if (this.contentMapper.isContentEnabled(contentId)) {
+			throw new BadRequestException("Not allowed");
+		}
+	
+	}
+	
+	/**
 	 * Check whether the given user is allowed to view given user content.
 	 * Guarantees to throw an {@link UnauthorizedException} if this is not the case.
 	 * @param auth current users' auth token.
@@ -42,6 +60,8 @@ public class UserContentService {
 	 * @throws UnauthorizedException if content may not be viewed by the given user.
 	 */
 	private void assertViewPermission(AuthenticationToken auth, String contentId) throws UnauthorizedException {
+
+		this.assertContentEnabled(contentId);
 		
 		Collection<? extends GrantedAuthority> grantedAuthorities = null;
 		if (auth != null) {
@@ -62,6 +82,8 @@ public class UserContentService {
 	 * @throws UnauthorizedException if content may not be edited by the given user.
 	 */
 	private void assertEditPermission(AuthenticationToken auth, String contentId) throws UnauthorizedException {
+
+		this.assertContentEnabled(contentId);
 		
 		Collection<? extends GrantedAuthority> grantedAuthorities = null;
 		if (auth != null) {
@@ -70,6 +92,61 @@ public class UserContentService {
 		
 		if (!this.contentMapper.canViewContent(contentId, grantedAuthorities)) {
 			throw new UnauthorizedException("User is not allowed to edit this content", auth);
+		}
+		
+	}
+	
+	/**
+	 * Check whether the user is allowed to approve contentId edited by user with editUserId (or null if anonymous).
+	 * 
+	 * @param auth current users' auth token
+	 * @param editUserId the used who edited the content which needs to be approved
+	 * @param contentId the content id of the content to be approved
+	 * @throws UnauthorizedException if content may not be approved by this user
+	 */
+	private void assertApprovalPermission(@NotNull AuthenticationToken auth,
+										  @Nullable Integer editUserId,
+										  @NotNull String contentId) throws UnauthorizedException {
+		
+		this.assertContentEnabled(contentId);
+		
+		Collection<? extends GrantedAuthority> grantedAuthorities = null;
+		if (auth != null) {
+			grantedAuthorities = auth.getAuthorities();
+		}
+		
+		List<Role> editRoles = null;
+		if (editUserId != null) {
+			editRoles = this.authService.getUserRoles(editUserId);
+		}
+		
+		if (!this.contentMapper.canApproveContent(contentId, editRoles, grantedAuthorities)) {
+			throw new UnauthorizedException("User is not allowed to view this content", auth);
+		}
+		
+	}
+	
+	/**
+	 * Approve content by given uid with given user.
+	 * @param authToken current users' auth token
+	 * @param contentUid unique id 
+	 */
+	public void approveContent(AuthenticationToken authToken, long contentUid) {
+		
+		UserContentMetadata metadata = this.contentMapper.findContentMetadataById(contentUid);
+		if (metadata == null) {
+			throw new BadRequestException("Unknown content");
+		}
+		
+		Integer editUserId = null;
+		UserIdentity editUser = metadata.getUser();
+		if (editUser != null) {
+			editUserId = editUser.getId();
+		}
+		
+		this.assertApprovalPermission(authToken, editUserId, metadata.getContentId());
+		if (this.contentMapper.approveContentById(contentUid, authToken.getId()) == 0) {
+			throw new BadRequestException("Content is already approved.");
 		}
 		
 	}

@@ -355,6 +355,15 @@ public class AuthenticationService {
 	}
 	
 	/**
+	 * Fetches all roles currently assigned to the given user.
+	 */
+	public List<Role> getUserRoles(int userId) {
+		
+		return this.authMapper.findRolesByUserId(userId);
+		
+	}
+	
+	/**
 	 * Get the current JWT secret key for the given user.
 	 * @param userId user's id
 	 * @param authId id of the current session

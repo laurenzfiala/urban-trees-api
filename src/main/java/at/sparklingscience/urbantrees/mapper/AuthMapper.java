@@ -60,7 +60,7 @@ public interface AuthMapper {
 	 * @param id id of the user to look for
 	 * @return collection of roles granted to the given user
 	 */
-	List<String> findRolesByUserId(@Param("id") int id);
+	List<Role> findRolesByUserId(@Param("id") int id);
 	
 	/**
 	 * Find the user identity for the given user id.

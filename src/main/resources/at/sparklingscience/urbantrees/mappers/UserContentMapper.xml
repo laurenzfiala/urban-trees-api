@@ -31,6 +31,33 @@
     
     <!--  TODO save new content = flushCache="true" -->
 	
+	<select id="isContentEnabled" resultType="java.lang.Boolean">
+		select 
+			enabled
+		from 
+			user_data.content_registry cr
+		where
+			content_id = #{contentId}
+	</select>
+	
+	<select id="findContentMetadataById" resultMap="UserContentMetadataResultMap">
+		select
+			c.id,
+			c.content_id,
+			c.content_title,
+			c.content_lang,
+			c."content",
+			c.is_draft,
+			c.save_dat,
+			c.user_id,
+			c.approve_dat,
+			c.approve_user_id
+		from
+			user_data."content" c
+		where
+			c.id = #{contentUid}
+	</select>
+	
 	<select id="findAllContent" resultMap="UserContentResultMap">
 		select
 			c.id,
@@ -132,7 +159,6 @@
 	<select id="canViewContent" resultType="java.lang.Boolean">
 		with help as (
 			select
-				cr.enabled as enabled,
 				cr.anon_allow_view as allow_view,
 				cr.anon_allow_edit as allow_edit
 			from
@@ -142,7 +168,6 @@
 			<if test="grantedAuthorities != null">
 				union all
 				select
-					null,
 					cr.user_allow_view as allow_view,
 					cr.user_allow_edit as allow_edit
 				from
@@ -153,7 +178,6 @@
 			<if test="grantedAuthorities != null and grantedAuthorities.size() > 0">
 				union all
 				select
-					null,
 					car.allow_view,
 					car.allow_edit 
 				from
@@ -168,7 +192,7 @@
 					</foreach>
 			</if>
 		)
-		select coalesce(bool_and(enabled), bool_or(allow_view), false)
+		select bool_or(allow_view)
 		from
 			help h
 	</select>
@@ -176,7 +200,6 @@
 	<select id="canEditContent" resultType="java.lang.Boolean">
 		with help as (
 			select
-				cr.enabled as enabled,
 				cr.anon_allow_view as allow_view,
 				cr.anon_allow_edit as allow_edit
 			from
@@ -186,7 +209,6 @@
 			<if test="grantedAuthorities != null">
 				union all
 				select
-					null,
 					cr.user_allow_view as allow_view,
 					cr.user_allow_edit as allow_edit
 				from
@@ -197,21 +219,93 @@
 			<if test="grantedAuthorities != null and grantedAuthorities.size() > 0">
 				union all
 				select
-					null,
 					car.allow_view,
 					car.allow_edit 
 				from
-					user_data.content_access_role car
+					user_data.content_access_role car,
+					access_data."role" r
 				where
 					car.content_id = #{contentId}
-					and car.role_id in
+					and car.role_id = r.id
+					and r."name" in
 					<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
 						#{ga.authority}
 					</foreach>
 			</if>
 		)
-		select coalesce(bool_and(enabled), bool_or(allow_edit), false)
+		select bool_or(allow_edit)
+		from
+			help h
+	</select>
+	
+	<select id="canApproveContent" resultType="java.lang.Boolean">
+		with help as (
+			<if test="editorRoles == null">
+				select
+					true as allow_approval
+				from
+					user_data.content_registry cr
+				where
+					cr.content_id = #{contentId}
+					and anon_approval_by_role in
+					<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
+						#{ga.authority}
+					</foreach>
+			</if>
+			<if test="editorRoles != null">
+				union all
+				select
+					true as allow_approval
+				from
+					user_data.content_registry cr
+				where
+					cr.content_id = #{contentId}
+					and cr.user_approval_by_role in
+					<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
+						#{ga.authority}
+					</foreach>
+				union all
+			</if>
+			<if test="editorRoles != null">
+				select
+					(
+						select
+							r2."name" in
+							<foreach collection="grantedAuthorities" item="ga" index="index" open="(" separator=","  close=")">
+								#{ga.authority}
+							</foreach>
+						from
+							user_data.content_access_role car2,
+							access_data."role" r2
+						where
+							car2.content_id = car.content_id 
+							and car2.approval_by_role = r2.id
+					)
+				from
+					user_data.content_access_role car,
+					access_data."role" r
+				where
+					car.content_id = #{contentId}
+					and car.role_id in
+					<foreach collection="editorRoles" item="r" index="index" open="(" separator=","  close=")">
+						#{r.id}
+					</foreach>
+			</if>
+		)
+		select bool_and(allow_approval)
 		from help
 	</select>
+	
+	<update id="approveContentById">
+		update
+			user_data."content"
+		set
+			approve_dat = now(),
+			approve_user_id = #{userId}
+		where 
+			id = #{contentUid}
+			and approve_dat is null
+			and is_draft = false
+	</update>
 
 </mapper>

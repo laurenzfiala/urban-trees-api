@@ -15,10 +15,13 @@ import javax.validation.constraints.NotNull;
 public class UserContentMetadata {
 
 	@Min(1)
-	private int id;
+	private long id;
 	
 	@NotNull
 	private String contentId;
+	
+	@NotNull
+	private int contentOrder;
 	
 	private String contentTitle;
 	
@@ -36,11 +39,11 @@ public class UserContentMetadata {
 	
 	private UserIdentity approveUser;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 
@@ -50,6 +53,14 @@ public class UserContentMetadata {
 
 	public void setContentId(String contentId) {
 		this.contentId = contentId;
+	}
+
+	public int getContentOrder() {
+		return contentOrder;
+	}
+
+	public void setContentOrder(int contentOrder) {
+		this.contentOrder = contentOrder;
 	}
 
 	public String getContentTitle() {

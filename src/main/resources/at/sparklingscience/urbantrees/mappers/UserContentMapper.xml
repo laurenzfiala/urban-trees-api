@@ -7,6 +7,7 @@
     <resultMap id="UserContentMetadataResultMap" type="at.sparklingscience.urbantrees.domain.UserContentMetadata">
         <id 	column="id"				property="id" />
         <result column="content_id"		property="contentId" />
+        <result column="content_order"	property="contentOrder" />
         <result column="content_title"	property="contentTitle" />
         <result column="is_draft"		property="isDraft" />
         <result column="save_dat"		property="saveDate" />
@@ -27,6 +28,15 @@
     		   type="at.sparklingscience.urbantrees.domain.UserContent"
     		   extends="UserContentMetadataResultMap">
         <result column="content"		property="content" />
+    </resultMap>
+    
+    <resultMap id="UserContentFileResultMap" type="at.sparklingscience.urbantrees.domain.UserContentFile">
+        <id 	column="id"					property="id" />
+        <result column="data"				property="data" />
+        <result column="type"				property="type" />
+        <result column="activate_cuid"		property="activateContentUid" />
+        <result column="deactivate_cuid"	property="deactivateContentUid" />
+        <result column="active"				property="active" />
     </resultMap>
     
     <!--  TODO save new content = flushCache="true" -->
@@ -75,6 +85,7 @@
 		where
 			c.content_id = #{contentId}
 			and c.approve_dat is not null
+			and c.is_draft = false
 			and (
 				select
 					count(*)
@@ -82,6 +93,8 @@
 					user_data."content"
 				where
 					history_id = c.id
+					and is_draft = false
+					and approve_dat is not null
 			) = 0
 		order by
 			c.content_order
@@ -296,11 +309,211 @@
 			user_data."content"
 		set
 			approve_dat = now(),
-			approve_user_id = #{userId}
+			approve_user_id = #{userId},
+			mod_dat = now(),
+			mod_usr = user
 		where 
 			id = #{contentUid}
 			and approve_dat is null
 			and is_draft = false
 	</update>
+	
+	<insert id="insertContent" useGeneratedKeys="true" keyColumn="id" keyProperty="c.id">
+		insert into
+			user_data."content"
+			(
+				content_id,
+				content_order,
+				content_title,
+				content_lang,
+				"content",
+				is_draft,
+				save_dat,
+				history_id,
+				user_id,
+				approve_dat,
+				approve_user_id,
+				cre_dat,
+				mod_dat,
+				cre_usr,
+				mod_usr
+			)
+		values
+			(
+				#{c.contentId},
+				#{c.contentOrder},
+				#{c.contentTitle},
+				#{c.contentLang},
+				#{c.content},
+				#{c.isDraft},
+				#{c.saveDate},
+				#{c.historyId},
+				<if test="c.user == null">
+					null,
+				</if>
+				<if test="c.user != null">
+					#{c.user.id},
+				</if>,
+				#{c.approveDate},
+				<if test="c.approveUser == null">
+					null,
+				</if>
+				<if test="c.approveUser != null">
+					#{c.approveUser.id},
+				</if>
+				now(),
+				now(),
+				user,
+				user
+			)
+	</insert>
+	
+	<select id="findContentMetadataById" resultMap="UserContentMetadataResultMap">
+		select
+			c.id,
+			c.content_id,
+			c.content_title,
+			c.content_lang,
+			c."content",
+			c.is_draft,
+			c.save_dat,
+			c.user_id,
+			c.approve_dat,
+			c.approve_user_id
+		from
+			user_data."content" c
+		where
+			c.content_id = #{contentId}
+			and is_draft = true
+			and user_id = #{userId}
+	</select>
+	
+	<update id="updateContentDraft">
+		update
+			user_data."content"
+		set
+			content = #{content},
+			save_dat = now(),
+			mod_dat = now(),
+			mod_usr = user
+		where 
+			id = #{contentUid}
+			and approve_dat is null
+			and is_draft = true
+	</update>
+	
+	<update id="updateContentPublish">
+		update
+			user_data."content"
+		set
+			is_draft = false,
+			mod_dat = now(),
+			mod_usr = user
+		where 
+			id = #{contentUid}
+			and approve_dat is null
+			and is_draft = true
+	</update>
+	
+	<select id="findAllContentUnapproved" resultMap="UserContentMetadataResultMap">
+		select
+			c.id,
+			c.content_id,
+			c.content_title,
+			c.content_lang,
+			c."content",
+			c.is_draft,
+			c.save_dat,
+			c.user_id,
+			c.approve_dat,
+			c.approve_user_id
+		from
+			user_data."content" c
+		where
+			c.approve_dat is null
+			and c.is_draft = false
+			and (
+				select
+					count(*)
+				from
+					user_data."content"
+				where
+					history_id = c.id
+					and is_draft = false
+					and approve_dat is not null
+			) = 0
+		order by
+			c.content_id, c.content_order
+	</select>
+	
+	<insert id="insertContentFile" useGeneratedKeys="true" keyColumn="id" keyProperty="id" parameterType="java.lang.Long">
+		insert into
+			user_data.content_file 
+			(
+				content_id,
+				"data",
+				"type",
+				user_id,
+				cre_dat,
+				mod_dat,
+				cre_usr,
+				mod_usr
+			)
+		values
+			(
+				#{contentId},
+				#{data},
+				#{type},
+				#{userId},
+				now(),
+				now(),
+				user,
+				user
+			)
+	</insert>
+	
+	<update id="updateActivateContentFile">
+		update
+			user_data.content_file
+		set
+			activate_cuid = #{contentUid}
+			active = true,
+			mod_dat = now(),
+			mod_usr = user
+		where 
+			id = #{id}
+			and activate_cuid is null
+			and active = false
+			and user_id = #{userId}
+	</update>
+	
+	<update id="updateDeactivateContentFile">
+		update
+			user_data.content_file
+		set
+			deactivate_cuid = #{contentUid}
+			active = false,
+			mod_dat = now(),
+			mod_usr = user
+		where 
+			id = #{id}
+			and activate_cuid is not null
+			and deactivate_cuid is null
+			and active = true
+	</update>
+	
+	<select id="findContentFile" resultMap="UserContentFileResultMap">
+		select
+			id,
+			"data",
+			"type",
+			activate_cuid,
+			deactivate_cuid,
+			active
+		from 
+			user_data.content_file cf
+		where
+			cf.id = #{id}
+	</select>
 
 </mapper>

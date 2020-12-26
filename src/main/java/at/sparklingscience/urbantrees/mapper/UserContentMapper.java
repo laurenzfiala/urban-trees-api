@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.UserContent;
+import at.sparklingscience.urbantrees.domain.UserContentFile;
 import at.sparklingscience.urbantrees.domain.UserContentMetadata;
 
 /**
@@ -113,7 +114,7 @@ public interface UserContentMapper {
 	 * 			  if you check for approval of non-anonymous editor, editorGrantedAuthorities must not be null.
 	 * 			  grantedAuthorities must not be null.
 	 * @param contentId content id to check permissions for
-	 * @param editorGrantedAuthorities list of roles of the user who edited the content. must be null if editor was anonymous
+	 * @param editorRoles list of roles of the user who edited the content. must be null if editor was anonymous
 	 * @param grantedAuthorities list of roles of the approving user (may be the same as editorGrantedAuthorities)
 	 * @return true if the editor/approver roles allow content approval; false otherwise
 	 */
@@ -132,5 +133,96 @@ public interface UserContentMapper {
 	 */
 	int approveContentById(@Param("contentUid") long contentUid,
 						   @Param("userId") int userId);
+	
+	/**
+	 * Insert a new content entry into the DB and update the given contents id.
+	 * @param content content to insert. id field is updated on insert.
+	 * @return number of rows inserted (always 1).
+	 */
+	int insertContent(@Param("c") UserContent content);
+	
+	/**
+	 * Update an exitsing content draft in the DB.
+	 * @param content content to set
+	 * @return number of rows updated (<= 1).
+	 */
+	int updateContentDraft(@Param("c") UserContent content);
+	
+	/**
+	 * Find a previously stored draft for the given user/content combination.
+	 * Since only one draft per content id per user can be stored, only one entry is supported.
+	 * @param contentId content id to check for draft
+	 * @param userId draft must be of this user (column user_id)
+	 * @return user content metadata of the user's draft for content with given id, or null if no draft/content/user matched
+	 */
+	UserContentMetadata findContentUserDraft(@Param("contentId") String contentId,
+											 @Param("userId") int userId);
+	
+	/**
+	 * Update the given content with the given content string and update save_dat.
+	 * @param contentUid the speicifc content to publish
+	 * @param content content string to set
+	 * @return nr. of updated rows (0 or 1)
+	 */
+	int updateContentDraft(@Param("contentUid") long contentUid,
+					  	   @Param("content") String content);
+	
+	/**
+	 * Set the given contents is_draft to false. This means publishing the content without it beaing approved.
+	 * Important: callers must take care that the given content UID may be published by the user.
+	 * @param contentUid
+	 * @return nr. of updated rows (0 or 1)
+	 */
+	int updateContentPublish(@Param("contentUid") long contentUid);
+	
+	/**
+	 * Find all content that has yet to be approved.
+	 * Only the newest entry per content id will be returned in this list.
+	 * @return list of unapproved user contents.
+	 */
+	List<UserContentMetadata> findAllContentUnapproved();
+	
+	/**
+	 * Insert a new file and return its generated id.
+	 * The inserted file is not active and may not be served.
+	 * @param contentId content id this file belongs to
+	 * @param data file contents
+	 * @param type file type
+	 * @param userId user who is inserting
+	 * @return generated file id
+	 */
+	long insertContentFile(@Param("contentId") String contentId,
+						   @Param("data") byte[] data,
+						   @Param("type") String type,
+						   @Param("userId") int userId);
+	
+	/**
+	 * Activate the given file id to be allowed to be served to other users than user_id.
+	 * @param id file id (previously inserted using {@link #insertContentFile(String, byte[], String, int)})
+	 * @param contentUid the content entry which contained the given file first
+	 * @param userId current user (must be the same as inserting user)
+	 * @return nr. of updated rows (0 or 1)
+	 */
+	int updateActivateContentFile(@Param("id") long id,
+								  @Param("contentUid") long contentUid,
+								  @Param("userId") int userId);
+	
+	/**
+	 * Deactivate the given file id when it has been removed from the given user content.
+	 * @param id file id (previously inserted using {@link #insertContentFile(String, byte[], String, int)} and activated using {@link #updateActivateContentFile(long, long, int)})
+	 * @param contentUid the content entry which removed the given file
+	 * @return nr. of updated rows (0 or 1)
+	 */
+	int updateDeactivateContentFile(@Param("id") long id,
+								    @Param("contentUid") long contentUid);
+	
+	/**
+	 * Find a single content file by its id.
+	 * @param id id of the file
+	 * @param contentId content id the found file must belong to
+	 * @return {@link UserContentFile}
+	 */
+	UserContentFile findContentFile(@Param("id") long id,
+					       			@Param("contentId") String contentId);
 	
 }

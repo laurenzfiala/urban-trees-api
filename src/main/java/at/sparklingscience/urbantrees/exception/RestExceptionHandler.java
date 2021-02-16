@@ -1,5 +1,6 @@
 package at.sparklingscience.urbantrees.exception;
 
+import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -38,6 +39,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	
 	@Autowired
 	private ApplicationService appService;
+	
+	@Autowired
+	private DateTimeFormatter httpHeaderDateFormatter;
 	
 	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
 		return new ResponseEntity<>(apiError, apiError.getStatus());
@@ -112,10 +116,19 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 	}
 	
+	@ExceptionHandler(TooManyRequestsException.class)
+	protected ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
+		LOGGER.trace("handleTooManyRequests: {}", ex.getMessage());
+		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
+		HttpHeaders headers = new HttpHeaders();
+		headers.add(HttpHeaders.RETRY_AFTER, this.httpHeaderDateFormatter.format(ex.getRetryAfter()));
+		return new ResponseEntity<>(headers, HttpStatus.TOO_MANY_REQUESTS);
+	}
+
 	@ExceptionHandler(ResponseStatusException.class)
 	protected ResponseEntity<Object> handleResponseStatus(ResponseStatusException ex) {
 		LOGGER.trace("handleResponseStatus: {}", ex.getMessage());
-		return new ResponseEntity<>(null, ex.getStatus());
+		return new ResponseEntity<>(ex.getResponseHeaders(), ex.getStatus());
 	}
 	
 	@Override
@@ -129,5 +142,15 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
 		return buildResponseEntity(apiError);
 	}
-
+	
+	@ExceptionHandler(ValidationException.class)
+	protected ResponseEntity<Object> handleInvalid(ValidationException ex) {
+		LOGGER.trace("handleInvalid: {}", ex.getMessage());
+		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+		apiError.setMessage(ex.getMessage());
+		apiError.setClientErrorCodeFromClientError(ex.getClientError());
+		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
+		return buildResponseEntity(apiError);
+	}
+	
 }

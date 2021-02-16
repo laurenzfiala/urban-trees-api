@@ -5,6 +5,8 @@ import java.util.Date;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange;
+
 /**
  * Holds a single user content entry.
  * This light version does not contain the actual content, only the metadata.
@@ -31,7 +33,11 @@ public class UserContentMetadata {
 	private boolean isDraft;
 	
 	@NotNull
+	@DateRange(DateRange.Range.PAST_AND_PRESENT)
 	private Date saveDate;
+	
+	@Min(1)
+	private Long historyId;
 	
 	private UserIdentity user;
 	
@@ -117,6 +123,14 @@ public class UserContentMetadata {
 
 	public void setApproveUser(UserIdentity approveUser) {
 		this.approveUser = approveUser;
+	}
+
+	public Long getHistoryId() {
+		return historyId;
+	}
+
+	public void setHistoryId(Long historyId) {
+		this.historyId = historyId;
 	}
 	
 }

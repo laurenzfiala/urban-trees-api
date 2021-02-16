@@ -33,7 +33,11 @@ public enum ClientError {
 	
 	SAME_USER_PERM_REQUEST(60),
 	
-	USERNAME_DUPLICATE(70);
+	USERNAME_DUPLICATE(70),
+	
+	FAILED_VALIDATION(80),
+	
+	CONTENT_BASE_OUTDATED(100);
 
 	
 	private final int errorCode;

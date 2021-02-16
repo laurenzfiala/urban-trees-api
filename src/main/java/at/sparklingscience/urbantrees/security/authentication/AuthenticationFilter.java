@@ -63,15 +63,27 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 	private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFilter.class);
 	
 	/**
+	 * Object mapper used to deserialize JWT tokens.
+	 * 
+	 * Note: dont use this directly, but call {@link ObjectMapper#reader()} or {@link ObjectMapper#writer()}
+	 * 		 to get a immutable representation.
+	 */
+	//private static ObjectMapper objectMapper = new ObjectMapper(); TODO remove
+	private ObjectMapper jsonObjectMapper;
+	
+	/**
 	 * Spring integrated auth manager.
 	 */
 	private AuthenticationManager authenticationManager;
 	
 	private AuthenticationService authService;
 	
-	public AuthenticationFilter(AuthenticationManager authenticationManager, AuthenticationService authService) {
+	public AuthenticationFilter(AuthenticationManager authenticationManager,
+								AuthenticationService authService,
+								ObjectMapper jsonObjectMapper) {
 		this.authenticationManager = authenticationManager;
 		this.authService = authService;
+		this.jsonObjectMapper = jsonObjectMapper;
 	}
 
 	@Override
@@ -89,7 +101,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 		UserCredentials creds = null;
 		try {
 			
-			creds = new ObjectMapper().readValue(req.getInputStream(), UserCredentials.class);
+			creds = this.jsonObjectMapper.reader().readValue(req.getInputStream(), UserCredentials.class);
 			LOGGER.trace("Got user info for user {}", creds.getUsername());
 
 			Authentication auth;

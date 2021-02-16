@@ -11,6 +11,8 @@ import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange.Rang
 /**
  * Validates the given {@link Date} for its presence in a given {@link DateRange}.
  * 
+ * Since 2020/12/29: Null values are allowed.
+ * 
  * @see DateRange
  * @author Laurenz Fiala
  * @since 2018/01/21
@@ -32,7 +34,7 @@ public class DateRangeValidator implements ConstraintValidator<DateRange, Date> 
 	public boolean isValid(Date validationDate, ConstraintValidatorContext validationContext) {
 		
 		if (validationDate == null) {
-			return false;
+			return true;
 		}
 
 		int compareResult = validationDate.compareTo(new Date());

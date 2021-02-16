@@ -26,9 +26,6 @@ spring:
     validationQuery: select 1
     maxActive: 50
     maxAge: 60000
-  jackson:
-    date-format: "yyyy-MM-dd'T'HH-mm-ss"
-    time-zone: UTC
   # File Upload
   servlet:
     multipart:
@@ -55,4 +52,6 @@ at:
     urbantrees:
       dateFormatPattern: "yyyy-MM-dd'T'HH-mm-ss"
       otpIssuer: "urban-trees-climate.sbg.ac.at"
+      userContent:
+        maxSavesPerUserPerDay: 100
     

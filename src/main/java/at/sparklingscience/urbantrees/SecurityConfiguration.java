@@ -24,6 +24,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import at.sparklingscience.urbantrees.controller.AdminController;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AdminAccessDecisionVoter;
@@ -145,6 +147,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private AuthenticationService authService;
 	
+	@Autowired
+	private ObjectMapper jsonObjectMapper;
+	
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
@@ -187,7 +192,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    	.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 	    	.and()
 	    		.addFilterBefore(new ApiKeyFilter(this.authenticationManager(), this.authMapper), UsernamePasswordAuthenticationFilter.class)
-	    		.addFilter(new AuthenticationFilter(this.authenticationManager(), this.authService))
+	    		.addFilter(new AuthenticationFilter(this.authenticationManager(), this.authService, this.jsonObjectMapper))
                 .addFilter(new JWTAuthorizationFilter(this.authenticationManager(), this.authService));
 
     }

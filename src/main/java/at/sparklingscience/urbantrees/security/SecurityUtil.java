@@ -5,6 +5,9 @@ import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import at.sparklingscience.urbantrees.SecurityConfiguration;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
+
 /**
  * Helper methods regarding security functionality.
  * 
@@ -32,13 +35,26 @@ public class SecurityUtil {
     	return new SimpleGrantedAuthority(role(role));
     }
 	
+	/**
+	 * Check that the given userAuthorities are a subset of checkAuthorities
+	 * and return false if this is not the case.
+	 * @param userAuthorities granted authorities
+	 * @param checkAuthorities authorities that have to be contained in userAuthorities
+	 * @return true if checkAuthorities is a subset of userAuthorities; false otherwise.
+	 */
 	public static boolean hasAllAuthorities(Collection<? extends GrantedAuthority> userAuthorities, Collection<? extends GrantedAuthority> checkAuthorities) {
-		for (GrantedAuthority checkAuthority : checkAuthorities) {
-			if (!userAuthorities.contains(checkAuthority)) {
-				return false;
-			}
-		}
-		return true;
+		return userAuthorities
+				.stream()
+				.allMatch(ua -> checkAuthorities.stream().anyMatch(ca -> ua.getAuthority().equals(ca.getAuthority())));
+	}
+	
+	/**
+	 * Returns true if the given user is an admin.
+	 */
+	public static boolean isAdmin(AuthenticationToken authToken) {
+		return authToken.getAuthorities()
+				.stream()
+				.anyMatch(a -> a.getAuthority().equals(SecurityConfiguration.ADMIN_ACCESS_ROLE));
 	}
 	
 }

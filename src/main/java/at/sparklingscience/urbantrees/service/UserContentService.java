@@ -1,5 +1,6 @@
 package at.sparklingscience.urbantrees.service;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -9,20 +10,35 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.Errors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import at.sparklingscience.urbantrees.cms.CmsContent;
+import at.sparklingscience.urbantrees.cms.CmsContentViews;
+import at.sparklingscience.urbantrees.cms.CmsElement;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.UserContent;
 import at.sparklingscience.urbantrees.domain.UserContentFile;
+import at.sparklingscience.urbantrees.domain.UserContentLanguage;
 import at.sparklingscience.urbantrees.domain.UserContentMetadata;
+import at.sparklingscience.urbantrees.domain.UserContentSaveAmount;
 import at.sparklingscience.urbantrees.domain.UserIdentity;
 import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
+import at.sparklingscience.urbantrees.exception.ClientError;
+import at.sparklingscience.urbantrees.exception.TooManyRequestsException;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
+import at.sparklingscience.urbantrees.exception.ValidationException;
 import at.sparklingscience.urbantrees.mapper.UserContentMapper;
+import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 
 /**
@@ -41,6 +57,12 @@ public class UserContentService {
 	
 	@Autowired
     private UserContentMapper contentMapper;
+
+	@Autowired
+	private ObjectMapper jsonObjectMapper;
+	
+	@Value("${at.sparklingscience.urbantrees.userContent.maxSavesPerUserPerDay}")
+	private int maxSavesPerUserPerDay;
 	
 	/**
 	 * Check that the given content is enabled.
@@ -207,17 +229,45 @@ public class UserContentService {
 	}
 	
 	/**
+	 * Check whether the user is allowed to save content.
+	 * If the user exceeded their daily quota (see config: at.sparklingscience.urbantrees.userContent.maxSavesPerUserPerDay)
+	 * a {@link TooManyRequestsException} is thrown.
+	 * @param authToken users' auth token
+	 * @throws TooManyRequestsException if the user may not insert a new content to the DB (exceeded their quota)
+	 */
+	private void throttleContentSaving(AuthenticationToken authToken) throws TooManyRequestsException {
+		
+		Integer userIdOrNull = null;
+		if (authToken != null) {
+			userIdOrNull = authToken.getId();
+			
+			if (SecurityUtil.isAdmin(authToken)) {
+				return;
+			}
+		}
+		
+		UserContentSaveAmount saveAmount = this.contentMapper.findSavedContentAmountForUserId(userIdOrNull);
+		if (saveAmount.getAmount() > maxSavesPerUserPerDay) {
+			throw new TooManyRequestsException("You may not save more than " + maxSavesPerUserPerDay + " content entries per day.",
+											   saveAmount.getMinSaveDate().toInstant().plus(1, ChronoUnit.DAYS));
+		}
+		
+	}
+	
+	/**
 	 * Get all contents for the given content id.
 	 * @param authToken current user auth token
 	 * @param contentId find content entries of this conent id
 	 * @return list of all published content entries.
 	 */
-	public @NonNull List<UserContent> getContent(@Nullable AuthenticationToken authToken, @NonNull String contentId) {
+	public @NonNull List<UserContent> getContent(@Nullable AuthenticationToken authToken,
+												 @NonNull String contentId,
+												 @NonNull String contentLangId) {
 		
 		LOGGER.debug("getContent - contentId: {}", contentId);
 		this.assertViewPermission(authToken, contentId);
 		
-		List<UserContent> content = this.contentMapper.findAllContent(contentId);
+		List<UserContent> content = this.contentMapper.findAllContent(contentId, UserContentLanguage.fromId(contentLangId));
 		
 		content.stream().forEach(c -> {
 			UserIdentity grantingUser = c.getUser();
@@ -239,40 +289,79 @@ public class UserContentService {
 	 * Save the given user content. Validates given user content so it can't overwrite
 	 * other user's drafts or published content.
 	 * @param authToken current user's authentication token.
-	 * @param content content to inster/update depending on it's content (draft, id, etc.)
-	 * @return inserted/updated user content.
-	 * @throws BadRequestException see {@link #assertEditPermission(AuthenticationToken, String)}
+	 * @param contentId content id
+	 * @param contentOrder content sub-order
+	 * @param contentLanguage order of content to save
+	 * @param isDraft whether the given content should be saved as draft or published
+	 * @param content content to insert/update depending on it's content (draft, id, etc.)
+	 * 				  Note: this content must have already been validated
+	 * @return inserted/updated user content entry
+	 * @throws BadRequestException either when user is not allowed to edit the given content,
+	 * 							   or when the instant-approval of a previous draft fails.
 	 */
-	public @NonNull UserContent saveContent(@NotNull AuthenticationToken authToken, @NonNull UserContent content) {
+	@Transactional
+	public @NonNull UserContent saveContent(@NotNull AuthenticationToken authToken,
+											@NotNull String contentId,
+											int contentOrder,
+											@NotNull String contentLanguage,
+											boolean isDraft,
+											@NonNull CmsContent cmsContent) throws BadRequestException {
 		
-		this.assertEditPermission(authToken, content.getContentId());
+		this.assertEditPermission(authToken, contentId);
 		
-		int userId = authToken.getId();
+		UserIdentity user = UserIdentity.fromAuthToken(authToken);
+		UserContent content;
+		try {
+			content = CmsContent.toUserContent(
+					cmsContent,
+					contentId,
+					contentOrder,
+					contentLanguage,
+					isDraft,
+					user,
+					this.jsonObjectMapper.writerWithView(CmsContentViews.Persist.class)
+					);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Can't serialize CmsContent back to string", e);
+		}
+
+		// opportunistic locking
+		this.assertLatestContentBase(content);
 		
 		// instant-approval if user has permission
-		if (!content.isDraft() && this.hasApprovalPermission(authToken, userId, content.getContentId())) {
+		if (!content.isDraft() && this.hasApprovalPermission(authToken, user.getId(), contentId)) {
 			content.setApproveDate(new Date());
-			content.setApproveUser(new UserIdentity(userId, authToken.getName()));
+			content.setApproveUser(user);
 		} else {
 			content.setApproveDate(null);
 			content.setApproveUser(null);
 		}
 
-		UserContentMetadata userDraft = this.contentMapper.findContentUserDraft(content.getContentId(), userId);
+		UserContentMetadata userDraft = this.contentMapper.findContentUserDraft(
+				content.getContentId(),
+				content.getContentOrder(),
+				content.getContentLanguage(),
+				user.getId()
+		);
 		
 		if (content.isDraft()) { 					// save draft
 			if (userDraft == null) { 				// -> save new draft
+				this.throttleContentSaving(authToken);
 				content.setDraft(true);
 				this.contentMapper.insertContent(content);
 			} else { 								// -> update existing draft
-				this.contentMapper.updateContentDraft(userDraft.getId(), content.getContent());
+				this.contentMapper.updateContentDraft(userDraft.getId(), content);
 			}
 		} else { 									// publish
 			if (userDraft == null) { 				// -> publish right away (without existing draft)
+				this.throttleContentSaving(authToken);
 				this.contentMapper.insertContent(content);
 			} else { 								// -> was saved draft before, update is_draft = false
-				this.contentMapper.updateContentDraft(userDraft.getId(), content.getContent());
-				this.approveContent(authToken, userDraft.getId());
+				this.contentMapper.updateContentDraft(userDraft.getId(), content);
+				this.contentMapper.updateContentPublish(userDraft.getId());
+				if (content.getApproveDate() != null) {
+					this.approveContent(authToken, userDraft.getId());			
+				}
 			}
 		}
 		
@@ -340,6 +429,47 @@ public class UserContentService {
 		}
 		
 		return this.contentMapper.findContentUserHistory(userId, contentIdPrefix, 10);
+		
+	}
+	
+	/**
+	 * Check if the given content has the latest history_id, meaning
+	 * it is based off of the newest published content.
+	 * @param userContent the content to check
+	 * @throws BadRequestException if the history id is outdated.
+	 */
+	private void assertLatestContentBase(UserContent userContent) throws BadRequestException {
+		
+		UserContentMetadata newestPublishedContent = this.contentMapper.findContentMetadata(
+				userContent.getContentId(),
+				userContent.getContentOrder(),
+				userContent.getContentLanguage()
+		);
+		
+		if (newestPublishedContent != null && newestPublishedContent.getId() != userContent.getHistoryId()) {
+			throw new BadRequestException("Your content is based on outdated content.", ClientError.CONTENT_BASE_OUTDATED);
+		}
+		
+	}
+	
+	/**
+	 * Validate the given CMS content and all its elements.
+	 * If there are any errors, {@link ValidationException}
+	 * is thrown.
+	 * @param content cms content received from the frontend
+	 * @param errors errors object from the controller
+	 * @throws ValidationException if any errors are reported by the
+	 * 							   {@link CmsElement#validate(Errors)} methods
+	 */
+	public void assertValid(CmsContent content, Errors errors) throws ValidationException {
+		
+		errors.pushNestedPath("content");
+		content.validate(errors);
+		errors.popNestedPath();
+		
+		if (errors.hasErrors()) {
+			throw new ValidationException("CMS content validation failed.", errors);
+		}
 		
 	}
 

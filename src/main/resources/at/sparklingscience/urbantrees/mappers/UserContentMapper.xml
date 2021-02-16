@@ -38,6 +38,12 @@
         <result column="deactivate_cuid"	property="deactivateContentUid" />
         <result column="active"				property="active" />
     </resultMap>
+
+    <resultMap id="UserContentSaveAmountResultMap"
+    		   type="at.sparklingscience.urbantrees.domain.UserContentSaveAmount">
+        <result column="amount"			property="amount" />
+        <result column="min_save_dat"	property="minSaveDat" />
+    </resultMap>
     
     <!--  TODO save new content = flushCache="true" -->
 	
@@ -50,6 +56,16 @@
 			content_id = #{contentId}
 	</select>
 	
+	<select id="findSavedContentAmountForUserId" resultMap="UserContentSaveAmountResultMap">
+		select
+			count(*) as amount, min(save_dat) as min_save_dat
+		from
+			user_data."content" c
+		where
+			user_id = #{userId}
+			and save_dat > now() - interval '1 day'
+	</select>
+	
 	<select id="findContentMetadataById" resultMap="UserContentMetadataResultMap">
 		select
 			c.id,
@@ -59,6 +75,7 @@
 			c."content",
 			c.is_draft,
 			c.save_dat,
+			c.history_id,
 			c.user_id,
 			c.approve_dat,
 			c.approve_user_id
@@ -66,6 +83,29 @@
 			user_data."content" c
 		where
 			c.id = #{contentUid}
+	</select>
+	
+	<select id="findContentMetadata" resultMap="UserContentMetadataResultMap">
+		select
+			c.id,
+			c.content_id,
+			c.content_title,
+			c.content_lang,
+			c."content",
+			c.is_draft,
+			c.save_dat,
+			c.history_id,
+			c.user_id,
+			c.approve_dat,
+			c.approve_user_id
+		from
+			user_data."content" c
+		where
+			c.content_id = #{contentId}
+			and c.content_order = #{contentOrder}
+			and c.content_lang = #{contentLang.id}
+			and c.approve_dat is not null
+			and c.is_draft = false
 	</select>
 	
 	<select id="findAllContent" resultMap="UserContentResultMap">
@@ -77,6 +117,7 @@
 			c."content",
 			c.is_draft,
 			c.save_dat,
+			c.history_id,
 			c.user_id,
 			c.approve_dat,
 			c.approve_user_id
@@ -84,6 +125,7 @@
 			user_data."content" c
 		where
 			c.content_id = #{contentId}
+			and c.content_lang = #{contentLang}
 			and c.approve_dat is not null
 			and c.is_draft = false
 			and (
@@ -93,6 +135,7 @@
 					user_data."content"
 				where
 					history_id = c.id
+					and content_id = c.content_id
 					and is_draft = false
 					and approve_dat is not null
 			) = 0
@@ -109,6 +152,8 @@
 			where
 				content_id = #{contentId}
 				and content_order = #{contentOrder}
+	  			and content_lang = #{contentLang.id}
+				and is_draft = false
 		  union
 		  	select
 				c.*
@@ -116,6 +161,10 @@
 				user_data."content" c
 			inner join content_rec cr
 		  		on cr.history_id = c.id
+	  			and cr.content_id = c.content_id
+	  			and cr.content_order = c.content_order
+	  			and cr.content_lang = c.content_lang
+				and cr.is_draft = c.is_draft 
 		)
 		SELECT 
 			c.id,
@@ -125,6 +174,7 @@
 			c."content",
 			c.is_draft,
 			c.save_dat,
+			c.history_id,
 			c.user_id,
 			c.approve_dat,
 			c.approve_user_id,
@@ -142,6 +192,7 @@
 			c."content",
 			c.is_draft,
 			c.save_dat,
+			c.history_id,
 			c.user_id,
 			c.approve_dat,
 			c.approve_user_id,
@@ -343,7 +394,7 @@
 				#{c.contentId},
 				#{c.contentOrder},
 				#{c.contentTitle},
-				#{c.contentLang},
+				#{c.contentLanguage.id},
 				#{c.content},
 				#{c.isDraft},
 				#{c.saveDate},
@@ -353,7 +404,7 @@
 				</if>
 				<if test="c.user != null">
 					#{c.user.id},
-				</if>,
+				</if>
 				#{c.approveDate},
 				<if test="c.approveUser == null">
 					null,
@@ -368,7 +419,7 @@
 			)
 	</insert>
 	
-	<select id="findContentMetadataById" resultMap="UserContentMetadataResultMap">
+	<select id="findContentUserDraft" resultMap="UserContentMetadataResultMap">
 		select
 			c.id,
 			c.content_id,
@@ -377,6 +428,7 @@
 			c."content",
 			c.is_draft,
 			c.save_dat,
+			c.history_id,
 			c.user_id,
 			c.approve_dat,
 			c.approve_user_id
@@ -384,6 +436,8 @@
 			user_data."content" c
 		where
 			c.content_id = #{contentId}
+			and c.content_order = #{contentOrder}
+			and c.content_lang = #{contentLang.id}
 			and is_draft = true
 			and user_id = #{userId}
 	</select>
@@ -392,8 +446,9 @@
 		update
 			user_data."content"
 		set
-			content = #{content},
-			save_dat = now(),
+			content = #{content.content},
+			save_dat = #{content.saveDate},
+			history_id = #{content.historyId},
 			mod_dat = now(),
 			mod_usr = user
 		where 
@@ -424,6 +479,7 @@
 			c."content",
 			c.is_draft,
 			c.save_dat,
+			c.history_id,
 			c.user_id,
 			c.approve_dat,
 			c.approve_user_id

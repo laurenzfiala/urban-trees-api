@@ -10,7 +10,9 @@ import org.springframework.security.core.GrantedAuthority;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.UserContent;
 import at.sparklingscience.urbantrees.domain.UserContentFile;
+import at.sparklingscience.urbantrees.domain.UserContentLanguage;
 import at.sparklingscience.urbantrees.domain.UserContentMetadata;
+import at.sparklingscience.urbantrees.domain.UserContentSaveAmount;
 
 /**
  * Mybatis mapping interface.
@@ -30,6 +32,14 @@ public interface UserContentMapper {
 	boolean isContentEnabled(@Param("contentId") String contentId);
 	
 	/**
+	 * Find meta info on content entries in the DB saved by the given user in the last 24 hours.
+	 * The query does not differentiate between drafts and published content.
+	 * @param userId user id to check or null to check for anonymous saves
+	 * @return see {@link UserContentSaveAmount}
+	 */
+	UserContentSaveAmount findSavedContentAmountForUserId(@Param("userId") Integer userId);
+	
+	/**
 	 * Find single user content metadata by its internal id.
 	 * @param contentUid internal id
 	 * @return metadata of one content entry
@@ -37,11 +47,25 @@ public interface UserContentMapper {
 	UserContentMetadata findContentMetadataById(@Param("contentUid") long contentUid);
 	
 	/**
-	 * Find all current approved content entries for the given content id in order of content_order.
+	 * Find the metadata for the newest content entry for content id/order/lang.
+	 * @param contentId content id
+	 * @param contentOrder content order
+	 * @param contentLang content language
+	 * @return metadata of the newest content entry
+	 */
+	UserContentMetadata findContentMetadata(@Param("contentId") String contentId,
+											@Param("contentOrder") int contentOrder,
+											@Param("contentLang") UserContentLanguage contentLang);
+	
+	/**
+	 * Find all current approved content entries for the given content id in order of
+	 * content_order and with given language.
 	 * @param id content id to search for
+	 * @param id content language to search for
 	 * @return list of matched user contents
 	 */
-	List<UserContent> findAllContent(@Param("contentId") String contentId);
+	List<UserContent> findAllContent(@Param("contentId") String contentId,
+									 @Param("contentLang") UserContentLanguage contentLang);
 	
 	
 	/**
@@ -52,7 +76,8 @@ public interface UserContentMapper {
 	 */
 	List<UserContent> findContentHistory(
 			@Param("contentId") String contentId,
-			@Param("contentOrder") int contentOrder
+			@Param("contentOrder") int contentOrder,
+			@Param("contentLang") UserContentLanguage contentLang
 			);
 	
 	
@@ -149,26 +174,31 @@ public interface UserContentMapper {
 	int updateContentDraft(@Param("c") UserContent content);
 	
 	/**
-	 * Find a previously stored draft for the given user/content combination.
+	 * Find a previously stored draft for the given user/content/lang/order combination.
 	 * Since only one draft per content id per user can be stored, only one entry is supported.
 	 * @param contentId content id to check for draft
+	 * @param contentOrder draft of this content order
+	 * @param contentLang draft must be of this language (column content_lang)
 	 * @param userId draft must be of this user (column user_id)
 	 * @return user content metadata of the user's draft for content with given id, or null if no draft/content/user matched
 	 */
 	UserContentMetadata findContentUserDraft(@Param("contentId") String contentId,
+											 @Param("contentOrder") int contentOrder,
+											 @Param("contentLang") UserContentLanguage contentLang,
 											 @Param("userId") int userId);
 	
 	/**
 	 * Update the given content with the given content string and update save_dat.
+	 * Only drafts are affected.
 	 * @param contentUid the speicifc content to publish
-	 * @param content content string to set
+	 * @param content user content to get update values from (history id, save date, content string)
 	 * @return nr. of updated rows (0 or 1)
 	 */
 	int updateContentDraft(@Param("contentUid") long contentUid,
-					  	   @Param("content") String content);
+					  	   @Param("content") UserContent content);
 	
 	/**
-	 * Set the given contents is_draft to false. This means publishing the content without it beaing approved.
+	 * Set the given contents is_draft to false. This means publishing the content without it being approved.
 	 * Important: callers must take care that the given content UID may be published by the user.
 	 * @param contentUid
 	 * @return nr. of updated rows (0 or 1)

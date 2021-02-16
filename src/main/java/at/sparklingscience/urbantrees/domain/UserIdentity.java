@@ -4,6 +4,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 
 /**
  * Only the identifying information of a user.
@@ -51,6 +52,10 @@ public class UserIdentity {
 
 	public static UserIdentity fromUser(User user) {
 		return new UserIdentity(user.getId(), user.getUsername());
+	}
+	
+	public static UserIdentity fromAuthToken(AuthenticationToken token) {
+		return new UserIdentity(token.getId(), token.getName());
 	}
 	
 }

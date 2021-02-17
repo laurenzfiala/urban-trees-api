@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.service;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Encoder;
@@ -13,6 +14,7 @@ import javax.crypto.SecretKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +23,10 @@ import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.domain.OtpCredentials;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.User;
+import at.sparklingscience.urbantrees.domain.UserCreation;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
+import at.sparklingscience.urbantrees.exception.DuplicateUsernameException;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
@@ -138,26 +142,65 @@ public class AuthenticationService {
 	 * @param rawPassword Password entered by the user (raw).
 	 * @param roles Roles to assign to the new user.
 	 * @return The given user object with ID set.
+	 * @throws DuplicateUsernameException if any of the given usernames already existed.
+	 * 								 	  This rolls back any changes that may have occurred
+	 * 								 	  before that.
 	 */
 	@Transactional
-	public User registerUser(final String username, final String rawPassword, final List<Role> roles) {
+	public List<User> registerUsers(final UserCreation creation)
+			throws DuplicateUsernameException {
+		
+		List<User> registeredUsers = new ArrayList<User>();
+		
+		User template = creation.getTemplate();
+		for (String username : creation.getUsernames()) {
+			registeredUsers.add(this.registerUser(username, null, template.getRoles()));
+		}
+		
+		return registeredUsers;
+		
+	}
+	
+	/**
+	 * Inserts a new user into the database.
+	 * If the given password is null, we automatically generate a secure login key.
+	 * Note: Transactional annotation of this method has been removed
+	 * 		 since this method is called in {@link #registerUsers(String, String, List)}.
+	 * @param username Username to register (raw).
+	 * @param rawPassword Password entered by the user (raw).
+	 * @param roles Roles to assign to the new user.
+	 * @return the newly created user (with all of their info).
+	 * @throws DuplicateUsernameException if the username was already given to another user.
+	 */
+	public User registerUser(final String username, final String rawPassword, final List<Role> roles)
+			throws DuplicateUsernameException {
+		
 		
 		User newUser = new User();
 		newUser.setUsername(username);
 		
+		boolean generateLoginKey = false;
 		if (rawPassword == null) {
 			newUser.setPassword(null);
+			generateLoginKey = true;
 		} else {
 			newUser.setPassword(this.bCryptPasswordEncoder.encode(rawPassword));
 		}
 		
-		this.authMapper.insertUser(newUser);
+		try {
+			this.authMapper.insertUser(newUser);			
+		} catch (DuplicateKeyException e) {
+			throw new DuplicateUsernameException(e, username);
+		}
 		if (roles != null && roles.size() > 0) {
 			this.authMapper.insertUserRoles(newUser.getId(), roles);
 		}
 		this.userService.prepareXp(newUser.getId());
+		if (generateLoginKey) {
+			this.getLoginKey(newUser.getId());			
+		}
 		
-		return newUser;
+		return this.authMapper.findUserById(newUser.getId());
 		
 	}
 

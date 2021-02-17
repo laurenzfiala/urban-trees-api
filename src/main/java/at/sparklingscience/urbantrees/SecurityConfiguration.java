@@ -129,6 +129,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	public static final String TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE = "TEMP_CHANGE_PASSWORD";
 	
 	/**
+	 * Role granted only temporarily to only allow the user
+	 * activation of their two-factor authentication.
+	 * "ROLE_" is automatically prepended by spring.
+	 */
+	public static final String TEMPORARY_ACTIVATE_OTP_ACCESS_ROLE = "TEMP_ACTIVATE_OTP";
+	
+	/**
 	 * Size of one-time login key in bytes.
 	 */
 	public static final int SECURE_LOGIN_KEY_BYTES = 64;
@@ -178,6 +185,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    	.antMatchers(
 		    			"/account/changepassword"
     			).hasAnyRole(USER_ACCESS_ROLE, TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE)
+		    	.antMatchers(
+		    			"/account/otp/activate"
+    			).hasAnyRole(USER_ACCESS_ROLE, TEMPORARY_ACTIVATE_OTP_ACCESS_ROLE)
 		    	.antMatchers(
 		    			"/tree/**/phenology",
 		    			"/user/phenology/**"

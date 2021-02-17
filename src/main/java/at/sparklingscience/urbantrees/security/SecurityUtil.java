@@ -54,7 +54,7 @@ public class SecurityUtil {
 	public static boolean isAdmin(AuthenticationToken authToken) {
 		return authToken.getAuthorities()
 				.stream()
-				.anyMatch(a -> a.getAuthority().equals(SecurityConfiguration.ADMIN_ACCESS_ROLE));
+				.anyMatch(a -> a.equals(grantedAuthority(SecurityConfiguration.ADMIN_ACCESS_ROLE)));
 	}
 	
 }

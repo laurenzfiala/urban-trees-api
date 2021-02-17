@@ -33,17 +33,20 @@ import at.sparklingscience.urbantrees.domain.Report;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.User;
+import at.sparklingscience.urbantrees.domain.UserCreation;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.ui.Announcement;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.ClientError;
+import at.sparklingscience.urbantrees.exception.DuplicateUsernameException;
 import at.sparklingscience.urbantrees.exception.InternalException;
 import at.sparklingscience.urbantrees.mapper.ApplicationMapper;
 import at.sparklingscience.urbantrees.mapper.BeaconMapper;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.TreeMapper;
 import at.sparklingscience.urbantrees.mapper.UiMapper;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
 
 @RestController
@@ -357,18 +360,21 @@ public class AdminController {
 		
 	}
 	
-	@RequestMapping(method = RequestMethod.PUT, path = "/user")
-	public void putNewUser(@Validated(ValidationGroups.Update.class) @RequestBody User user, Authentication auth) {
-		
-		LOGGER.info("[[ PUT ]] putNewUser - called by: {}, user to create: {}", auth.getName(), user);
+	@RequestMapping(method = RequestMethod.PUT, path = "/users")
+	public List<User> putNewUsers(@Validated(ValidationGroups.Update.class) @RequestBody UserCreation creation, Authentication auth) {
+				
+		AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
+		LOGGER.info("[[ PUT ]] putNewUser - called by: {}, users to create: {}", authToken.getId(), creation);
 		
 		try {
-			this.authService.registerUser(user.getUsername(), null, user.getRoles());
+			return this.authService.registerUsers(creation);
+		} catch (DuplicateUsernameException e) {
+			throw new BadRequestException("Username " + e.getUsername() + " already exists.", ClientError.USERNAME_DUPLICATE);
 		} catch (Throwable t) {
-			LOGGER.error("Could not create user: {}", t.getMessage(), t);
+			LOGGER.error("Could not create users: {}", t.getMessage(), t);
 			throw new InternalException("Failed to create user.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ PUT ]] putNewUser |END| - called by: {}, user to create: {}", auth.getName(), user);
+			LOGGER.info("[[ PUT ]] putNewUser |END| - called by: {}, users to create: {}", authToken.getId(), creation);
 		}
 		
 	}

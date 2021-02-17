@@ -27,6 +27,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
+import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.authentication.jwt.JWTUserAuthentication;
 import at.sparklingscience.urbantrees.security.authentication.otk.TokenAuthenticationToken;
@@ -144,16 +145,20 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 	protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res, FilterChain chain,
 			Authentication auth) throws IOException, ServletException {
 
+		final AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
 		at.sparklingscience.urbantrees.security.user.User user =
 				(at.sparklingscience.urbantrees.security.user.User) auth.getDetails();
 		
 		Collection<? extends GrantedAuthority> authorities = null;
 		if (!user.isCredentialsNonExpired()) {
-			LOGGER.info("User credentials are expired. Granting temp change role only.");
+			LOGGER.info("Credentials of user {} are expired. Granting temp change role only.", user.getId());
 			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE));
+		} else if (SecurityUtil.isAdmin(authToken) && !user.isUsingOtp()) {
+			LOGGER.info("User {} is admin and OTP is deactivated. Granting temp OTP activation role only.", user.getId());
+			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_ACTIVATE_OTP_ACCESS_ROLE));
 		}
 		
-		LOGGER.trace("Successful authentication, creating token for user {}.", auth.getPrincipal());
+		LOGGER.trace("Successful authentication, creating token for user {}.", user.getId());
 		
 		this.authService.successfulAuth(user.getId());
 		

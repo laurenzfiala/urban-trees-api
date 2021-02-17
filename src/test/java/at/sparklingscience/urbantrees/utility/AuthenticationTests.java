@@ -14,6 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import at.sparklingscience.urbantrees.exception.DuplicateUsernameException;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
 
 /**
@@ -36,7 +37,7 @@ public class AuthenticationTests {
 	
 	@Test
 	@Commit
-	public void registerUser() throws ClientProtocolException, IOException {
+	public void registerUser() throws ClientProtocolException, IOException, DuplicateUsernameException {
 		
 		this.authenticationService.registerUser("test", "test", new ArrayList<>());
 		

@@ -3,6 +3,7 @@ package at.sparklingscience.urbantrees.controller;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,7 @@ import at.sparklingscience.urbantrees.domain.City;
 import at.sparklingscience.urbantrees.domain.PhenologyObservationType;
 import at.sparklingscience.urbantrees.domain.Report;
 import at.sparklingscience.urbantrees.domain.Role;
+import at.sparklingscience.urbantrees.domain.SearchResult;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserCreation;
@@ -222,13 +224,14 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.DELETE, path = "/beacon/{beaconId:\\d+}")
 	public void deleteBeacon(@PathVariable int beaconId, Authentication auth) {
 		
-		LOGGER.info("[[ DELETE ]] deleteBeacon - beaconId: {}", beaconId);
+		AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
+		LOGGER.info("[[ DELETE ]] deleteBeacon - beaconId: {}, userId: {}", beaconId, authToken.getId());
 		
 		BeaconLog log = new BeaconLog(
 				beaconId,
 				BeaconLogSeverity.INFO,
 				BeaconLogType.SYSTEM,
-				"Marked beacon as DELETED by user: " + auth.getName() + ".",
+				"Marked beacon as DELETED by user with id: " + authToken.getId() + ".",
 				new Date()
 				);
 		
@@ -240,26 +243,28 @@ public class AdminController {
 			throw new InternalException("Failed to delete beacon.", ClientError.BEACON_DELETE_FAILED);
 		}
 		
-		LOGGER.info("[[ DELETE ]] deleteBeacon |END| - beaconId: {}", beaconId);
+		LOGGER.info("[[ DELETE ]] deleteBeacon |END| - beaconId: {}, userId: {}", beaconId, authToken.getId());
 		
 	}
 	
-	@RequestMapping(method = RequestMethod.GET, path = "/users")
-	public List<UserLight> getUsers() {
+	@RequestMapping(method = RequestMethod.POST, path = "/users")
+	public SearchResult<List<UserLight>> getUsers(@RequestBody Map<String, Object> filters,
+									@RequestParam(required = false) Integer offset,
+									@RequestParam(required = false) Integer limit,
+									Authentication auth) {
 		
-		LOGGER.info("[[ GET ]] getUsers");
+		AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
+		LOGGER.info("[[ GET ]] getUsers - by user with id: {}", authToken.getId());
 		
 		try {
-			List<UserLight> users = this.authService.getAllUsersLight();
-			for (UserLight user : users) {
-				user.setNonLocked(this.authService.isUserNonLocked(user));
-			}
-			return users;
+			return this.authService.getUsersLight(filters, limit, offset);
+		} catch (BadRequestException e) {
+			throw e;
 		} catch (Throwable t) {
 			LOGGER.error("Could not find users: {}", t.getMessage(), t);
 			throw new InternalException("Failed to find users.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ GET ]] getUsers |END|");
+			LOGGER.info("[[ GET ]] getUsers - by user with id: {} |END|", authToken.getId());
 		}
 		
 	}

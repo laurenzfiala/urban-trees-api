@@ -7,6 +7,7 @@ import java.util.List;
 import javax.validation.constraints.NotNull;
 
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
+import at.sparklingscience.urbantrees.domain.validator.annotation.DateRange;
 
 /**
  * A user for authentication.
@@ -69,6 +70,13 @@ public class User extends UserIdentity implements Serializable {
 	 */
 	@NotNull(groups = {ValidationGroups.Read.class})
 	private List<Role> roles;
+	
+	/**
+	 * Date at which this user was created.
+	 */
+	@NotNull
+	@DateRange(DateRange.Range.PAST_AND_PRESENT)
+	private Date creationDate;
 	
 	@Override
 	public String toString() {
@@ -145,6 +153,14 @@ public class User extends UserIdentity implements Serializable {
 
 	public void setUsingOtp(boolean isUsingOtp) {
 		this.isUsingOtp = isUsingOtp;
+	}
+
+	public Date getCreationDate() {
+		return creationDate;
+	}
+
+	public void setCreationDate(Date creationDate) {
+		this.creationDate = creationDate;
 	}
 
 }

@@ -2,6 +2,7 @@ package at.sparklingscience.urbantrees.mapper;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -70,10 +71,24 @@ public interface AuthMapper {
 	UserIdentity findUserIdentityById(@Param("id") int id);
 	
 	/**
-	 * Find all existing users.
-	 * @return List of users.
+	 * Find all existing users matching given filters.
+	 * @param filters filters to restrict returned users
+	 * @param limit limit amount of results
+	 * @param offset page offset (start of page)
+	 * @return list of users matching the given filters
 	 */
-	List<UserLight> findAllUsersLight();
+	List<UserLight> findUsersLight(@Param("filters") Map<String, Object> filters,
+								   @Param("limit") Integer limit,
+								   @Param("offset") Integer offset);
+	
+	/**
+	 * Find amount of all existing users matching given filters.
+	 * This method is analogous to {@link #findUsersLight(Map, int, int)}.
+	 * @param filters filters to restrict returned users
+	 * @return amount of users found
+	 * @see #findUsersLight(Map, int, int)
+	 */
+	int findUsersLightAmount(@Param("filters") Map<String, Object> filters);
 	
 	/**
 	 * Insert a new user to the database.

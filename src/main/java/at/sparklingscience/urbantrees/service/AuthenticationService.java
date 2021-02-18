@@ -1,12 +1,14 @@
 package at.sparklingscience.urbantrees.service;
 
 import java.security.SecureRandom;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.crypto.SecretKey;
@@ -14,18 +16,22 @@ import javax.crypto.SecretKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
+import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.OtpCredentials;
 import at.sparklingscience.urbantrees.domain.Role;
+import at.sparklingscience.urbantrees.domain.SearchResult;
 import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserCreation;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
+import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.DuplicateUsernameException;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
@@ -64,6 +70,9 @@ public class AuthenticationService {
 	
 	@Autowired
 	private UserService userService;
+	
+	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
+	private String dateFormatPattern;
 	
 	/**
 	 * Searches for a user with the given username.
@@ -381,11 +390,38 @@ public class AuthenticationService {
 	}
 	
 	/**
-	 * Fetches all users in a light version.
+	 * Fetches all users in a light version that match the given filters.
 	 * Important Note: THIS METHOD MUST SOLELY BE CALLED BY AN ADMIN VIA ADMINCONTROLLER!
+	 * @param filters filters to restrict users to return
+	 * @param limit limit nr. of results
+	 * @param offset page offset
+	 * @return list of users wrapped in a {@link SearchResult} met-info wrapper
+	 * @throws BadRequestException if conversion of filter strings to date fails
 	 */
-	public List<UserLight> getAllUsersLight() {
-		return this.authMapper.findAllUsersLight();
+	public SearchResult<List<UserLight>> getUsersLight(Map<String, Object> filters,
+													   Integer limit,
+													   Integer offset) throws BadRequestException {
+
+		try {
+			ControllerUtil.filterStringToDate(
+					this.dateFormatPattern,
+					filters,
+					"lastLoginDateFrom",
+					"lastLoginDateTo",
+					"creationDateFrom",
+					"creationDateTo"
+					);
+		} catch (ParseException e) {
+			LOGGER.warn("Illegal date format for filters: " + e.getMessage(), e);
+			throw new BadRequestException("Illegal date format for filters.");
+		}
+
+		List<UserLight> results = this.authMapper.findUsersLight(filters, limit, offset);
+		results.forEach(r -> r.setNonLocked(this.isUserNonLocked(r)));
+		
+		int totalResultAmount = this.authMapper.findUsersLightAmount(filters);
+		return new SearchResult<List<UserLight>>(results).withMetadata("totalResultAmount", totalResultAmount);
+		
 	}
 	
 	/**

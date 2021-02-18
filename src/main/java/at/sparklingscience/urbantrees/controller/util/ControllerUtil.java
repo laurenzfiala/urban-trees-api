@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +100,28 @@ public class ControllerUtil {
 		System.arraycopy(input, 0, assocUsers, 1, input.length);
 		
 		return assocUsers;
+		
+	}
+	
+	/**
+	 * Convert all given keys in the given filters from their raw string representation to {@link Date}.
+	 * @param dateFormatPattern date format pattern to parse
+	 * @param filters filters map to modify
+	 * @param keys all map entries to convert from strings to dates
+	 * @throws ParseException if a string can't be converted to a date
+	 */
+	public static void filterStringToDate(String dateFormatPattern, Map<String, Object> filters, String ...keys)
+			throws ParseException {
+		
+		DateFormat dateFormat = new SimpleDateFormat(dateFormatPattern);
+		
+		for (String key : keys) {
+			Object valueObj = filters.get(key);
+			if (valueObj == null || !(valueObj instanceof String)) {
+				continue;
+			}
+			filters.put(key, dateFormat.parse((String) valueObj));
+		}
 		
 	}
 	

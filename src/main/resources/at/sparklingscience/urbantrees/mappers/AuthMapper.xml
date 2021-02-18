@@ -25,6 +25,7 @@
         <result column="last_login_dat" 			property="lastLoginDate" />
         <result column="secure_login_key" 			property="secureLoginKey" />
         <result column="is_using_otp" 				property="isUsingOtp" />
+        <result column="cre_dat" 					property="creationDate" />
         
         <collection
 	        column="id"
@@ -41,6 +42,7 @@
         <result column="last_login_attempt_dat" 	property="lastLoginAttemptDate" />
         <result column="last_login_dat" 			property="lastLoginDate" />
         <result column="is_using_otp" 				property="isUsingOtp" />
+        <result column="cre_dat" 					property="creationDate" />
         
         <collection
 	        column="id"
@@ -85,7 +87,8 @@
 			u.last_login_attempt_dat,
 			u.last_login_dat,
 			u.secure_login_key,
-			u.is_using_otp
+			u.is_using_otp,
+			u.cre_dat
 		from 
 		    access_data."user" u
 		where
@@ -122,7 +125,8 @@
 			u.last_login_attempt_dat,
 			u.last_login_dat,
 			u.secure_login_key,
-			u.is_using_otp
+			u.is_using_otp,
+			u.cre_dat
 		from
 			access_data."user" u
 		where
@@ -285,7 +289,69 @@
 			u.id = #{id}
     </select>
     
-    <select id="findAllUsersLight" resultMap="UserLightMap" useCache="false">
+    <sql id="findUsersLightWhere">
+    	from
+			access_data."user" u
+			<where>
+				<if test="filters.containsKey('id')">
+					and u.id = #{filters.id}
+				</if>
+				<if test="filters.containsKey('username')">
+					and u.username like '%' || #{filters.username} || '%'
+				</if>
+				<if test="filters.containsKey('isActive')">
+					and u.is_active = #{filters.isActive}
+				</if>
+				<if test="filters.containsKey('isUsingOtp')">
+					and u.is_using_otp = #{filters.isUsingOtp}
+				</if>
+				<if test="filters.containsKey('isCredentialsNonExpired')">
+					and u.is_credentials_non_expired = #{filters.isCredentialsNonExpired}
+				</if>
+				<if test="filters.containsKey('lastLoginDateFrom')">
+					and u.last_login_dat &gt;= #{filters.lastLoginDateFrom}
+				</if>
+				<if test="filters.containsKey('lastLoginDateTo')">
+					and u.last_login_dat &lt;= #{filters.lastLoginDateTo}
+				</if>
+				<if test="filters.containsKey('creationDateFrom')">
+					and u.cre_dat &gt;= #{filters.creationDateFrom}
+				</if>
+				<if test="filters.containsKey('creationDateTo')">
+					and u.cre_dat &lt;= #{filters.creationDateTo}
+				</if>
+				<if test="filters.containsKey('roles')">
+					and
+					<choose>
+						<when test="filters.containsKey('rolesAnd') and filters.rolesAnd">
+							<bind name="rolesAmount" value="filters.roles.size()" />
+							#{rolesAmount} = 
+						</when>
+						<otherwise>
+							exists 
+						</otherwise>
+					</choose>
+					(
+						select
+							count(*)
+						from
+							access_data.user_role ur
+						where
+							u.id = ur.user_id
+							and ur.role_id in <foreach item="role"
+												  collection="filters.roles" 
+												  index="index"
+												  open="("
+												  separator=","
+												  close=")">
+					        	#{role}
+						    </foreach>
+					)
+				</if>
+			</where>
+    </sql>
+    
+    <select id="findUsersLight" resultMap="UserLightMap" useCache="false">
         select
 			u.id,
 			u.username,
@@ -295,11 +361,23 @@
 			u.failed_login_attempts,
 			u.last_login_attempt_dat,
 			u.last_login_dat,
-			u.is_using_otp
-		from
-			access_data."user" u
+			u.is_using_otp,
+			u.cre_dat
+		<include refid="findUsersLightWhere"></include>
 		order by
 			id
+		<if test="limit != null">
+			limit #{limit}
+		</if>
+		<if test="offset != null">
+			offset #{offset}
+		</if>
+    </select>
+    
+    <select id="findUsersLightAmount" resultType="java.lang.Integer" useCache="false">
+        select
+			count(*)
+		<include refid="findUsersLightWhere"></include>
     </select>
     
     <update id="updateCredentialsNonExpired">

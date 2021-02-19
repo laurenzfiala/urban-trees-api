@@ -39,13 +39,13 @@ public class UserContentController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{contentId}/{contentLang}")
 	public List<UserContent> getUserContent(
 			@PathVariable String contentId,
-			@PathVariable String contentLangId,
+			@PathVariable String contentLang,
 			Authentication auth) {
 		
 		LOGGER.debug("[[ GET ]] getUserContent - contentId: {}", contentId);
 		
 		try {
-			return this.contentService.getContent(ControllerUtil.getAuthToken(auth), contentId, contentLangId);			
+			return this.contentService.getContent(ControllerUtil.getAuthToken(auth), contentId, contentLang);			
 		} finally {
 			LOGGER.debug("[[ GET ]] getUserContent |END| - contentId: {}", contentId);
 		}

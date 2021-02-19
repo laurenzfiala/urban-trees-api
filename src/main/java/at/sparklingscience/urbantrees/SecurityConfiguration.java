@@ -173,8 +173,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    			"/ui/**",
 		    			"/beacon",
 		    			"/beacon/*",
-		    			"/beacon/*/data",
-		    			"/content/**"
+		    			"/beacon/*/data"/*,
+		    			"/content/**" TODO temporarily disable all unauthorized CMS access until hardened*/
     			).permitAll()
 		    	.antMatchers(
 		    			"/admin/**"
@@ -253,7 +253,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     
 	/**
 	 * NOTE:
-	 * There is anyother instance of this encoder in {@link AuthenticationService}
+	 * There is another instance of this encoder in {@link AuthenticationService}
 	 * which des not use this bean.
 	 * @see AuthenticationService#bCryptPasswordEncoder
 	 */

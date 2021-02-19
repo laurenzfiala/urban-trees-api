@@ -5,8 +5,7 @@ import javax.validation.constraints.NotNull;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 
 /**
- * A user without means to log in to
- * the account (meaning no password or other login credentials).
+ * A user without password.
  * 
  * Note: The restricted fields are still there, but the getters
  * 		 and setters are stubs.
@@ -31,14 +30,6 @@ public class UserLight extends User {
 
 	@Override
 	public void setPassword(String password) {}
-	
-	@Override
-	public String getSecureLoginKey() {
-		return null;
-	}
-	
-	@Override
-	public void setSecureLoginKey(String secureLoginKey) {}
 
 	public boolean isNonLocked() {
 		return isNonLocked;

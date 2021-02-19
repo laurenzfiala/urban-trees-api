@@ -35,6 +35,7 @@ import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.SearchResult;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.User;
+import at.sparklingscience.urbantrees.domain.UserBulkAction;
 import at.sparklingscience.urbantrees.domain.UserCreation;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.ui.Announcement;
@@ -248,13 +249,13 @@ public class AdminController {
 	}
 	
 	@RequestMapping(method = RequestMethod.POST, path = "/users")
-	public SearchResult<List<UserLight>> getUsers(@RequestBody Map<String, Object> filters,
+	public SearchResult<List<UserLight>> postFindUsers(@RequestBody Map<String, Object> filters,
 									@RequestParam(required = false) Integer offset,
 									@RequestParam(required = false) Integer limit,
 									Authentication auth) {
 		
 		AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
-		LOGGER.info("[[ GET ]] getUsers - by user with id: {}", authToken.getId());
+		LOGGER.info("[[ POST ]] postFindUsers - by user with id: {}", authToken.getId());
 		
 		try {
 			return this.authService.getUsersLight(filters, limit, offset);
@@ -264,7 +265,23 @@ public class AdminController {
 			LOGGER.error("Could not find users: {}", t.getMessage(), t);
 			throw new InternalException("Failed to find users.", ClientError.GENERIC_ERROR);
 		} finally {
-			LOGGER.info("[[ GET ]] getUsers - by user with id: {} |END|", authToken.getId());
+			LOGGER.info("[[ POST ]] postFindUsers - by user with id: {} |END|", authToken.getId());
+		}
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.POST, path = "/users/bulk/{action}")
+	public List<UserLight> postUserBulkAction(@RequestBody Map<String, Object> filters,
+									@PathVariable UserBulkAction action,
+									Authentication auth) {
+		
+		AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
+		LOGGER.info("[[ POST ]] postUserBulkAction - action: {} by user with id: {}", action, authToken.getId());
+		
+		try {
+			return this.authService.executeBulkAction(filters, action);
+		} finally {
+			LOGGER.info("[[ POST ]] postUserBulkAction - action: {} by user with id: {} |END|", action, authToken.getId());
 		}
 		
 	}
@@ -366,7 +383,7 @@ public class AdminController {
 	}
 	
 	@RequestMapping(method = RequestMethod.PUT, path = "/users")
-	public List<User> putNewUsers(@Validated(ValidationGroups.Update.class) @RequestBody UserCreation creation, Authentication auth) {
+	public List<UserLight> putNewUsers(@Validated(ValidationGroups.Update.class) @RequestBody UserCreation creation, Authentication auth) {
 				
 		AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
 		LOGGER.info("[[ PUT ]] putNewUser - called by: {}, users to create: {}", authToken.getId(), creation);

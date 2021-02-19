@@ -28,6 +28,7 @@ import at.sparklingscience.urbantrees.domain.OtpCredentials;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.SearchResult;
 import at.sparklingscience.urbantrees.domain.User;
+import at.sparklingscience.urbantrees.domain.UserBulkAction;
 import at.sparklingscience.urbantrees.domain.UserCreation;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
@@ -156,10 +157,10 @@ public class AuthenticationService {
 	 * 								 	  before that.
 	 */
 	@Transactional
-	public List<User> registerUsers(final UserCreation creation)
+	public List<UserLight> registerUsers(final UserCreation creation)
 			throws DuplicateUsernameException {
 		
-		List<User> registeredUsers = new ArrayList<User>();
+		List<UserLight> registeredUsers = new ArrayList<UserLight>();
 		
 		User template = creation.getTemplate();
 		for (String username : creation.getUsernames()) {
@@ -178,12 +179,11 @@ public class AuthenticationService {
 	 * @param username Username to register (raw).
 	 * @param rawPassword Password entered by the user (raw).
 	 * @param roles Roles to assign to the new user.
-	 * @return the newly created user (with all of their info).
+	 * @return the newly created user.
 	 * @throws DuplicateUsernameException if the username was already given to another user.
 	 */
-	public User registerUser(final String username, final String rawPassword, final List<Role> roles)
+	public UserLight registerUser(final String username, final String rawPassword, final List<Role> roles)
 			throws DuplicateUsernameException {
-		
 		
 		User newUser = new User();
 		newUser.setUsername(username);
@@ -209,7 +209,7 @@ public class AuthenticationService {
 			this.getLoginKey(newUser.getId());			
 		}
 		
-		return this.authMapper.findUserById(newUser.getId());
+		return this.authMapper.findUserLightById(newUser.getId());
 		
 	}
 
@@ -402,6 +402,23 @@ public class AuthenticationService {
 													   Integer limit,
 													   Integer offset) throws BadRequestException {
 
+		this.prepareUserSearchFilters(filters);
+		
+		List<UserLight> results = this.authMapper.findUsersLight(filters, limit, offset);
+		results.forEach(r -> r.setNonLocked(this.isUserNonLocked(r)));
+		
+		int totalResultAmount = this.authMapper.findUsersLightAmount(filters);
+		return new SearchResult<List<UserLight>>(results).withMetadata("totalResultAmount", totalResultAmount);
+		
+	}
+	
+	/**
+	 * Prepare search filters for user search.
+	 * This converts predefined fields from string to date.
+	 * @param filters given filters from teh frontend
+	 */
+	private void prepareUserSearchFilters(final Map<String, Object> filters) {
+		
 		try {
 			ControllerUtil.filterStringToDate(
 					this.dateFormatPattern,
@@ -415,12 +432,54 @@ public class AuthenticationService {
 			LOGGER.warn("Illegal date format for filters: " + e.getMessage(), e);
 			throw new BadRequestException("Illegal date format for filters.");
 		}
-
-		List<UserLight> results = this.authMapper.findUsersLight(filters, limit, offset);
-		results.forEach(r -> r.setNonLocked(this.isUserNonLocked(r)));
 		
-		int totalResultAmount = this.authMapper.findUsersLightAmount(filters);
-		return new SearchResult<List<UserLight>>(results).withMetadata("totalResultAmount", totalResultAmount);
+	}
+	
+	/**
+	 * Execute the given bulk action for all users matching the given filters.
+	 * @param filters filters the users must match
+	 * @param action action to execute for every matching user
+	 * @return all {@link UserLight}s that were affected in the state they were in *before* the bulk action
+	 */
+	@Transactional
+	public List<UserLight> executeBulkAction(Map<String, Object> filters,
+							 				 UserBulkAction action) {
+		
+		this.prepareUserSearchFilters(filters);
+		
+		List<UserLight> users = this.authMapper.findUsersLight(filters, null, null);
+		users.forEach(u -> {
+			try {
+				switch (action) {
+				case EXPIRE_CREDENTIALS:
+					this.expireCredentials(u.getId());
+					break;
+	
+				case CREATE_LOGIN_LINKS:
+					this.getLoginKey(u.getId());
+					break;
+					
+				case ACTIVATE:
+					this.activate(u.getId());
+					break;
+					
+				case INACTIVATE:
+					this.inactivate(u.getId());
+					break;
+					
+				case DELETE:
+					this.deleteUser(u.getId());
+					break;
+	
+				default:
+					throw new IllegalArgumentException("Unsupported user bulk action: " + action);
+				}
+			} catch (Throwable t) {
+				throw new RuntimeException("Failed to execute bulk action " + action + " on user " + u.getId(), t);
+			}
+		});
+		
+		return users;
 		
 	}
 	

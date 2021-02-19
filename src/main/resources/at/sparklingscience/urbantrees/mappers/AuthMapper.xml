@@ -41,6 +41,7 @@
         <result column="failed_login_attempts"		property="failedloginAttempts" />
         <result column="last_login_attempt_dat" 	property="lastLoginAttemptDate" />
         <result column="last_login_dat" 			property="lastLoginDate" />
+        <result column="secure_login_key" 			property="secureLoginKey" />
         <result column="is_using_otp" 				property="isUsingOtp" />
         <result column="cre_dat" 					property="creationDate" />
         
@@ -289,12 +290,38 @@
 			u.id = #{id}
     </select>
     
+    <select id="findUserLightById" resultMap="UserLightMap" useCache="false">
+       	select
+			u.id,
+			u.username,
+			u.password,
+			u.is_active,
+			u.is_credentials_non_expired,
+			u.failed_login_attempts,
+			u.last_login_attempt_dat,
+			u.last_login_dat,
+			u.secure_login_key,
+			u.is_using_otp,
+			u.cre_dat
+		from
+			access_data."user" u
+		where
+			u.id = #{id}
+    </select>
+    
     <sql id="findUsersLightWhere">
     	from
 			access_data."user" u
 			<where>
 				<if test="filters.containsKey('id')">
-					and u.id = #{filters.id}
+					and u.id in <foreach item="id"
+										 collection="filters.id" 
+										 index="index"
+										 open="("
+										 separator=","
+										 close=")">
+			        	#{id}
+				    </foreach>
 				</if>
 				<if test="filters.containsKey('username')">
 					and u.username like '%' || #{filters.username} || '%'
@@ -328,7 +355,7 @@
 							#{rolesAmount} = 
 						</when>
 						<otherwise>
-							exists 
+							0 &lt; 
 						</otherwise>
 					</choose>
 					(
@@ -361,6 +388,7 @@
 			u.failed_login_attempts,
 			u.last_login_attempt_dat,
 			u.last_login_dat,
+			u.secure_login_key,
 			u.is_using_otp,
 			u.cre_dat
 		<include refid="findUsersLightWhere"></include>

@@ -71,6 +71,13 @@ public interface AuthMapper {
 	UserIdentity findUserIdentityById(@Param("id") int id);
 	
 	/**
+	 * Find the user with the given user id.
+	 * @param id user id
+	 * @return {@link UserLight} with given id
+	 */
+	UserLight findUserLightById(@Param("id") int id);
+	
+	/**
 	 * Find all existing users matching given filters.
 	 * @param filters filters to restrict returned users
 	 * @param limit limit amount of results

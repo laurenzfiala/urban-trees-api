@@ -164,6 +164,7 @@
 		    	user,
 		    	user
             </foreach>
+		on conflict do nothing
 	</insert>
 	
 	<delete id="deleteUserRoles">

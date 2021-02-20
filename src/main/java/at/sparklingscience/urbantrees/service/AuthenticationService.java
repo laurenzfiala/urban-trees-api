@@ -29,6 +29,7 @@ import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.SearchResult;
 import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserBulkAction;
+import at.sparklingscience.urbantrees.domain.UserBulkActionData;
 import at.sparklingscience.urbantrees.domain.UserCreation;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
@@ -437,17 +438,17 @@ public class AuthenticationService {
 	
 	/**
 	 * Execute the given bulk action for all users matching the given filters.
-	 * @param filters filters the users must match
 	 * @param action action to execute for every matching user
+	 * @param data filters & additional data that may be needed for certain actions
 	 * @return all {@link UserLight}s that were affected in the state they were in *before* the bulk action
 	 */
 	@Transactional
-	public List<UserLight> executeBulkAction(Map<String, Object> filters,
-							 				 UserBulkAction action) {
+	public List<UserLight> executeBulkAction(UserBulkAction action,
+							 				 UserBulkActionData data) {
 		
-		this.prepareUserSearchFilters(filters);
+		this.prepareUserSearchFilters(data.getFilters());
 		
-		List<UserLight> users = this.authMapper.findUsersLight(filters, null, null);
+		List<UserLight> users = this.authMapper.findUsersLight(data.getFilters(), null, null);
 		users.forEach(u -> {
 			try {
 				switch (action) {
@@ -457,6 +458,14 @@ public class AuthenticationService {
 	
 				case CREATE_LOGIN_LINKS:
 					this.getLoginKey(u.getId());
+					break;
+	
+				case ADD_ROLES:
+					this.modifyRoles(u.getId(), data.getRoles(), true);
+					break;
+	
+				case REMOVE_ROLES:
+					this.modifyRoles(u.getId(), data.getRoles(), false);
 					break;
 					
 				case ACTIVATE:

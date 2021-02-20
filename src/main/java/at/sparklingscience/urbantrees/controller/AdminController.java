@@ -34,8 +34,8 @@ import at.sparklingscience.urbantrees.domain.Report;
 import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.SearchResult;
 import at.sparklingscience.urbantrees.domain.Tree;
-import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserBulkAction;
+import at.sparklingscience.urbantrees.domain.UserBulkActionData;
 import at.sparklingscience.urbantrees.domain.UserCreation;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.ui.Announcement;
@@ -271,15 +271,15 @@ public class AdminController {
 	}
 	
 	@RequestMapping(method = RequestMethod.POST, path = "/users/bulk/{action}")
-	public List<UserLight> postUserBulkAction(@RequestBody Map<String, Object> filters,
-									@PathVariable UserBulkAction action,
-									Authentication auth) {
+	public List<UserLight> postUserBulkAction(@PathVariable UserBulkAction action,
+											  @RequestBody UserBulkActionData data,
+											  Authentication auth) {
 		
 		AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
 		LOGGER.info("[[ POST ]] postUserBulkAction - action: {} by user with id: {}", action, authToken.getId());
 		
 		try {
-			return this.authService.executeBulkAction(filters, action);
+			return this.authService.executeBulkAction(action, data);
 		} finally {
 			LOGGER.info("[[ POST ]] postUserBulkAction - action: {} by user with id: {} |END|", action, authToken.getId());
 		}

@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -153,7 +154,9 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 		if (!user.isCredentialsNonExpired()) {
 			LOGGER.info("Credentials of user {} are expired. Granting temp change role only.", user.getId());
 			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE));
-		} else if (SecurityUtil.isAdmin(authToken) && !user.isUsingOtp()) {
+		} else if (!this.getEnvironment().acceptsProfiles(Profiles.of("dev")) &&
+				SecurityUtil.isAdmin(authToken) &&
+				!user.isUsingOtp()) {
 			LOGGER.info("User {} is admin and OTP is deactivated. Granting temp OTP activation role only.", user.getId());
 			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_ACTIVATE_OTP_ACCESS_ROLE));
 		}

@@ -255,21 +255,29 @@ public class UserContentService {
 	}
 	
 	/**
-	 * Get all contents for the given content id.
+	 * Get all published/approved contents for the given content id.
 	 * @param authToken current user auth token
 	 * @param contentId find content entries of this conent id
+	 * @param contentLangId find content entries of this language
+	 * @param substituteUserDrafts true to substitute content for the users' draft, if available;
+	 * 							   false to only return approved content
 	 * @return list of all published content entries.
 	 */
 	public @NonNull List<UserContent> getContent(@Nullable AuthenticationToken authToken,
 												 @NonNull String contentId,
-												 @NonNull String contentLangId) {
+												 @NonNull String contentLangId,
+												 boolean substituteUserDrafts) {
 		
 		LOGGER.debug("getContent - contentId: {}", contentId);
 		this.assertViewPermission(authToken, contentId);
 		
-		List<UserContent> content = this.contentMapper.findAllContent(contentId, UserContentLanguage.fromId(contentLangId));
+		List<UserContent> content = this.contentMapper.findAllContent(
+			contentId,
+			UserContentLanguage.fromId(contentLangId),
+			substituteUserDrafts
+		);
 		
-		content.stream().forEach(c -> {
+		content.parallelStream().forEach(c -> {
 			UserIdentity grantingUser = c.getUser();
 			
 			if (authToken == null || (

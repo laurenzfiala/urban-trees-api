@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import at.sparklingscience.urbantrees.cms.CmsContent;
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.UserContent;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.service.UserContentService;
 
 /**
@@ -41,12 +42,29 @@ public class UserContentController {
 			@PathVariable String contentLang,
 			Authentication auth) {
 		
-		LOGGER.debug("[[ GET ]] getUserContent - contentId: {}", contentId);
+		LOGGER.debug("[[ GET ]] getUserContent - contentId: {}, contentLang: {}", contentId, contentLang);
 		
 		try {
-			return this.contentService.getContent(ControllerUtil.getAuthToken(auth), contentId, contentLang);			
+			return this.contentService.getContent(ControllerUtil.getAuthToken(auth), contentId, contentLang, false);			
 		} finally {
-			LOGGER.debug("[[ GET ]] getUserContent |END| - contentId: {}", contentId);
+			LOGGER.debug("[[ GET ]] getUserContent |END| - contentId: {}, contentLang: {}", contentId, contentLang);
+		}
+		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, path = "/user/{contentId}/{contentLang}")
+	public List<UserContent> getUserContentForUser(
+			@PathVariable String contentId,
+			@PathVariable String contentLang,
+			Authentication auth) {
+		
+		AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
+		LOGGER.debug("[[ GET ]] getUserContentForUser - contentId: {}, contentLang: {}, userId: {}", contentId, contentLang, authToken.getId());
+		
+		try {
+			return this.contentService.getContent(authToken, contentId, contentLang, true);			
+		} finally {
+			LOGGER.debug("[[ GET ]] getUserContentForUser |END| - contentId: {}, contentLang: {}, userId: {}", contentId, contentLang, authToken.getId());
 		}
 		
 	}

@@ -4,14 +4,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.http.client.ClientProtocolException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import at.sparklingscience.urbantrees.exception.DuplicateUsernameException;
@@ -23,7 +24,7 @@ import at.sparklingscience.urbantrees.service.AuthenticationService;
  * @author Laurenz Fiala
  * @since 2018/06/10
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("dev")
 @ContextConfiguration

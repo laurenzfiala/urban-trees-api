@@ -8,8 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 
 import org.apache.http.client.ClientProtocolException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,12 +17,13 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import at.sparklingscience.urbantrees.domain.City;
 import at.sparklingscience.urbantrees.domain.Coordinates;
+import at.sparklingscience.urbantrees.domain.Location;
 import at.sparklingscience.urbantrees.domain.PhenologyDataset;
 import at.sparklingscience.urbantrees.domain.PhenologyObservation;
 import at.sparklingscience.urbantrees.domain.PhenologyObservationObject;
@@ -30,7 +31,6 @@ import at.sparklingscience.urbantrees.domain.PhenologyObservationResult;
 import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.TreeGenus;
-import at.sparklingscience.urbantrees.domain.Location;
 import at.sparklingscience.urbantrees.domain.TreeSpecies;
 
 /**
@@ -39,7 +39,7 @@ import at.sparklingscience.urbantrees.domain.TreeSpecies;
  * @author Laurenz Fiala
  * @since 2017/01/04
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("dev")
 @ContextConfiguration

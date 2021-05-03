@@ -125,9 +125,7 @@
 			user_data."content" c
 		where
 			c.content_id = #{contentId}
-			and c.content_lang = #{contentLang}
-			and c.approve_dat is not null
-			and c.is_draft = false
+			and c.content_lang = #{contentLang.id}
 			and (
 				select
 					count(*)
@@ -139,6 +137,29 @@
 					and is_draft = false
 					and approve_dat is not null
 			) = 0
+			<if test="substituteUserDrafts">
+				and (
+					select
+						count(*)
+					from 
+						user_data."content"
+					where
+						id != c.id
+						and content_id = c.content_id
+						and content_lang = c.content_lang
+						and content_order = c.content_order
+						and is_draft = true
+						and approve_dat is null
+				) = 0
+				and (
+					(c.is_draft = true and c.approve_dat is null and c.user_id = #{userId})
+					or (c.is_draft = false and c.approve_dat is not null)
+				)
+			</if>
+			<if test="!substituteUserDrafts">
+				and c.approve_dat is not null
+				and c.is_draft = false
+			</if>
 		order by
 			c.content_order
 	</select>

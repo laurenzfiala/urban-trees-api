@@ -166,6 +166,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 			.and()
 		    	.authorizeRequests()
 		    	.antMatchers(
+		    			"/content",
+		    			"/content/**"
+    			)
+		    	.denyAll() // TODO deny all content requests until impl is finished
+		    	.antMatchers(
 		    			HttpMethod.GET,
 		    			"/tree",
 		    			"/tree/**",
@@ -173,8 +178,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    			"/ui/**",
 		    			"/beacon",
 		    			"/beacon/*",
-		    			"/beacon/*/data"/*,
-		    			"/content/**" TODO temporarily disable all unauthorized CMS access until hardened*/
+		    			"/beacon/*/data",
+		    			"/content/*/*"
     			).permitAll()
 		    	.antMatchers(
 		    			"/admin/**"

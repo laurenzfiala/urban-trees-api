@@ -58,14 +58,17 @@ public interface UserContentMapper {
 											@Param("contentLang") UserContentLanguage contentLang);
 	
 	/**
-	 * Find all current approved content entries for the given content id in order of
+	 * Find all current content entries for the given content id in order of
 	 * content_order and with given language.
 	 * @param id content id to search for
 	 * @param id content language to search for
+	 * @param substituteUserDrafts true to substitute content for the users' draft, if available;
+	 * 							   false to only return approved content
 	 * @return list of matched user contents
 	 */
 	List<UserContent> findAllContent(@Param("contentId") String contentId,
-									 @Param("contentLang") UserContentLanguage contentLang);
+									 @Param("contentLang") UserContentLanguage contentLang,
+									 @Param("substituteUserDrafts") boolean substituteUserDrafts);
 	
 	
 	/**

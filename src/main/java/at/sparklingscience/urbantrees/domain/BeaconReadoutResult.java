@@ -30,6 +30,11 @@ public class BeaconReadoutResult {
 	@Min(0)
     private long timeSinceDataReadoutMs;
 
+	/**
+	 * Default Constructor.
+	 */
+	public BeaconReadoutResult() {}
+
     public BeaconReadoutResult(List<BeaconDataset> datasets, BeaconSettings settings, long timeSinceDataReadoutMs) {
         this.datasets = datasets;
         this.settings = settings;

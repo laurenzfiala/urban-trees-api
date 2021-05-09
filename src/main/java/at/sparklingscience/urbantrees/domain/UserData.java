@@ -24,5 +24,13 @@ public class UserData implements Serializable {
 	public void setNewMessagesAmount(int newMessagesAmount) {
 		this.newMessagesAmount = newMessagesAmount;
 	}
+	
+	/**
+	 * Constructs a new empty user data instance and returns it.
+	 * @return new {@link UserData} instance
+	 */
+	public static UserData empty() {
+		return new UserData();
+	}
 
 }

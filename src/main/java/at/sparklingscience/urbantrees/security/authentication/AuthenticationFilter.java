@@ -70,7 +70,6 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 	 * Note: dont use this directly, but call {@link ObjectMapper#reader()} or {@link ObjectMapper#writer()}
 	 * 		 to get a immutable representation.
 	 */
-	//private static ObjectMapper objectMapper = new ObjectMapper(); TODO remove
 	private ObjectMapper jsonObjectMapper;
 	
 	/**
@@ -91,9 +90,6 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 	@Override
 	protected void initFilterBean() throws ServletException {
 		super.initFilterBean();
-		
-		//WebApplicationContext webApplicationContext = WebApplicationContextUtils.getWebApplicationContext(this.getServletContext());
-        //this.authService = webApplicationContext.getBean(AuthenticationService.class);
 	}
 	
 	@Override
@@ -168,7 +164,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 		final JWTUserAuthentication session = this.authService.newSession(user);
 		final String token = Jwts.builder().setSubject(user.getUsername())
 				.setExpiration(new Date(System.currentTimeMillis() + SecurityConfiguration.JWT_EXPIRATION_TIME))
-				.addClaims(this.getUserClaims(user, authorities, session))
+				.addClaims(this.getUserClaims(authToken, authorities, session))
 				.signWith(session.getSecret())
 				.compact();
 		
@@ -180,22 +176,22 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 	/**
 	 * Converts the users' roles, user id and auth id to a map for inclusion
 	 * the the JWT claims.
-	 * @param user User to get information from
+	 * @param authToken authentication token to get auth info from
 	 * @param overrideAuthorities null if users' authorities should be used; otherwise use this parameter
 	 * @param session users' new session
 	 */
-	private Map<String, Object> getUserClaims(at.sparklingscience.urbantrees.security.user.User user,
+	private Map<String, Object> getUserClaims(AuthenticationToken authToken,
 											  Collection<? extends GrantedAuthority> overrideAuthorities,
 											  JWTUserAuthentication session) {
 		
 		if (overrideAuthorities == null) {
-			overrideAuthorities = user.getAuthorities();
+			overrideAuthorities = authToken.getAuthorities();
 		}
 		
 		Map<String, Object> userClaims = new HashMap<>(2);
 		userClaims.put(
 				SecurityConfiguration.JWT_CLAIMS_USERID_KEY,
-				user.getId()
+				authToken.getId()
 				);
 		userClaims.put(
 				SecurityConfiguration.JWT_CLAIMS_AUTHID_KEY,

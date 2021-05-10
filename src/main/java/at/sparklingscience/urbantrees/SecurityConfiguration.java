@@ -66,7 +66,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	 * Maximum allowed age of token to access admin
 	 * resources (those needing ROLE_ADMIN).
 	 */
-	public static final long				ADMIN_MAX_TOKEN_AGE				= 1_800_000; /* 30 minutes */
+	public static final long				ADMIN_MAX_TOKEN_AGE				= 3_600_000; /* 1 hour */
 
 	/**
 	 * Header key for the JWT token.

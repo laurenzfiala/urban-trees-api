@@ -289,6 +289,16 @@ public class AuthenticationService {
 		
 	}
 	
+	/**
+	 * Used by the account service to notify auth service of changed user
+	 * credentials.
+	 * If credentials are changed, we invalidate the OTK (aka login key).
+	 * @param authToken token of the user which credentials have changed
+	 */
+	public void userCredentialsChanged(final AuthenticationToken authToken) {
+		this.authMapper.updateUserLoginKey(authToken.getId(), null, null);
+	}
+	
 	@Transactional
 	public void modifyRoles(int userId, List<Role> roles, boolean isAdd) {
 		
@@ -320,7 +330,6 @@ public class AuthenticationService {
 		
 		this.authMapper.resetFailedLoginAttempts(userId);
 		this.authMapper.updateLastLoginDat(userId);
-		this.authMapper.updateUserLoginKey(userId, null, null);
 		
 	}
 	

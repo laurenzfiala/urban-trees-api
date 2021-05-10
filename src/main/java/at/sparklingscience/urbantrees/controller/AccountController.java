@@ -24,6 +24,7 @@ import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.security.authentication.otp.OtpValidationException;
 import at.sparklingscience.urbantrees.service.AccountService;
+import at.sparklingscience.urbantrees.service.AuthenticationService;
 import io.nayuki.qrcodegen.QrCode;
 
 /**
@@ -37,9 +38,12 @@ import io.nayuki.qrcodegen.QrCode;
 public class AccountController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AccountController.class);
-	
+
 	@Autowired
 	private AccountService accountService;
+	
+	@Autowired
+	private AuthenticationService authService;
 	
 	@Value("${at.sparklingscience.urbantrees.otpIssuer}")
 	private String otpIssuer;
@@ -52,6 +56,7 @@ public class AccountController {
 		LOGGER.debug("[[ PUT ]] putChangePassword - reset password for user: {}", authToken.getDetails());
 		
 		this.accountService.changePassword(authToken.getId(), authToken.getAuthorities(), passwordReset);
+		this.authService.userCredentialsChanged(authToken);
 		
 		LOGGER.debug("[[ PUT ]] putChangePassword |END| Successfully changed user password.");
 		
@@ -65,6 +70,7 @@ public class AccountController {
 		LOGGER.debug("[[ PUT ]] putChangeUsername - change username for user: {} to: {}", authToken.getDetails(), usernameChange.getUsername());
 		
 		this.accountService.changeUsername(authToken.getId(), usernameChange);
+		this.authService.userCredentialsChanged(authToken);
 		
 		LOGGER.debug("[[ PUT ]] putChangeUsername |END| Successfully changed username.");
 		
@@ -161,17 +167,18 @@ public class AccountController {
 	@RequestMapping(method = RequestMethod.POST, path = "/otp/activate")
 	public String[] postActivateOtp(@RequestBody OtpCode code, Authentication auth) {
 		
-		final int userId = ControllerUtil.getAuthToken(auth).getId();
-		LOGGER.debug("[[ POST ]] postActivateOtp - activate OTP for user: {}", userId);
+		final AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
+		LOGGER.debug("[[ POST ]] postActivateOtp - activate OTP for user: {}", authToken.getId());
 		
 		String[] scratchCodes;
 		try {
-			scratchCodes = this.accountService.validateNewOtp(userId, code.getCode());
+			scratchCodes = this.accountService.validateNewOtp(authToken.getId(), code.getCode());
+			this.authService.userCredentialsChanged(authToken);
 		} catch (OtpValidationException e) {
 			throw new BadRequestException(e.getMessage());
 		}
 		
-		LOGGER.debug("[[ POST ]] postActivateOtp |END| Successfully activated OTP for user: {}", userId);
+		LOGGER.debug("[[ POST ]] postActivateOtp |END| Successfully activated OTP for user: {}", authToken.getId());
 		return scratchCodes;
 		
 	}
@@ -179,16 +186,17 @@ public class AccountController {
 	@RequestMapping(method = RequestMethod.POST, path = "/otp/deactivate")
 	public void postDeactivateOtp(@RequestBody OtpCode code, Authentication auth) {
 		
-		final int userId = ControllerUtil.getAuthToken(auth).getId();
-		LOGGER.debug("[[ POST ]] postDeactivateOtp - deactivate OTP for user: {}", userId);
+		final AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
+		LOGGER.debug("[[ POST ]] postDeactivateOtp - deactivate OTP for user: {}", authToken.getId());
 		
 		try {
-			this.accountService.deactivateOtp(userId, code.getCode());
+			this.accountService.deactivateOtp(authToken.getId(), code.getCode());
+			this.authService.userCredentialsChanged(authToken);
 		} catch (OtpValidationException e) {
 			throw new BadRequestException("Invalid OTP.");
 		}
 		
-		LOGGER.debug("[[ POST ]] postDeactivateOtp |END| Successfully deactivated OTP for user: {}", userId);
+		LOGGER.debug("[[ POST ]] postDeactivateOtp |END| Successfully deactivated OTP for user: {}", authToken.getId());
 		
 	}
 

@@ -389,7 +389,7 @@
 			u.failed_login_attempts,
 			u.last_login_attempt_dat,
 			u.last_login_dat,
-			u.secure_login_key,
+			(case when u.secure_login_key_expiration_dat &gt; now() then u.secure_login_key else null end) as secure_login_key,
 			u.is_using_otp,
 			u.cre_dat
 		<include refid="findUsersLightWhere"></include>

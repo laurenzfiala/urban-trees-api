@@ -60,7 +60,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	 * Duration after which a generated login link expire.
 	 * In milliseconds.
 	 */
-	public static final long				LOGIN_LINK_EXPIRATION_TIME		= 86_400_000; /* 24 hours */
+	public static final long				LOGIN_LINK_EXPIRATION_TIME		= 604_800_000; /* 7 days */
 	
 	/**
 	 * Maximum allowed age of token to access admin

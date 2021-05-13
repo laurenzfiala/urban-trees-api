@@ -1,5 +1,6 @@
 package at.sparklingscience.urbantrees.service;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -61,7 +62,8 @@ public class UserService {
 	
 	/**
 	 * Increase xp for all given users.
-	 * Every user gets the same amount of XP (action-xp divided by amount of users).
+	 * Every user gets the same amount of XP (action-xp divided by amount of users)
+	 * if reward wait time is not active.
 	 */
 	public void increaseXp(UserLevelAction action,
 			int[] userIds,
@@ -85,11 +87,13 @@ public class UserService {
 		try {
 			final int ownUserId = ControllerUtil.getAuthToken(auth).getId();
 			
-			for (int userId : userIds) {
-				if (userId == ownUserId || this.authService.hasUserPermission(userId, ownUserId, permission)) {
-					this.increaseXp(action, new int[] {userId}, context);
-				}
-			}
+			userIds = Arrays.stream(userIds)
+				.boxed()
+				.filter(uid -> uid == ownUserId || this.authService.hasUserPermission(uid, ownUserId, permission))
+				.mapToInt(i -> i)
+				.toArray();
+			
+			this.increaseXp(action, userIds, context);
 
 			LOGGER.debug(
 					"XP successfully increased for users - users: {}, action: {}",

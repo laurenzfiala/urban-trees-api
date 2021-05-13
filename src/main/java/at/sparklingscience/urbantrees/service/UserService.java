@@ -1,14 +1,20 @@
 package at.sparklingscience.urbantrees.service;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
+import at.sparklingscience.urbantrees.domain.UserLevelActionContext;
 import at.sparklingscience.urbantrees.domain.UserPermission;
+import at.sparklingscience.urbantrees.domain.UserXp;
 import at.sparklingscience.urbantrees.mapper.UserMapper;
 
 /**
@@ -34,21 +40,18 @@ public class UserService {
 	/**
 	 * Increase experience points for a single user, namely the one thats logged in.
 	 * @param action action to get the xp amount from
+	 * @param context optional context (why the XP have increased) object
 	 * @param auth user authentication 
 	 */
-	public void increaseXp(UserLevelAction action, Authentication auth) {
+	public void increaseXp(UserLevelAction action, UserLevelActionContext context, Authentication auth) {
 		
 		if (ControllerUtil.isUserAnonymous(auth)) {
 			return;
 		}
 		final int userId = ControllerUtil.getAuthToken(auth).getId();
 		
-		LOGGER.debug("increase XP for user - user: {}, action: {}, xp: {}", userId, action, action.getRewardXp());
-		
-		try {
-			this.increaseXp(action, userId);
-			
-			LOGGER.debug("successfully increased XP for user - user: {}, action: {}, xp: {}", userId, action, action.getRewardXp());
+		try {			
+			this.increaseXp(action, new int[] {userId}, context);
 		} catch (Throwable t) {
 			LOGGER.error("Failed to increase XP for user: {}", t.getMessage(), t);
 			this.appService.logExceptionEvent("Failed to increase XP for user: " + t.getMessage(), t);
@@ -60,41 +63,38 @@ public class UserService {
 	 * Increase xp for all given users.
 	 * Every user gets the same amount of XP (action-xp divided by amount of users).
 	 */
-	public void increaseXp(UserLevelAction action, int[] userIds, UserPermission permission, Authentication auth) {
+	public void increaseXp(UserLevelAction action,
+			int[] userIds,
+			UserLevelActionContext context,
+			UserPermission permission,
+			Authentication auth) {
 	
 		if (ControllerUtil.isUserAnonymous(auth)) {
 			return;
 		}
-		
-		final int ownUserId = ControllerUtil.getAuthToken(auth).getId();
-		final int singleUserXp = (int) Math.floor(action.getRewardXp() / userIds.length);
-		LOGGER.debug(
-				"increase XP for users - users: {}, action: {}, xp: {}, single user xp: {}, permission: {}",
-				userIds,
-				action,
-				action.getRewardXp(),
-				singleUserXp,
-				permission
-				);
-		
 		if (userIds == null || permission == null) {
 			throw new RuntimeException("increaseXp: userIds or permission is null");
 		}
+		
+		LOGGER.debug(
+				"Increasing XP for users - users: {}, action: {}",
+				userIds,
+				action
+				);
 
 		try {
+			final int ownUserId = ControllerUtil.getAuthToken(auth).getId();
 			
-			for (int otherUserId : userIds) {
-				if (otherUserId == ownUserId || this.authService.hasUserPermission(otherUserId, ownUserId, permission)) {
-					this.increaseXp(action, singleUserXp, otherUserId);
+			for (int userId : userIds) {
+				if (userId == ownUserId || this.authService.hasUserPermission(userId, ownUserId, permission)) {
+					this.increaseXp(action, new int[] {userId}, context);
 				}
 			}
 
 			LOGGER.debug(
-					"XP successfully increased for users - users: {}, action: {}, xp: {}, single user xp: {}",
+					"XP successfully increased for users - users: {}, action: {}",
 					userIds,
-					action,
-					action.getRewardXp(),
-					singleUserXp
+					action
 					);
 			
 		} catch (Throwable t) {
@@ -105,21 +105,25 @@ public class UserService {
 	}
 	
 	/**
-	 * Increase the users' XP using the given action.
-	 */
-	public void increaseXp(UserLevelAction action, int userId) throws RuntimeException {
-		this.increaseXp(action, action.getRewardXp(), userId);
-	}
-	
-	/**
 	 * Execute the XP increase on the DB.
+	 * @throws JsonProcessingException if the context can't be written to a string
 	 */
-	public void increaseXp(UserLevelAction action, int xp, int userId) throws RuntimeException {
+	private void increaseXp(UserLevelAction action, int[] userIds, UserLevelActionContext context)
+			throws RuntimeException, JsonProcessingException {
 		
-		if (this.userMapper.insertIncreaseLevel(xp, action, userId) == 0) {
-			this.prepareXp(userId, true);
-			this.userMapper.insertIncreaseLevel(xp, action, userId);
-		}
+		for (int userId : userIds) {
+			List<UserXp> xpHistory = this.userMapper.findXpHistoryByUserId(userId);		
+			int xpFull = action.getRewardXp(action, context, xpHistory);
+			int xp = (int) Math.floor(xpFull / userIds.length);
+
+			LOGGER.debug("Increasing XP for user - user: {}, action: {}, xp: {}, context: {}", userId, action, xp, context);
+			if (this.userMapper.insertIncreaseLevel(xp, action, userId, context) == 0) {
+				this.prepareXp(userId, true);
+				this.userMapper.insertIncreaseLevel(xp, action, userId, context);
+			}
+			LOGGER.debug("Successfully increased XP for user - user: {}, action: {}, xp: {}, context: {}", userId, action, xp, context);
+			
+		}		
 		
 	}
 	
@@ -137,7 +141,7 @@ public class UserService {
 		}
 		
 		try {
-			this.userMapper.insertLevel(userId, action.getRewardXp(), action.toString());			
+			this.userMapper.insertLevel(userId, action.getDefaultRewardXp(), action.toString(), null);			
 		} catch (Throwable t) {
 			LOGGER.error("Failed to insert XP for user {}: {}", userId, t.getMessage(), t);
 			this.appService.logExceptionEvent("Failed to insert XP for user " + userId + ": " + t.getMessage(), t);

@@ -21,6 +21,8 @@ public class UserXp {
 	
 	@NotNull
 	private Date date;
+	
+	private UserLevelActionContext context;
 
 	public int getXp() {
 		return xp;
@@ -44,6 +46,21 @@ public class UserXp {
 
 	public void setDate(Date date) {
 		this.date = date;
+	}
+
+	/**
+	 * @return Returns safe context.
+	 * If {@link #context} is null, this returns an empty context.
+	 */
+	public UserLevelActionContext getContext() {
+		if (this.context == null) {
+			return UserLevelActionContext.EMPTY;
+		}
+		return context;
+	}
+
+	public void setContext(UserLevelActionContext context) {
+		this.context = context;
 	}
 	
 }

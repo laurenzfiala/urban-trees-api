@@ -25,6 +25,9 @@
         <result column="xp"			property="xp" />
         <result column="action"		property="action" />
         <result column="cre_dat"	property="date" />
+        <result column="context"	property="context"
+        		javaType="at.sparklingscience.urbantrees.domain.UserLevelActionContext"
+        		typeHandler="at.sparklingscience.urbantrees.mapper.util.JsonTypeHandler"/>
     </resultMap>
     
     <resultMap id="UserDataMap" type="at.sparklingscience.urbantrees.domain.UserData">
@@ -65,7 +68,8 @@
 		select
 			l.xp,
 			l."action",
-			l.cre_dat
+			l.cre_dat,
+			l.context
 		from
 			user_data."level" l
 		where
@@ -77,11 +81,12 @@
 	<insert id="insertIncreaseLevel">
 		insert into
 			user_data."level"
-			(user_id, xp, "action", cre_dat, cre_usr)
+			(user_id, xp, "action", context, cre_dat, cre_usr)
 		select
 			l.user_id,
 			l.xp + #{xp},
 			#{action},
+			#{context,javaType=at.sparklingscience.urbantrees.domain.UserLevelActionContext,typeHandler=at.sparklingscience.urbantrees.mapper.util.JsonTypeHandler},
 			now(),
 			user
 		from
@@ -98,12 +103,13 @@
 	<insert id="insertLevel">
 		insert into
 			user_data."level"
-			(user_id, xp, "action", cre_dat, cre_usr)
+			(user_id, xp, "action", context, cre_dat, cre_usr)
 		values
 			(
 				#{userId},
 				#{xp},
 				#{action},
+				#{context,javaType=at.sparklingscience.urbantrees.domain.UserLevelActionContext,typeHandler=at.sparklingscience.urbantrees.mapper.util.JsonTypeHandler},
 				now(),
 				user
 			)

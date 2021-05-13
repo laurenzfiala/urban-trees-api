@@ -27,6 +27,7 @@ import at.sparklingscience.urbantrees.domain.BeaconReadoutResult;
 import at.sparklingscience.urbantrees.domain.BeaconSettings;
 import at.sparklingscience.urbantrees.domain.BeaconStatus;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
+import at.sparklingscience.urbantrees.domain.UserLevelActionContext;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
@@ -187,30 +188,9 @@ public class BeaconController {
 		this.beaconMapper.insertBeaconSettings(beaconId, result.getSettings(), null);
 
 		this.beaconMapper.updateBeaconStatus(beaconId, BeaconStatus.OK);
-		this.userService.increaseXp(UserLevelAction.BEACON_READOUT, auth);
+		this.userService.increaseXp(UserLevelAction.BEACON_READOUT, new UserLevelActionContext(beaconId, beaconId), auth);
 		
 		LOGGER.info("[[ PUT ]] postBeaconputBeaconReadoutResultData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
-		
-	}
-	
-	@Transactional
-	@RequestMapping(method = RequestMethod.PUT, path = "/{beaconId:\\d+}/data")
-	public void putBeaconData(
-			@PathVariable int beaconId,
-			@Validated(ValidationGroups.Update.class) @RequestBody List<BeaconDataset> datasets,
-			Authentication auth) {
-		
-		LOGGER.info("[[ PUT ]] putBeaconData - beaconId: {}", beaconId);
-		
-		if (datasets == null) {
-			throw new BadRequestException("Beacon datasets are null, can't continue with postBeaconData for beaconId: " + beaconId);
-		}
-		
-		this.beaconMapper.insertBeaconDatasets(beaconId, datasets);
-		
-		LOGGER.info("[[ PUT ]] putBeaconData |END| - beaconId: {}, inserted {} datasets", beaconId, datasets.size());
-		
-		this.userService.increaseXp(UserLevelAction.BEACON_READOUT, auth);
 		
 	}
 	

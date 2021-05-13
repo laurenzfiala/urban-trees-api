@@ -27,6 +27,7 @@ import at.sparklingscience.urbantrees.domain.UserAchievements;
 import at.sparklingscience.urbantrees.domain.UserContentMetadata;
 import at.sparklingscience.urbantrees.domain.UserData;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
+import at.sparklingscience.urbantrees.domain.UserLevelActionContext;
 import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
@@ -104,6 +105,7 @@ public class UserController {
 		this.userService.increaseXp(
 			UserLevelAction.PHENOLOGY_IMAGE_UPLOAD,
 			phenology.getObserversUserIds(),
+			new UserLevelActionContext(phenologyId, phenology.getTreeId()),
 			UserPermission.PHENOLOGY_OBSERVATION,
 			auth
 		);

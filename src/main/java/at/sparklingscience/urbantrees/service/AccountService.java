@@ -65,7 +65,12 @@ public class AccountService {
 		if (authorities.contains(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE))) {
 			changeWithoutOldPw = true;
 		}
-		boolean pwChanged = this.changePassword(userId, passwordReset.getOldPassword(), passwordReset.getNewPassword(), changeWithoutOldPw);
+		boolean pwChanged = this.changePassword(
+				userId,
+				passwordReset.getOldPassword(),
+				passwordReset.getNewPassword(),
+				changeWithoutOldPw
+		);
 		
 		if (!pwChanged) {
 			throw new BadRequestException("Old password is incorrect or invalid user id was given.");
@@ -86,7 +91,10 @@ public class AccountService {
 	 * @return true if the password change was successful, false otherwise
 	 */
 	@Transactional
-	private boolean changePassword(final int userId, final String oldPassword, final String newPassword, final boolean changeWithoutOldPw) {
+	private boolean changePassword(final int userId,
+			final String oldPassword,
+			final String newPassword,
+			final boolean changeWithoutOldPw) {
 		
 		final User user = this.authMapper.findUserById(userId);
 		if (user == null) {

@@ -26,6 +26,7 @@ import at.sparklingscience.urbantrees.domain.PhysiognomyDataset;
 import at.sparklingscience.urbantrees.domain.Tree;
 import at.sparklingscience.urbantrees.domain.TreeSpecies;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
+import at.sparklingscience.urbantrees.domain.UserLevelActionContext;
 import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
@@ -221,6 +222,7 @@ public class TreeController {
 		this.userService.increaseXp(
 			UserLevelAction.PHENOLOGY_OBSERVATION,
 			assocUsers,
+			new UserLevelActionContext(dataset.getId(), dataset.getTreeId()),
 			UserPermission.PHENOLOGY_OBSERVATION,
 			auth
 		);

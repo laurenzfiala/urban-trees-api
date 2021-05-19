@@ -1,6 +1,9 @@
 package at.sparklingscience.urbantrees.controller;
 
 import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -9,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import at.sparklingscience.urbantrees.SecurityConfiguration;
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.controller.util.Timespan;
 import at.sparklingscience.urbantrees.domain.Beacon;
@@ -31,7 +36,10 @@ import at.sparklingscience.urbantrees.domain.UserLevelActionContext;
 import at.sparklingscience.urbantrees.domain.validator.ValidationGroups;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.NotFoundException;
+import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.BeaconMapper;
+import at.sparklingscience.urbantrees.security.SecurityUtil;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.service.UserService;
 
 /**
@@ -137,7 +145,8 @@ public class BeaconController {
 			@PathVariable int beaconId,
 			@RequestParam(required = false) Integer maxDatapoints,
 			@RequestParam(required = false) String timespanMin,
-			@RequestParam(required = false) String timespanMax) {
+			@RequestParam(required = false) String timespanMax,
+			Authentication authentication) {
 		
 		LOGGER.debug("[[ GET ]] getBeaconData - beaconId: {}", beaconId);
 		
@@ -147,6 +156,16 @@ public class BeaconController {
 		
 		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
 
+		if (timespan.getStart() == null ||
+				timespan.getStart().toInstant().isBefore(ZonedDateTime.now().minus(1, ChronoUnit.MONTHS).toInstant())) {
+			final AuthenticationToken authToken = ControllerUtil.getAuthToken(authentication);
+			final GrantedAuthority allDataGrantedAuth = SecurityUtil.grantedAuthority(SecurityConfiguration.ALL_DATA_ACCESS_ROLE);
+			final boolean hasAccess = SecurityUtil.hasAnyAuthorityOrAdmin(authToken, Arrays.asList(allDataGrantedAuth));
+			if (!hasAccess) {
+				throw new UnauthorizedException("You may not view the requested beacon data", authToken);
+			}
+		}
+		
 		List<BeaconDataset> datasets = 
 				this.beaconMapper.findBeaconDataByBeaconId(
 						beaconId,

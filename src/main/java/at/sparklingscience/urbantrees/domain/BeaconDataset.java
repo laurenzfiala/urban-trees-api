@@ -23,7 +23,7 @@ public class BeaconDataset {
 	 * The datasets' database identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * ID of associated {@link Beacon}.
@@ -61,11 +61,11 @@ public class BeaconDataset {
 	@DateRange(Range.PAST_AND_PRESENT)
 	private Date observationDate;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

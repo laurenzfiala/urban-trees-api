@@ -18,7 +18,7 @@ public class TreeGenus implements Comparable<TreeGenus> {
 	 * Database identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * Genus name.
@@ -28,14 +28,14 @@ public class TreeGenus implements Comparable<TreeGenus> {
 	
 	public TreeGenus() {}
 	
-	public TreeGenus(int id, String name) {
+	public TreeGenus(long id, String name) {
 		this.id = id;
 		this.name = name;
 	}
 	
 	@Override
 	public int compareTo(TreeGenus o) {
-		int diff = o.getId() - this.getId();
+		long diff = o.getId() - this.getId();
 		if (diff > 0) {
 			return 1;
 		} else if (diff < 0) {
@@ -44,11 +44,11 @@ public class TreeGenus implements Comparable<TreeGenus> {
 		return 0;
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

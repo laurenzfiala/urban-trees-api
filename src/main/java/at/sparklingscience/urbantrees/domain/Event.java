@@ -20,7 +20,7 @@ public class Event implements Serializable {
 	 * Event' unique identifier.
 	 */
 	@Min(value = 1)
-	private int id;
+	private long id;
 	
 	/**
 	 * Brief surrary of event.
@@ -52,11 +52,11 @@ public class Event implements Serializable {
 	@NotNull
 	private String remark;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

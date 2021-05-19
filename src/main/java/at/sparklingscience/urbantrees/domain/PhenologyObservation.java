@@ -14,7 +14,7 @@ public class PhenologyObservation {
 	 * The datasets' database identifier.
 	 */
 	@Min(value = 1, groups = { ValidationGroups.Read.class })
-	private int id;
+	private long id;
 	
 	/**
 	 * Observed object.
@@ -28,11 +28,11 @@ public class PhenologyObservation {
 	@NotNull
 	private PhenologyObservationResult result;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

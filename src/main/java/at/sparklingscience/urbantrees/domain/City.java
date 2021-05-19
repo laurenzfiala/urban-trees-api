@@ -19,7 +19,7 @@ public class City implements Comparable<City> {
 	 * Database identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * Genus name.
@@ -31,14 +31,14 @@ public class City implements Comparable<City> {
 	public City() {
 	}
 	
-	public City(int id, String name) {
+	public City(long id, String name) {
 		this.id = id;
 		this.name = name;
 	}
 
 	@Override
 	public int compareTo(City o) {
-		int diff = o.getId() - this.getId();
+		long diff = o.getId() - this.getId();
 		if (diff > 0) {
 			return 1;
 		} else if (diff < 0) {
@@ -47,11 +47,11 @@ public class City implements Comparable<City> {
 		return 0;
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

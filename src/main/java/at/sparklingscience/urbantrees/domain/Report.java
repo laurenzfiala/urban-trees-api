@@ -23,7 +23,7 @@ public class Report implements Serializable {
 	 * Reports' unique identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * Roles' name.
@@ -64,11 +64,11 @@ public class Report implements Serializable {
 	@NotNull(groups = {ValidationGroups.Read.class})
 	private Date reportDate;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

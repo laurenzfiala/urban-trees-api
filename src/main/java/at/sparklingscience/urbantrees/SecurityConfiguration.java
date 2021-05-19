@@ -105,6 +105,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	public static final String ADMIN_ACCESS_ROLE = "ADMIN";
 	
 	/**
+	 * Role for users that need access to more system data than is default.
+	 * "ROLE_" is automatically prepended by spring.
+	 */
+	public static final String ALL_DATA_ACCESS_ROLE = "ALL_DATA";
+	
+	/**
 	 * Role needed for standard users.
 	 * "ROLE_" is automatically prepended by spring.
 	 */

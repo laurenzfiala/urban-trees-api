@@ -18,7 +18,7 @@ public class Location {
 	 * Database identifier (autoincrement).
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * Trees' cooridinates.
@@ -39,11 +39,11 @@ public class Location {
 	@NotNull
 	private City city;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

@@ -20,7 +20,7 @@ public class Beacon {
 	 * The beaons' database identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * The device id given to the beacon.
@@ -74,11 +74,11 @@ public class Beacon {
 				&& ObjectUtils.nullSafeEquals(this.getBluetoothAddress(), b.getBluetoothAddress());
 	}
 	
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 	
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 	

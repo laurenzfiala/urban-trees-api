@@ -23,7 +23,7 @@ public class PhenologyDataset {
 	 * Phenology identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 
 	/**
 	 * Tree identifier of the tree this dataset corresponds to.
@@ -100,11 +100,11 @@ public class PhenologyDataset {
 		this.observationDate = observationDate;
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

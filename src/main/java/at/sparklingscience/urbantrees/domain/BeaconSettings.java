@@ -21,7 +21,7 @@ public class BeaconSettings {
 	 * The settings' database identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * ID of associated {@link Beacon}.
@@ -114,11 +114,11 @@ public class BeaconSettings {
 	@DateRange(Range.PAST_AND_PRESENT)
 	private Date checkDate = new Date();
 	
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

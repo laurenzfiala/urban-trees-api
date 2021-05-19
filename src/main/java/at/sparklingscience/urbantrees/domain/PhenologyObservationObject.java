@@ -18,7 +18,7 @@ public class PhenologyObservationObject {
 	 * Type identifier.
 	 */
 	@Min(1)
-	private int id;
+	private long id;
 	
 	/**
 	 * ID of the type this object belongs to.
@@ -34,17 +34,17 @@ public class PhenologyObservationObject {
 	
 	public PhenologyObservationObject() {}
 	
-	public PhenologyObservationObject(int id, String name, int typeId) {
+	public PhenologyObservationObject(long id, String name, int typeId) {
 		this.setId(id);
 		this.setName(name);
 		this.setTypeId(typeId);
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

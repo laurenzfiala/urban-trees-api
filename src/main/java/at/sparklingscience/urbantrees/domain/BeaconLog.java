@@ -19,7 +19,7 @@ public class BeaconLog {
 	 * The logs' database identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * ID of associated {@link Beacon}.
@@ -75,7 +75,7 @@ public class BeaconLog {
 	 * Default constructor for all members.
 	 */
 	public BeaconLog(
-			int id,
+			long id,
 			int beaconId,	
 			BeaconLogSeverity severity,
 			BeaconLogType type,
@@ -91,11 +91,11 @@ public class BeaconLog {
 		this.settingsId = settingsId;
 	}
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

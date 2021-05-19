@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.security;
 
 import java.util.Collection;
+import java.util.LinkedList;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -28,24 +29,52 @@ public class SecurityUtil {
 	/**
 	 * Create a {@link SimpleGrantedAuthority} from the
 	 * given role (needs to be non-prefixed). 
-	 * @param role role without prefix
+	 * @param roleName role without prefix
 	 * @return {@link SimpleGrantedAuthority}
 	 */
-	public static GrantedAuthority grantedAuthority(final String role) {
-    	return new SimpleGrantedAuthority(role(role));
+	public static GrantedAuthority grantedAuthority(final String roleName) {
+    	return new SimpleGrantedAuthority(role(roleName));
     }
 	
 	/**
-	 * Check that the given userAuthorities are a subset of checkAuthorities
+	 * TODO
+	 * @param authToken
+	 * @param checkAuthorities
+	 * @return
+	 */
+	public static boolean hasAnyAuthorityOrAdmin(AuthenticationToken authToken, Collection<? extends GrantedAuthority> checkAuthorities) {
+		if (authToken == null) {
+			return false;
+		}
+		Collection<GrantedAuthority> checkAuthoritiesAndAdmin = new LinkedList<>();
+		checkAuthoritiesAndAdmin.add(SecurityUtil.grantedAuthority(SecurityConfiguration.ADMIN_ACCESS_ROLE));
+		checkAuthoritiesAndAdmin.addAll(checkAuthorities);
+		return hasAnyAuthority(authToken.getAuthorities(), checkAuthoritiesAndAdmin);
+	}
+	
+	/**
+	 * TODO
+	 * @param userAuthorities
+	 * @param checkAuthorities
+	 * @return
+	 */
+	public static boolean hasAnyAuthority(Collection<? extends GrantedAuthority> userAuthorities, Collection<? extends GrantedAuthority> checkAuthorities) {
+		return userAuthorities
+				.stream()
+				.anyMatch(ua -> checkAuthorities.stream().anyMatch(ca -> ua.getAuthority().equals(ca.getAuthority())));
+	}
+	
+	/**
+	 * Check that the given checkAuthorities are a subset of userAuthorities
 	 * and return false if this is not the case.
 	 * @param userAuthorities granted authorities
 	 * @param checkAuthorities authorities that have to be contained in userAuthorities
 	 * @return true if checkAuthorities is a subset of userAuthorities; false otherwise.
 	 */
 	public static boolean hasAllAuthorities(Collection<? extends GrantedAuthority> userAuthorities, Collection<? extends GrantedAuthority> checkAuthorities) {
-		return userAuthorities
+		return checkAuthorities
 				.stream()
-				.allMatch(ua -> checkAuthorities.stream().anyMatch(ca -> ua.getAuthority().equals(ca.getAuthority())));
+				.allMatch(ca -> userAuthorities.stream().anyMatch(ua -> ua.getAuthority().equals(ca.getAuthority())));
 	}
 	
 	/**

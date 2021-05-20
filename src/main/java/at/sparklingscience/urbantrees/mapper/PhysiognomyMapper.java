@@ -27,7 +27,7 @@ public interface PhysiognomyMapper {
 	 * @return All datasets found for the given tree.
 	 */
 	List<PhysiognomyDataset> findPhysiognomyByTreeId(
-			@Param("treeId") int treeId,
+			@Param("treeId") long treeId,
 			@Param("timespanMin") Date timespanMin,
 			@Param("timespanMax") Date timespanMax
 			);

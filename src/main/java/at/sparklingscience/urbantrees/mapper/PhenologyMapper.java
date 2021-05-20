@@ -21,13 +21,13 @@ import at.sparklingscience.urbantrees.domain.PhenologyObservationType;
 public interface PhenologyMapper {
 	
 	List<PhenologyDataset> findPhenologyByTreeId(
-			@Param("treeId") int treeId,
+			@Param("treeId") long treeId,
 			@Param("timespanMin") Date timespanMin,
 			@Param("timespanMax") Date timespanMax
 			);
 	
 	PhenologyDataset findPhenologyById(
-			@Param("phenologyId") int phenologyId
+			@Param("phenologyId") long phenologyId
 			);
 	
 	List<PhenologyDatasetWithTree> findPhenologyByUserId(

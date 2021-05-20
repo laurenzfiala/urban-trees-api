@@ -27,7 +27,7 @@ public interface UserMapper {
 	 * @param observationImg
 	 */
 	void insertPhenologyImage(
-			@Param("phenologyId") int phenologyId,
+			@Param("phenologyId") long phenologyId,
 			@Param("imgData") byte[] imgData,
 			@Param("imgType") String imgType
 			);

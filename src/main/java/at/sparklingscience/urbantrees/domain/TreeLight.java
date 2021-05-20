@@ -19,7 +19,7 @@ public class TreeLight implements Comparable<TreeLight> {
 	 * Database identifier.
 	 */
 	@Min(value = 1, groups = {ValidationGroups.Read.class})
-	private int id;
+	private long id;
 	
 	/**
 	 * Location information for the tree.
@@ -44,7 +44,7 @@ public class TreeLight implements Comparable<TreeLight> {
 	
 	@Override
 	public int compareTo(TreeLight o) {
-		int diff = o.getId() - this.getId();
+		long diff = o.getId() - this.getId();
 		if (diff > 0) {
 			return 1;
 		} else if (diff < 0) {
@@ -59,11 +59,11 @@ public class TreeLight implements Comparable<TreeLight> {
 	 */
 	private boolean isPlantationYearEstimate;
 
-	public int getId() {
+	public long getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 

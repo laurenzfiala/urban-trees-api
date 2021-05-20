@@ -28,8 +28,8 @@ public interface UiMapper {
 	 * @return {@link Image}
 	 */
 	Image findImageForPhenologyObservationResult(
-			@Param("treeSpeciesId") int treeSpeciesId,
-			@Param("resultId") int resultId
+			@Param("treeSpeciesId") long treeSpeciesId,
+			@Param("resultId") long resultId
 			);
 	
 	/**

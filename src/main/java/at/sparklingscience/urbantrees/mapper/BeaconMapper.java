@@ -27,28 +27,28 @@ public interface BeaconMapper {
 	
 	List<Beacon> findAllBeaconsByStatus(@Param("status") BeaconStatus status);
 	
-	Beacon findBeaconById(@Param("beaconId") int beaconId);
+	Beacon findBeaconById(@Param("beaconId") long beaconId);
 	
 	Beacon findBeaconByAddress(@Param("address") String address);
 	
 	List<BeaconDataset> findBeaconDataByBeaconId(
-			@Param("beaconId") int beaconId,
+			@Param("beaconId") long beaconId,
 			@Param("maxDatapoints") int maxDatapoints,
 			@Param("timespanMin") Date timespanMin,
 			@Param("timespanMax") Date timespanMax
 			);
 	
 	void insertBeaconDatasets(
-			@Param("beaconId") int beaconId,
+			@Param("beaconId") long beaconId,
 			@Param("datasets") List<BeaconDataset> datasets
 			);
 	
 	BeaconSettings findLatestBeaconSettingsByBeaconId(
-			@Param("beaconId") int beaconId
+			@Param("beaconId") long beaconId
 			);
 	
 	List<BeaconLog> findBeaconLogs(
-			@Param("beaconId") Integer beaconId,
+			@Param("beaconId") Long beaconId,
 			@Param("severities") List<BeaconLogSeverity> severities,
 			@Param("offset") Integer offset,
 			@Param("maxLogs") Integer maxLogs,
@@ -57,13 +57,13 @@ public interface BeaconMapper {
 			);
 	
 	void insertBeaconSettings(
-			@Param("beaconId") int beaconId,
+			@Param("beaconId") long beaconId,
 			@Param("settings") BeaconSettings settings,
 			@Param("user") String user
 			);
 	
 	void insertBeaconLog(
-			@Param("beaconId") int beaconId,
+			@Param("beaconId") long beaconId,
 			@Param("log") BeaconLog log
 			);
 	

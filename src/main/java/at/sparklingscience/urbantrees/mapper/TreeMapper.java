@@ -25,7 +25,7 @@ public interface TreeMapper {
 
 	void insertLocation(@Param("location") Location location, @Param("user") String user);
 	
-	void deleteLocation(@Param("id") int id);
+	void deleteLocation(@Param("id") long id);
 	
 	void updateLocation(@Param("location") Location location, @Param("user") String user);
 

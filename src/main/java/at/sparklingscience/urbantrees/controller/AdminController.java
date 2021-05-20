@@ -508,7 +508,7 @@ public class AdminController {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, path = "/beacon/logs")
-	public List<BeaconLog> getBeaconLogs(@RequestParam(required = false) Integer beaconId,
+	public List<BeaconLog> getBeaconLogs(@RequestParam(required = false) Long beaconId,
 										 @RequestParam(required = false) BeaconLogSeverity minSeverity,
 										 @RequestParam(required = false) Integer offset,
 										 @RequestParam(required = false) Integer maxLogs,
@@ -548,7 +548,7 @@ public class AdminController {
 			}
 			
 			if (beaconId == null) {
-				beaconId = -1;
+				beaconId = -1l;
 			}
 			if (offset == null) {
 				offset = -1;

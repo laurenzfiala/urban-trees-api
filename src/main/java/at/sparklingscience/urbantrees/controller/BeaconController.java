@@ -157,7 +157,9 @@ public class BeaconController {
 		Timespan timespan = ControllerUtil.getTimespanParams(this.dateFormatPattern, timespanMin, timespanMax);
 
 		if (timespan.getStart() == null ||
-				timespan.getStart().toInstant().isBefore(ZonedDateTime.now().minus(1, ChronoUnit.MONTHS).toInstant())) {
+				timespan.getStart().toInstant().isBefore(
+						ZonedDateTime.now().minus(1, ChronoUnit.MONTHS).minus(5, ChronoUnit.MINUTES).toInstant()
+						)) {
 			final AuthenticationToken authToken = ControllerUtil.getAuthToken(authentication);
 			final GrantedAuthority allDataGrantedAuth = SecurityUtil.grantedAuthority(SecurityConfiguration.ALL_DATA_ACCESS_ROLE);
 			final boolean hasAccess = SecurityUtil.hasAnyAuthorityOrAdmin(authToken, Arrays.asList(allDataGrantedAuth));

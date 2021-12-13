@@ -131,11 +131,7 @@ public class UserService {
 		
 	}
 	
-	public void prepareXp(int userId) {
-		this.prepareXp(userId, false);
-	}
-	
-	public void prepareXp(int userId, boolean upgrade) {
+	private void prepareXp(int userId, boolean upgrade) {
 		
 		LOGGER.debug("insert initial XP for user - user: {}", userId);
 		

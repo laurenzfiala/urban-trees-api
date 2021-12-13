@@ -20,7 +20,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.4.5</version>
+		<version>2.6.1</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
@@ -65,7 +65,7 @@
 		<dependency>
 		    <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
 		    <artifactId>owasp-java-html-sanitizer</artifactId>
-		    <version>20200713.1</version>
+		    <version>20211018.2</version>
 		</dependency>
 		
 		
@@ -73,7 +73,7 @@
 		<dependency>
 		    <groupId>io.nayuki</groupId>
 		    <artifactId>qrcodegen</artifactId>
-		    <version>1.6.0</version>
+		    <version>1.7.0</version>
 		</dependency>
 		
 		
@@ -94,7 +94,7 @@
 		<dependency>
 			<groupId>org.mybatis.spring.boot</groupId>
 			<artifactId>mybatis-spring-boot-starter</artifactId>
-			<version>2.1.4</version>
+			<version>2.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

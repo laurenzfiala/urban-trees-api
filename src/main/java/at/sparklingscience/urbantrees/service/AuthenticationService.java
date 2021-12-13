@@ -31,12 +31,14 @@ import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserBulkAction;
 import at.sparklingscience.urbantrees.domain.UserBulkActionData;
 import at.sparklingscience.urbantrees.domain.UserCreation;
+import at.sparklingscience.urbantrees.domain.UserLevelAction;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.DuplicateUsernameException;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
+import at.sparklingscience.urbantrees.mapper.UserMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.security.authentication.jwt.JWTUserAuthentication;
@@ -71,7 +73,10 @@ public class AuthenticationService {
 	private AuthMapper authMapper;
 	
 	@Autowired
-	private UserService userService;
+    private UserMapper userMapper;
+	
+	@Autowired
+    private ApplicationService appService;
 	
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
@@ -205,7 +210,18 @@ public class AuthenticationService {
 		if (roles != null && roles.size() > 0) {
 			this.authMapper.insertUserRoles(newUser.getId(), roles);
 		}
-		this.userService.prepareXp(newUser.getId());
+		// prepare xp
+		try {
+			this.userMapper.insertLevel(
+					newUser.getId(),
+					UserLevelAction.INITIAL.getDefaultRewardXp(),
+					UserLevelAction.INITIAL.toString(),
+					null
+			);			
+		} catch (Throwable t) {
+			LOGGER.error("Failed to insert XP for user {}: {}", newUser.getId(), t.getMessage(), t);
+			this.appService.logExceptionEvent("Failed to insert XP for user " + newUser.getId() + ": " + t.getMessage(), t);
+		}
 		if (generateLoginKey) {
 			this.getLoginKey(newUser.getId());			
 		}

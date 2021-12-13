@@ -25,6 +25,7 @@ import at.sparklingscience.urbantrees.security.authentication.AuthenticationToke
 import at.sparklingscience.urbantrees.security.authentication.otp.OtpValidationException;
 import at.sparklingscience.urbantrees.service.AccountService;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
+import at.sparklingscience.urbantrees.util.QrCodeRenderer;
 import io.nayuki.qrcodegen.QrCode;
 
 /**
@@ -157,7 +158,7 @@ public class AccountController {
 		final QrCode qrCode = QrCode.encodeText(uriPrefix + username + "?secret=" + secret + "&issuer=" + issuer, QrCode.Ecc.HIGH);
 		
 		try {
-			return qrCode.toSvgString(0);
+			return QrCodeRenderer.toSvgString(qrCode);
 		} finally {
 			LOGGER.debug("[[ GET ]] getNewOtp |END| Successfully generated new OTP credentials & svg for user: {}", userId);
 		}

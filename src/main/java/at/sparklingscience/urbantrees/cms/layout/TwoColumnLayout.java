@@ -1,12 +1,20 @@
 package at.sparklingscience.urbantrees.cms.layout;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.springframework.validation.Errors;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import at.sparklingscience.urbantrees.cms.CmsElement;
 
 public class TwoColumnLayout implements CmsElement {
 
+	@JsonProperty
 	private CmsElement slotLeft;
+	
+	@JsonProperty
 	private CmsElement slotRight;
 
 	@Override
@@ -26,6 +34,27 @@ public class TwoColumnLayout implements CmsElement {
 			this.slotRight.validate(errors);
 			errors.popNestedPath();
 		}
+		
+	}
+	
+	@Override
+	public void sanitize() {
+
+		this.slotLeft.sanitize();
+		this.slotRight.sanitize();
+		
+	}
+
+	@Override
+	public List<CmsElement> getChildren() {
+		
+		List<CmsElement> elements = new LinkedList<>();
+		elements.add(this.slotLeft);
+		elements.addAll(this.slotLeft.getChildren());
+		elements.add(this.slotRight);
+		elements.addAll(this.slotRight.getChildren());
+		
+		return elements;
 		
 	}
 

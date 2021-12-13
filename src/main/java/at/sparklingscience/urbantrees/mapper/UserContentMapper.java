@@ -1,18 +1,17 @@
 package at.sparklingscience.urbantrees.mapper;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.security.core.GrantedAuthority;
 
-import at.sparklingscience.urbantrees.domain.Role;
 import at.sparklingscience.urbantrees.domain.UserContent;
+import at.sparklingscience.urbantrees.domain.UserContentAccess;
 import at.sparklingscience.urbantrees.domain.UserContentFile;
 import at.sparklingscience.urbantrees.domain.UserContentLanguage;
 import at.sparklingscience.urbantrees.domain.UserContentMetadata;
 import at.sparklingscience.urbantrees.domain.UserContentSaveAmount;
+import at.sparklingscience.urbantrees.domain.UserContentStatus;
 
 /**
  * Mybatis mapping interface.
@@ -23,13 +22,14 @@ import at.sparklingscience.urbantrees.domain.UserContentSaveAmount;
  */
 @Mapper
 public interface UserContentMapper {
-
+	
 	/**
-	 * Check whether the given content is enabled.
-	 * @param contentId content id
-	 * @return true if enabled; false otherwise.
+	 * Find all content access entries that match the given path expression
+	 * regex.
+	 * @param pathExp regex to find content access entries
+	 * @return list of matching content access entries
 	 */
-	boolean isContentEnabled(@Param("contentId") String contentId);
+	List<UserContentAccess> findContentAccess(@Param("pathExp") String pathExp);
 	
 	/**
 	 * Find meta info on content entries in the DB saved by the given user in the last 24 hours.
@@ -44,112 +44,71 @@ public interface UserContentMapper {
 	 * @param contentUid internal id
 	 * @return metadata of one content entry
 	 */
-	UserContentMetadata findContentMetadataById(@Param("contentUid") long contentUid);
+	UserContentMetadata findContentMetadataById(@Param("contentUid") Long contentUid);
 	
 	/**
-	 * Find the metadata for the newest content entry for content id/order/lang.
-	 * @param contentId content id
-	 * @param contentOrder content order
-	 * @param contentLang content language
-	 * @return metadata of the newest content entry
+	 * Find the current content uids for the given content path and language.
+	 * Returns the same entries as {@link #findContent(String, UserContentLanguage, boolean)},
+	 * but only returns the content UIDs.
+	 * @param contentPath content path to search for
+	 * @param contentLang content language to search for
+	 * @param userId id of current user
+	 * @param substituteUserDrafts true to substitute content for the users'
+	 * 							   draft, if available;
+	 * 							   false to only return approved content
+	 * @return list of matched user content UIDs
 	 */
-	UserContentMetadata findContentMetadata(@Param("contentId") String contentId,
-											@Param("contentOrder") int contentOrder,
-											@Param("contentLang") UserContentLanguage contentLang);
+	List<Long> findContentIdListForPath(@Param("contentPath") String contentPath,
+							   	 		@Param("contentLang") UserContentLanguage contentLang,
+										@Param("userId") int userId,
+										@Param("substituteUserDrafts") boolean substituteUserDrafts);
 	
 	/**
-	 * Find all current content entries for the given content id in order of
-	 * content_order and with given language.
-	 * @param id content id to search for
-	 * @param id content language to search for
-	 * @param substituteUserDrafts true to substitute content for the users' draft, if available;
+	 * Find all current content entries for the given content path
+	 * with given language.
+	 * @param contentPath content path to search for
+	 * @param contentLang content language to search for
+	 * @param userId id of current user
+	 * @param substituteUserDrafts true to substitute content for the users'
+	 * 							   draft, if available;
 	 * 							   false to only return approved content
 	 * @return list of matched user contents
 	 */
-	List<UserContent> findAllContent(@Param("contentId") String contentId,
-									 @Param("contentLang") UserContentLanguage contentLang,
-									 @Param("substituteUserDrafts") boolean substituteUserDrafts);
+	List<UserContent> findContent(@Param("contentPath") String contentPath,
+								  @Param("contentLang") UserContentLanguage contentLang,
+								  @Param("userId") int userId,
+								  @Param("substituteUserDrafts") boolean substituteUserDrafts);
+	
+	/**
+	 * Find published user content with the given history ID.
+	 * @param historyId find published content with this history id
+	 * @return user content with given history id
+	 */
+	UserContent findContentForHistoryId(@Param("historyId") long historyId);
 	
 	
 	/**
-	 * Find current approved content and all previous approved contents for the given contentId and contentOrder.
-	 * @param contentId content id to look for
-	 * @param contentOrder order of the content to look for
-	 * @return list of content history starting with the newest approved entry
+	 * Find given content by its' uid and all of its' history entries.
+	 * @param contentUid content entry id
+	 * @return list of content history starting with content entry with given id
 	 */
 	List<UserContent> findContentHistory(
-			@Param("contentId") String contentId,
-			@Param("contentOrder") int contentOrder,
-			@Param("contentLang") UserContentLanguage contentLang
+			@Param("contentUid") long contentUid
 			);
 	
 	
 	/**
 	 * Find all past user content edits (one per content id).
 	 * @param userId user for whom to find the history for
-	 * @param contentIdPrefix only find content ids which start with given string
+	 * @param contentPathExp only find content which matches the given path
+	 * 						 expression
 	 * @param limit max amount of history entries
 	 * @return list of cms content history for given user
 	 */
 	List<UserContentMetadata> findContentUserHistory(
 			@Param("userId") int userId,
-			@Param("contentIdPrefix") String contentIdPrefix,
+			@Param("contentPathExp") String contentPathExp,
 			@Param("limit") int limit
-			);
-
-	/**
-	 * Check whether the given content id may be viewed by any of the given roles.
-	 * 
-	 * Note: if the roles list is null, only anonymous users' permissios are checked.
-	 * 		 if the roles list is empty, default user permissions are checked also.
-	 * 
-	 * Important: if you check for anonymous access, roles must be null.
-	 * 			  if you check for user access, roles must not be null.
-	 * @param contentId content id to check permissions for
-	 * @param grantedAuthorities list of roles (if any role has a permission, it is granted); pass null to check for anonymous access
-	 * @return true if any of the given roles allow to view the content or anonymous access is allowed; false otherwise
-	 */
-	boolean canViewContent(
-			@Param("contentId") String contentId,
-			@Param("grantedAuthorities") Collection<? extends GrantedAuthority> grantedAuthorities
-			);
-
-	/**
-	 * Check whether the given content id may be edited by any of the given roles.
-	 * 
-	 * Note: if the roles list is null, only anonymous users' permissios are checked.
-	 * 		 if the roles list is empty, default user permissions are checked also.
-	 * 
-	 * Important: if you check for anonymous access, roles must be null.
-	 * 			  if you check for user access, roles must not be null.
-	 * @param contentId content id to check permissions for
-	 * @param grantedAuthorities list of roles (if any role has a permission, it is granted); pass null to check for anonymous access
-	 * @return true if any of the given roles allow to edit the content or anonymous access is allowed; false otherwise
-	 */
-	boolean canEditContent(
-			@Param("contentId") String contentId,
-			@Param("grantedAuthorities") Collection<? extends GrantedAuthority> grantedAuthorities
-			);
-
-	/**
-	 * Check whether the given content id (edited by user/anon with editorGrantedAuthorities)
-	 * may be approved by any of grantedAuthorities.
-	 * 
-	 * Note: if the editor roles list is null, the user is assumed to be anonymous.
-	 * 		 if the editor roles list is empty, default approval permissions are checked also.
-	 * 
-	 * Important: if you check for approval of anonymous editor, editorGrantedAuthorities must be null.
-	 * 			  if you check for approval of non-anonymous editor, editorGrantedAuthorities must not be null.
-	 * 			  grantedAuthorities must not be null.
-	 * @param contentId content id to check permissions for
-	 * @param editorRoles list of roles of the user who edited the content. must be null if editor was anonymous
-	 * @param grantedAuthorities list of roles of the approving user (may be the same as editorGrantedAuthorities)
-	 * @return true if the editor/approver roles allow content approval; false otherwise
-	 */
-	boolean canApproveContent(
-			@Param("contentId") String contentId,
-			@Param("editorRoles") List<Role> editorRoles,
-			@Param("grantedAuthorities") Collection<? extends GrantedAuthority> grantedAuthorities
 			);
 	
 	/**
@@ -163,6 +122,13 @@ public interface UserContentMapper {
 						   @Param("userId") int userId);
 	
 	/**
+	 * Insert a new content to content_registry. If the given path is already
+	 * registered, the error is ignored.
+	 * @param contentPath content path to register
+	 */
+	void registerContent(@Param("contentPath") String contentPath);
+	
+	/**
 	 * Insert a new content entry into the DB and update the given contents id.
 	 * @param content content to insert. id field is updated on insert.
 	 * @return number of rows inserted (always 1).
@@ -170,25 +136,57 @@ public interface UserContentMapper {
 	int insertContent(@Param("c") UserContent content);
 	
 	/**
-	 * Update an exitsing content draft in the DB.
+	 * Update an existing content in the DB.
+	 * This only updates fields of {@link UserContent} that may be
+	 * changed.
 	 * @param content content to set
 	 * @return number of rows updated (<= 1).
 	 */
-	int updateContentDraft(@Param("c") UserContent content);
+	int updateContent(@Param("c") UserContent content);
+	
+	/**
+	 * Update the content entry with given ID to the given status.
+	 * @param contentUid content entry to update
+	 * @param status status to set
+	 * @return rows updated (0 or 1)
+	 */
+	int updateContentStatus(@Param("contentUid") long contentUid,
+							@Param("status") UserContentStatus status);
+	
+	/**
+	 * Update references of next and previous contents to the given IDs.
+	 * @param content content used to get previous and next content (to update)
+	 * @param prevNextId next ID at content.previousId is updated to this
+	 * @param nextPrevId previous ID at content.nextId is updated to this
+	 * @return no. of updated rows
+	 */
+	int stitchContent(@Param("c") UserContentMetadata content,
+					  @Param("prevNextId") Long prevNextId,
+					  @Param("nextPrevId") Long nextPrevId);
 	
 	/**
 	 * Find a previously stored draft for the given user/content/lang/order combination.
-	 * Since only one draft per content id per user can be stored, only one entry is supported.
-	 * @param contentId content id to check for draft
-	 * @param contentOrder draft of this content order
+	 * Since only one draft per content path/history id per user can be stored, only one entry is supported.
+	 * 
+	 * TODO redo doc
+	 * @param contentPath content path to check for draft
+	 * @param historyId given history id from cms content (may reference approved content or draft)
 	 * @param contentLang draft must be of this language (column content_lang)
 	 * @param userId draft must be of this user (column user_id)
 	 * @return user content metadata of the user's draft for content with given id, or null if no draft/content/user matched
 	 */
-	UserContentMetadata findContentUserDraft(@Param("contentId") String contentId,
-											 @Param("contentOrder") int contentOrder,
+	UserContentMetadata findContentUserDraft(@Param("contentPath") String contentPath,
+											 @Param("historyId") long historyId,
 											 @Param("contentLang") UserContentLanguage contentLang,
 											 @Param("userId") int userId);
+	
+	/**
+	 * Delete the draft with given ID from the DB.
+	 * This actually deletes the entry.
+	 * @param id draft content UID
+	 * @return amount of deleted rows (0 or 1)
+	 */
+	int deleteContentUserDraft(@Param("id") long id);
 	
 	/**
 	 * Update the given content with the given content string and update save_dat.
@@ -201,33 +199,32 @@ public interface UserContentMapper {
 					  	   @Param("content") UserContent content);
 	
 	/**
-	 * Set the given contents is_draft to false. This means publishing the content without it being approved.
+	 * Set the given contents' status to AWAITING_APPROVAL.
+	 * This means publishing the content without it being approved.
 	 * Important: callers must take care that the given content UID may be published by the user.
-	 * @param contentUid
+	 * @param contentUid content entry to be updated
 	 * @return nr. of updated rows (0 or 1)
 	 */
 	int updateContentPublish(@Param("contentUid") long contentUid);
 	
 	/**
-	 * Find all content that has yet to be approved.
-	 * Only the newest entry per content id will be returned in this list.
-	 * @return list of unapproved user contents.
+	 * Set the given contents' status to DELETED and stitch together
+	 * previous and next content entries.
+	 * This means the content can in no way be viewed or edited anymore.
+	 * Important: callers must take care that the given content UID may be deleted by the user.
+	 * @param contentUid content entry to be updated
+	 * @return nr. of updated rows (0 or 1)
 	 */
-	List<UserContentMetadata> findAllContentUnapproved();
+	int updateContentDelete(@Param("contentUid") long contentUid);
 	
 	/**
 	 * Insert a new file and return its generated id.
 	 * The inserted file is not active and may not be served.
-	 * @param contentId content id this file belongs to
-	 * @param data file contents
-	 * @param type file type
-	 * @param userId user who is inserting
-	 * @return generated file id
+	 * @param contentPath content path this file belongs to
+	 * @param file user content file object used to get content type, path, user id.
 	 */
-	long insertContentFile(@Param("contentId") String contentId,
-						   @Param("data") byte[] data,
-						   @Param("type") String type,
-						   @Param("userId") int userId);
+	void insertContentFile(@Param("contentPath") String contentPath,
+						   @Param("file") UserContentFile file);
 	
 	/**
 	 * Activate the given file id to be allowed to be served to other users than user_id.
@@ -238,7 +235,7 @@ public interface UserContentMapper {
 	 */
 	int updateActivateContentFile(@Param("id") long id,
 								  @Param("contentUid") long contentUid,
-								  @Param("userId") int userId);
+								  @Param("userId") Integer userId);
 	
 	/**
 	 * Deactivate the given file id when it has been removed from the given user content.
@@ -252,10 +249,19 @@ public interface UserContentMapper {
 	/**
 	 * Find a single content file by its id.
 	 * @param id id of the file
-	 * @param contentId content id the found file must belong to
+	 * @param contentPath content path the found file must belong to
 	 * @return {@link UserContentFile}
 	 */
 	UserContentFile findContentFile(@Param("id") long id,
-					       			@Param("contentId") String contentId);
+					       			@Param("contentPath") String contentPath);
+	
+	/**
+	 * Find all files that are active in the context of the given content entry.
+	 * This also includes files that were activated in one of the contents'
+	 * changes (history).
+	 * @param contentUid contents' UID to check
+	 * @return list of all active files for the given content
+	 */
+	List<UserContentFile> findActiveContentFilesForContentUid(@Param("contentUid") long contentUid);
 	
 }

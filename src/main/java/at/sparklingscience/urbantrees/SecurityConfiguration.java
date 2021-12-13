@@ -185,8 +185,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    			"/beacon",
 		    			"/beacon/*",
 		    			"/beacon/*/data",
-		    			"/content/*/*"
+		    			"/content/*",
+		    			"/content/file/*"
     			).permitAll()
+		    	/*.antMatchers( TODO uncomment when you want to allow anonymous CMS content editing
+		    			HttpMethod.POST,
+		    			"/content",
+		    			"/content/file"
+    			).permitAll()*/
 		    	.antMatchers(
 		    			"/admin/**"
     			).hasRole(ADMIN_ACCESS_ROLE)

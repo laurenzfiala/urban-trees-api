@@ -20,17 +20,15 @@ public class UserContentMetadata {
 	private long id;
 	
 	@NotNull
-	private String contentId;
-	
-	@NotNull
-	private int contentOrder;
+	private String contentPath;
 	
 	private String contentTitle;
 	
 	@NotNull
 	private UserContentLanguage contentLanguage;
 	
-	private boolean isDraft;
+	@NotNull
+	private UserContentStatus status;
 	
 	@NotNull
 	@DateRange(DateRange.Range.PAST_AND_PRESENT)
@@ -38,6 +36,12 @@ public class UserContentMetadata {
 	
 	@Min(1)
 	private Long historyId;
+	
+	@Min(1)
+	private Long previousId;
+	
+	@Min(1)
+	private Long nextId;
 	
 	private UserIdentity user;
 	
@@ -53,20 +57,12 @@ public class UserContentMetadata {
 		this.id = id;
 	}
 
-	public String getContentId() {
-		return contentId;
+	public String getContentPath() {
+		return contentPath;
 	}
 
-	public void setContentId(String contentId) {
-		this.contentId = contentId;
-	}
-
-	public int getContentOrder() {
-		return contentOrder;
-	}
-
-	public void setContentOrder(int contentOrder) {
-		this.contentOrder = contentOrder;
+	public void setContentPath(String contentId) {
+		this.contentPath = contentId;
 	}
 
 	public String getContentTitle() {
@@ -83,14 +79,6 @@ public class UserContentMetadata {
 
 	public void setContentLanguage(UserContentLanguage contentLanguage) {
 		this.contentLanguage = contentLanguage;
-	}
-
-	public boolean isDraft() {
-		return isDraft;
-	}
-
-	public void setDraft(boolean isDraft) {
-		this.isDraft = isDraft;
 	}
 
 	public Date getSaveDate() {
@@ -131,6 +119,30 @@ public class UserContentMetadata {
 
 	public void setHistoryId(Long historyId) {
 		this.historyId = historyId;
+	}
+
+	public Long getPreviousId() {
+		return previousId;
+	}
+
+	public void setPreviousId(Long previousId) {
+		this.previousId = previousId;
+	}
+
+	public Long getNextId() {
+		return nextId;
+	}
+
+	public void setNextId(Long nextId) {
+		this.nextId = nextId;
+	}
+
+	public UserContentStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(UserContentStatus status) {
+		this.status = status;
 	}
 	
 }

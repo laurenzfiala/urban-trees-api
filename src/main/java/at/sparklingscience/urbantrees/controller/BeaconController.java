@@ -162,7 +162,7 @@ public class BeaconController {
 						)) {
 			final AuthenticationToken authToken = ControllerUtil.getAuthToken(authentication);
 			final GrantedAuthority allDataGrantedAuth = SecurityUtil.grantedAuthority(SecurityConfiguration.ALL_DATA_ACCESS_ROLE);
-			final boolean hasAccess = SecurityUtil.hasAnyAuthorityOrAdmin(authToken, Arrays.asList(allDataGrantedAuth));
+			final boolean hasAccess = SecurityUtil.isAdmin(authToken) || SecurityUtil.hasAnyAuthority(authToken, Arrays.asList(allDataGrantedAuth));
 			if (!hasAccess) {
 				throw new UnauthorizedException("You may not view the requested beacon data", authToken);
 			}

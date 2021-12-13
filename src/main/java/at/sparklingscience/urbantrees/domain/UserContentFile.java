@@ -16,7 +16,7 @@ public class UserContentFile {
 	private long id;
 	
 	@NotNull
-	private byte[] data;
+	private String path;
 	
 	@NotNull
 	@NotEmpty
@@ -31,14 +31,14 @@ public class UserContentFile {
 	private boolean active;
 	
 	@Min(1)
-	private int userId;
-	
-	public byte[] getData() {
-		return data;
-	}
+	private Integer userId;
 
-	public void setData(byte[] data) {
-		this.data = data;
+	public UserContentFile() {}
+	
+	public UserContentFile(String path, String type, Integer userId) {
+		this.path = path;
+		this.type = type;
+		this.userId = userId;
 	}
 
 	public String getType() {
@@ -81,12 +81,20 @@ public class UserContentFile {
 		this.active = active;
 	}
 
-	public int getUserId() {
+	public Integer getUserId() {
 		return userId;
 	}
 
-	public void setUserId(int userId) {
+	public void setUserId(Integer userId) {
 		this.userId = userId;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
 	}
 	
 }

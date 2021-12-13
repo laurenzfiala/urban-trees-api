@@ -31,17 +31,36 @@ public class ApplicationService {
 	
 	/**
 	 * TODO
-	 * @param action
-	 * @param principal
+	 * @param message
+	 * @param t
 	 */
-	public void logExceptionEvent(String message, Throwable t) {
-		this.logExceptionEvent(message, t, EventSeverity.EXCEPTION);
+	public void logExceptionEvent(Throwable t) {
+		this.logExceptionEvent(t.getClass().getName() + ": " + t.getMessage(), t);
 	}
 	
 	/**
 	 * TODO
-	 * @param action
-	 * @param principal
+	 * @param message
+	 * @param t
+	 */
+	public void logExceptionEvent(String message, Throwable t) {
+		this.logExceptionEvent(message, t, EventSeverity.EXCEPTION);
+	}
+
+	/**
+	 * TODO
+	 * @param t
+	 * @param severity
+	 */
+	public void logExceptionEvent(Throwable t, EventSeverity severity) {
+		this.logExceptionEvent(t.getClass().getName() + ": " + t.getMessage(), t, severity);
+	}
+	
+	/**
+	 * TODO
+	 * @param message
+	 * @param t
+	 * @param severity
 	 */
 	public void logExceptionEvent(String message, Throwable t, EventSeverity severity) {
 		String details = ControllerUtil.traceToString(t.getStackTrace());
@@ -64,8 +83,9 @@ public class ApplicationService {
 	
 	/**
 	 * TODO
-	 * @param action
-	 * @param principal
+	 * @param message
+	 * @param details
+	 * @param severity
 	 */
 	@Transactional
 	public void logEvent(String message, String details, EventSeverity severity) {

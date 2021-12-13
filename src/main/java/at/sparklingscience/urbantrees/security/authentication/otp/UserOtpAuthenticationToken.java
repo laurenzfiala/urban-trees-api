@@ -3,7 +3,7 @@ package at.sparklingscience.urbantrees.security.authentication.otp;
 import at.sparklingscience.urbantrees.security.authentication.user.UserAuthenticationToken;
 
 /**
- * TODO
+ * An authentication token holding the entered credentials (including an OTP).
  * 
  * @author Laurenz Fiala
  * @since 2020/04/23

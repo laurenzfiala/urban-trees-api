@@ -77,7 +77,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleInternal(InternalException ex) {
 		LOGGER.warn("handleInternal: {}", ex.getMessage(), ex);
 		ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error encountered", ex);
-		this.appService.logExceptionEvent(ex.getMessage(), ex);
+		this.appService.logExceptionEvent(ex);
 		return buildResponseEntity(apiError);
 	}
 	
@@ -89,7 +89,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		LOGGER.warn("handleInternal: {}", ex.getMessage(), ex);
 		ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error encountered", ex);
 		apiError.setClientErrorCodeFromClientError(ClientError.UNCAUGHT);
-		this.appService.logExceptionEvent(ex.getMessage(), ex);
+		this.appService.logExceptionEvent(ex);
 		return buildResponseEntity(apiError);
 	}
 	
@@ -99,7 +99,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
 		apiError.setMessage(ex.getMessage());
 		apiError.setClientErrorCodeFromClientError(ex.getClientError());
-		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.INTERNAL);
+		this.appService.logExceptionEvent(ex, EventSeverity.INTERNAL);
 		return buildResponseEntity(apiError);
 	}
 	
@@ -112,14 +112,14 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(UnauthorizedException.class)
 	protected ResponseEntity<Object> handleUnauthorized(UnauthorizedException ex) {
 		LOGGER.trace("handleUnauthorized: {}", ex.getMessage());
-		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
+		this.appService.logExceptionEvent(ex, EventSeverity.SUSPICIOUS);
 		return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 	}
 	
 	@ExceptionHandler(TooManyRequestsException.class)
 	protected ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
 		LOGGER.trace("handleTooManyRequests: {}", ex.getMessage());
-		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
+		this.appService.logExceptionEvent(ex, EventSeverity.SUSPICIOUS);
 		HttpHeaders headers = new HttpHeaders();
 		headers.add(HttpHeaders.RETRY_AFTER, this.httpHeaderDateFormatter.format(ex.getRetryAfter()));
 		return new ResponseEntity<>(headers, HttpStatus.TOO_MANY_REQUESTS);
@@ -139,7 +139,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 				.map(o -> o.getField() + ": " + o.getDefaultMessage())
 				.collect(Collectors.joining(", ")));
 		LOGGER.debug("handleMethodArgumentNotValid: {}, invalid arguments: {}", ex.getMessage(), apiError.getMessage());
-		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
+		this.appService.logExceptionEvent(ex, EventSeverity.SUSPICIOUS);
 		return buildResponseEntity(apiError);
 	}
 	
@@ -149,7 +149,17 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
 		apiError.setMessage(ex.getMessage());
 		apiError.setClientErrorCodeFromClientError(ex.getClientError());
-		this.appService.logExceptionEvent(ex.getMessage(), ex, EventSeverity.SUSPICIOUS);
+		this.appService.logExceptionEvent(ex, EventSeverity.SUSPICIOUS);
+		return buildResponseEntity(apiError);
+	}
+	
+	@ExceptionHandler(SimpleValidationException.class)
+	protected ResponseEntity<Object> handleInvalidSimple(SimpleValidationException ex) {
+		LOGGER.trace("handleInvalidSimple: {}", ex.getMessage());
+		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+		apiError.setMessage(ex.getMessage());
+		apiError.setClientErrorCodeFromClientError(ex.getClientError());
+		this.appService.logExceptionEvent(ex, EventSeverity.SUSPICIOUS);
 		return buildResponseEntity(apiError);
 	}
 	

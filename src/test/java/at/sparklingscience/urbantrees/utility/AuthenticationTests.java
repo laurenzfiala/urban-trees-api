@@ -13,7 +13,6 @@ import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import at.sparklingscience.urbantrees.exception.DuplicateUsernameException;
 import at.sparklingscience.urbantrees.service.AuthenticationService;

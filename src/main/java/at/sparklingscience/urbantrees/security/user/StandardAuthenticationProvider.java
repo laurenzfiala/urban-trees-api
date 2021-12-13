@@ -6,7 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * TODO
+ * Sets details of the auth token to be {@link UserDetails}.
  * @author Laurenz Fiala
  * @since 2019/02/04
  */

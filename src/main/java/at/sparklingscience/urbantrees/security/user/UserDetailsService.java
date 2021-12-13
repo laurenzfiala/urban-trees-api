@@ -1,17 +1,15 @@
 package at.sparklingscience.urbantrees.security.user;
 
-import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import at.sparklingscience.urbantrees.domain.User;
+import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.authentication.otp.OtpValidationException;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
 
@@ -93,7 +91,7 @@ public class UserDetailsService implements org.springframework.security.core.use
 				true,
 				domainUser.isCredentialsNonExpired(),
 				this.authenticationService.isUserNonLocked(domainUser),
-				domainUser.getRoles().stream().map(u -> new SimpleGrantedAuthority(u.getName())).collect(Collectors.toList()),
+				SecurityUtil.rolesToGrantedAuthorities(domainUser.getRoles()),
 				domainUser.isUsingOtp()
 				);
 	}

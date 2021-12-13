@@ -22,9 +22,10 @@ import at.sparklingscience.urbantrees.domain.UserXp;
 public interface UserMapper {
 	
 	/**
-	 * TODO
-	 * @param phenologyId
-	 * @param observationImg
+	 * Insert an image for a phenology observation.
+	 * @param phenologyId phenology the image applies to
+	 * @param imgData image data
+	 * @param imgType image content type
 	 */
 	void insertPhenologyImage(
 			@Param("phenologyId") long phenologyId,

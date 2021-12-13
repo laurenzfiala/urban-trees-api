@@ -31,6 +31,11 @@ public class ValidationException extends GenericException {
 
 	public Errors getErrors() {
 		return errors;
-	}	
+	}
+	
+	@Override
+	public String toString() {
+		return super.toString() + "\n" + errors.toString();
+	}
 
 }

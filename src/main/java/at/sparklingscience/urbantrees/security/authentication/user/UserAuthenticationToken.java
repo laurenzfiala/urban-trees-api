@@ -6,7 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
 /**
- * TODO
+ * Standard user authentication with username and password.
  * 
  * @author Laurenz Fiala
  * @since 2020/04/23

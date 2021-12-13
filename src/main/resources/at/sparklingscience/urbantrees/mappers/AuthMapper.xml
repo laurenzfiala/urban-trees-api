@@ -259,6 +259,17 @@
 			id = #{userId}
 	</update>
 	
+	<select id="findRoleById" resultMap="RoleMap" useCache="false">
+        select
+        	r.id,
+			r."name"
+		from
+			access_data."role" r
+		where
+			r.id = #{roleId}
+			and r.is_active = true
+    </select>
+	
 	<select id="findRolesByUserId" resultMap="RoleMap" useCache="false">
         select
         	r.id,

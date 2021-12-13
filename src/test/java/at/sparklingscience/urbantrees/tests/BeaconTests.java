@@ -60,7 +60,7 @@ public class BeaconTests {
 		test.getTree().setId(9990);
 		test.setBluetoothAddress("18-75-22-BA-6A-68");
 		
-		assertThat(beacon).isEqualToComparingFieldByField(test);
+		assertThat(beacon).usingRecursiveComparison().isEqualTo(test);
 		
 	}
 	
@@ -75,7 +75,7 @@ public class BeaconTests {
 		test.getTree().setId(9990);
 		test.setBluetoothAddress("18-75-22-BA-6A-68");
 		
-		assertThat(beacon).isEqualToComparingFieldByField(test);
+		assertThat(beacon).usingRecursiveComparison().isEqualTo(test);
 		
 	}
 	
@@ -97,7 +97,7 @@ public class BeaconTests {
 		test.setTemperature(17.2f);
 		test.setObservationDate(new SimpleDateFormat(this.dateFormatPattern).parse("2017-01-01T00-00-00"));
 		
-		assertThat(dataset).isEqualToComparingFieldByField(test);
+		assertThat(dataset).usingRecursiveComparison().isEqualTo(test);
 		
 	}
 

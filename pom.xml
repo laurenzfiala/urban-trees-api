@@ -38,6 +38,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
+
 		<!-- Security -->
 		<!-- IMPORTANT: KEEP STABLE RELEASES UP-TO-DATE -->
 		<dependency>
@@ -58,6 +59,16 @@
 		    <scope>runtime</scope>
 		</dependency>
 		
+		
+		<!-- UGC: HTML Sanitization -->
+		<!-- IMPORTANT: KEEP STABLE RELEASES UP-TO-DATE -->
+		<dependency>
+		    <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+		    <artifactId>owasp-java-html-sanitizer</artifactId>
+		    <version>20200713.1</version>
+		</dependency>
+		
+		
 		<!-- QR Code Generation -->
 		<dependency>
 		    <groupId>io.nayuki</groupId>
@@ -65,12 +76,19 @@
 		    <version>1.6.0</version>
 		</dependency>
 		
-		<!-- En-/decoding -->
+		
+		<!-- Apache Commons -->
 		<dependency>
 		    <groupId>commons-codec</groupId>
 		    <artifactId>commons-codec</artifactId>
 		    <!-- version managed by spring boot parent -->
 		</dependency>
+		<dependency>
+		    <groupId>commons-io</groupId>
+		    <artifactId>commons-io</artifactId>
+		    <version>2.11.0</version>
+		</dependency>
+		
 		
 		<!-- Spring Boot -->
 		<dependency>
@@ -106,7 +124,7 @@
 			<groupId>org.glassfish.jaxb</groupId>
 			<artifactId>jaxb-runtime</artifactId>
 		</dependency>
-		
+
 
 		<!-- Testing -->
 		<dependency>

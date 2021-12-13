@@ -81,6 +81,10 @@ public class UserController {
 		
 		LOGGER.debug("[[ POST ]] postPhenologyObservation - phenologyId: {}", phenologyId);
 		
+		if (image.getSize() > 5242880l) {
+			throw new BadRequestException("Phenology image is too large.");
+		}
+		
 		final String originalFilename = image.getOriginalFilename();
 		if (originalFilename == null) {
 			LOGGER.warn("User tried to upload file with filename: " + originalFilename);
@@ -131,13 +135,13 @@ public class UserController {
 	@RequestMapping(method = RequestMethod.GET, path = "/{userId:\\d+}/content")
 	public List<UserContentMetadata> getContentHistory(
 			@PathVariable int userId,
-			@RequestParam(required = false) String prefix,
+			@RequestParam(required = false, name = "path") String pathExp,
 			Authentication auth) {
 		
 		final AuthenticationToken currentUser = ControllerUtil.getAuthToken(auth);
 		LOGGER.debug("[[ GET ]] getContentHistory - of user: {}, access by user: {}", userId, currentUser.getId());
 		
-		List<UserContentMetadata> history = this.contentService.getContentUserHistory(currentUser, userId, prefix);
+		List<UserContentMetadata> history = this.contentService.getContentUserHistory(currentUser, userId, pathExp);
 		
 		LOGGER.debug("[[ GET ]] getContentHistory |END| Successfully fetched content history - user: {}", userId);
 		return history;

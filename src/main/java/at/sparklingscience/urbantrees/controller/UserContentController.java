@@ -1,7 +1,9 @@
 package at.sparklingscience.urbantrees.controller;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import javax.annotation.MatchesPattern;
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
@@ -9,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,10 +28,11 @@ import at.sparklingscience.urbantrees.cms.CmsContent;
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.ResponseFile;
 import at.sparklingscience.urbantrees.domain.UserContent;
+import at.sparklingscience.urbantrees.service.UserContentFileService;
 import at.sparklingscience.urbantrees.service.UserContentService;
 
 /**
- * Controller for user-related backend calls.
+ * Controller for user content-related backend calls.
  * 
  * @author Laurenz Fiala
  * @since 2020/12/10 (doc)
@@ -41,6 +45,9 @@ public class UserContentController {
 
 	@Autowired
     private UserContentService contentService;
+
+	@Autowired
+    private UserContentFileService fileService;
 	
 	@RequestMapping(method = RequestMethod.GET)
 	public List<UserContent> getUserContent(
@@ -122,6 +129,7 @@ public class UserContentController {
 	@RequestMapping(method = RequestMethod.DELETE, path = "/{contentUid:\\d+}")
 	public void deleteUserContent(
 			@PathVariable long contentUid,
+			@RequestParam(name = "draftOnly", required = false, defaultValue = "false") boolean draftOnly,
 			Authentication auth) {
 		
 		LOGGER.debug("[[ DELETE ]] deleteUserContent - contentUid: {}", contentUid);
@@ -129,7 +137,8 @@ public class UserContentController {
 		try {
 			this.contentService.deleteContent(
 					ControllerUtil.getAuthToken(auth),
-					contentUid
+					contentUid,
+					draftOnly
 			);
 		} finally {
 			LOGGER.debug("[[ DELETE ]] deleteUserContent |END| - contentUid: {}", contentUid);
@@ -140,18 +149,21 @@ public class UserContentController {
 	@RequestMapping(method = RequestMethod.GET, path = "/file/{fileUid:\\d+}")
 	public ResponseEntity<Resource> getUserContentFile(
 			@RequestParam("path") String contentPath,
+			@RequestParam(name = "filename", required = false) @MatchesPattern("[^/]+") String filename,
 			@PathVariable long fileUid,
 			Authentication auth) {
 		
 		LOGGER.debug("[[ GET ]] getUserContentFile - contentPath: {}, fileUid: {}", contentPath, fileUid);
 		
 		try {
-			ResponseFile file = this.contentService.getFile(
+			ResponseFile file = this.fileService.getFile(
 					ControllerUtil.getAuthToken(auth),
 					contentPath,
 					fileUid
 			);
 			return ResponseEntity.ok()
+					.header("Content-Disposition", "attachment" + (filename == null ? "" : "; filename=\"" + filename + "\""))
+					.cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
 		            .contentType(MediaType.valueOf(file.getType()))
 		            .body(new FileSystemResource(file.getPath()));
 		} finally {
@@ -166,16 +178,16 @@ public class UserContentController {
 			@RequestParam("file") MultipartFile file,
 			Authentication auth) {
 		
-		LOGGER.debug("[[ GET ]] postUserContentFile - contentPath: {}", contentPath);
+		LOGGER.debug("[[ POST ]] postUserContentFile - contentPath: {}", contentPath);
 		
 		try {
-			return this.contentService.saveNewFile(
+			return this.fileService.saveNewFile(
 					ControllerUtil.getAuthToken(auth),
 					contentPath,
 					file
 			);
 		} finally {
-			LOGGER.debug("[[ GET ]] postUserContentFile |END| - contentPath: {}", contentPath);
+			LOGGER.debug("[[ POST ]] postUserContentFile |END| - contentPath: {}", contentPath);
 		}
 		
 	}

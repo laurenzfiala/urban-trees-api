@@ -46,21 +46,33 @@ public class UserDetailsService implements org.springframework.security.core.use
 	/**
 	 * The user provided a login token via a link. Find them and return the security user.
 	 * @param token the given login token (from the login link)
+	 * @param pin the given PIN
 	 * @return security user (wrapped in UserDetails interface)
 	 * @throws BadCredentialsException if no user with the given key can be found or the key is expired.
 	 */
-	public UserDetails loadUserByLoginKey(String token) throws BadCredentialsException {
+	public User loadUserByLoginKey(String token, String pin) throws BadCredentialsException {
 		
 		LOGGER.trace("Searching for user by token in the database.");
 		User user = this.authenticationService.findUserByLoginKey(token);
+		
 		if (user == null) {
 			LOGGER.trace("Could not find user {}.", user);
-			throw new BadCredentialsException("Could not find user with name " + user);
+			throw new BadCredentialsException("Could not find user " + user);
+		}
+		
+		if (user.getSecureLoginKeyPin() == null && pin != null) {
+			LOGGER.trace("Setting login key PIN for user {}.", user);
+			var pinToSet = pin.trim();
+			if (pinToSet == "" || pinToSet.length() < 4) {
+				LOGGER.trace("Could not find user {}.", user);
+				throw new BadCredentialsException("Invalid PIN");
+			}
+			this.authenticationService.updateUserLoginKeyPin(user.getId(), pinToSet);
 		}
 		
 		LOGGER.trace("User {} found.", user);
 		
-		return this.domainUserToSecUser(user);
+		return user;
 		
 	}
 	
@@ -82,7 +94,7 @@ public class UserDetailsService implements org.springframework.security.core.use
 	 * Initialize a new security user instance given the domain user.
 	 * @param domainUser user
 	 */
-	private at.sparklingscience.urbantrees.security.user.User domainUserToSecUser(User domainUser) {
+	public at.sparklingscience.urbantrees.security.user.User domainUserToSecUser(User domainUser) {
 		return new at.sparklingscience.urbantrees.security.user.User(
 				domainUser.getId(),
 				domainUser.getUsername(),

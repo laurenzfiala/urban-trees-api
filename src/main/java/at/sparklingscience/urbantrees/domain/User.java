@@ -59,6 +59,12 @@ public class User extends UserIdentity implements Serializable {
 	 * or the secure login key (randomly generated).
 	 */
 	private String secureLoginKey;
+
+	/**
+	 * PIN the user must enter when using their login key.
+	 * If this is set, this prevents the login key from being deleted.
+	 */
+	private String secureLoginKeyPin;
 	
 	/**
 	 * Whether the user is currently using an OTP.
@@ -145,6 +151,14 @@ public class User extends UserIdentity implements Serializable {
 
 	public void setSecureLoginKey(String secureLoginKey) {
 		this.secureLoginKey = secureLoginKey;
+	}
+
+	public String getSecureLoginKeyPin() {
+		return secureLoginKeyPin;
+	}
+
+	public void setSecureLoginKeyPin(String secureLoginKeyPin) {
+		this.secureLoginKeyPin = secureLoginKeyPin;
 	}
 
 	public boolean isUsingOtp() {

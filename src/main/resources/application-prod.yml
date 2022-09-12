@@ -50,8 +50,10 @@ logging:
 at:
   sparklingscience:
     urbantrees:
+      corsAllowedOriginPatterns: https://urban-tree-climate.sbg.ac.at:[80,443]
       dateFormatPattern: "yyyy-MM-dd'T'HH-mm-ss"
       otpIssuer: "urban-trees-climate.sbg.ac.at"
+      loginQrUri: "https://urban-tree-climate.sbg.ac.at/login/{token}?pin=true"
       userContent:
         maxSavesPerUserPerDay: 100
     

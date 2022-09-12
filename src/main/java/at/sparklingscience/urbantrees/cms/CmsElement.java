@@ -28,7 +28,7 @@ public interface CmsElement {
 	/**
 	 * Return the child elements of this element.
 	 * The default implementation returns an empty unmodifiable list.
-	 * @return list of direct child elements
+	 * @return list of direct child elements (may never be null)
 	 */
 	default List<CmsElement> getChildren() {
 		return List.of();

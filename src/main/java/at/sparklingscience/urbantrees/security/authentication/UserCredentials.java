@@ -24,18 +24,28 @@ public class UserCredentials {
 	private String otp;
 
 	/**
-	 * (optional) one-time login token
+	 * (optional) login token
 	 */
 	private String secureLoginKey;
+
+	/**
+	 * (optional) additional PIN for OTK auth
+	 */
+	private String secureLoginKeyPin;
 	
 	public UserCredentials() {
 	}
 
-	public UserCredentials(String username, String password, String otp, String secureLoginKey) {
+	public UserCredentials(String username,
+						   String password,
+						   String otp,
+						   String secureLoginKey,
+						   String secureLoginKeyPin) {
 		this.username = username;
 		this.password = password;
 		this.otp = otp;
 		this.secureLoginKey = secureLoginKey;
+		this.secureLoginKeyPin = secureLoginKeyPin;
 	}
 
 	public String getUsername() {
@@ -68,6 +78,14 @@ public class UserCredentials {
 
 	public void setSecureLoginKey(String secureLoginKey) {
 		this.secureLoginKey = secureLoginKey;
+	}
+
+	public String getSecureLoginKeyPin() {
+		return secureLoginKeyPin;
+	}
+
+	public void setSecureLoginKeyPin(String secureLoginKeyPin) {
+		this.secureLoginKeyPin = secureLoginKeyPin;
 	}
 	
 }

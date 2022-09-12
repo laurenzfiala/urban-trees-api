@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -95,7 +96,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse res)
 			throws AuthenticationException {
-
+		
 		UserCredentials creds = null;
 		try {
 			
@@ -104,7 +105,10 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 
 			Authentication auth;
 			if (creds.getSecureLoginKey() != null) {
-				auth = new TokenAuthenticationToken(creds.getSecureLoginKey());
+				auth = new TokenAuthenticationToken(
+						creds.getSecureLoginKey(),
+						creds.getSecureLoginKeyPin()
+						);
 			} else if (creds.getOtp() != null) {
 				auth = new UserOtpAuthenticationToken(
 						creds.getUsername(),
@@ -167,10 +171,15 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 				.addClaims(this.getUserClaims(authToken, authorities, session))
 				.signWith(session.getSecret())
 				.compact();
-		
-		res.addHeader("Access-Control-Expose-Headers", SecurityConfiguration.HEADER_KEY);
-		res.addHeader(SecurityConfiguration.HEADER_KEY, SecurityConfiguration.JWT_TOKEN_PREFIX + token);
 
+		final Cookie cookie = new Cookie(SecurityConfiguration.JWT_COOKIE_KEY, token);
+		cookie.setPath("/");
+		cookie.setHttpOnly(false);
+		cookie.setSecure(getEnvironment().acceptsProfiles(Profiles.of("prod")));			
+		cookie.setMaxAge(31_536_000);
+		
+		res.addCookie(cookie);
+		
 	}
 	
 	/**
@@ -211,9 +220,9 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 			AuthenticationException exception) throws IOException, ServletException {
 		
 		LOGGER.trace("Incorrect token given, responding with appropriate header.");
-		if (exception instanceof IncorrectOtpTokenException) {
+		if (exception instanceof IncorrectTokenException) {
 			response.addHeader("Access-Control-Expose-Headers", INCOMPLETE_HEADER_KEY);
-			response.addHeader(INCOMPLETE_HEADER_KEY, ((IncorrectOtpTokenException) exception).flag());
+			response.addHeader(INCOMPLETE_HEADER_KEY, ((IncorrectTokenException) exception).flag());
 		}
 		response.setStatus(HttpStatus.FORBIDDEN.value());
 		

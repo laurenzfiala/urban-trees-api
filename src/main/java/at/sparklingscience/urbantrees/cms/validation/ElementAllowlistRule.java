@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 import at.sparklingscience.urbantrees.cms.CmsContent;
 import at.sparklingscience.urbantrees.cms.CmsElement;
 import at.sparklingscience.urbantrees.exception.ValidationException;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 
 /**
  * Create a new allowlist rule where only the passed element types may
@@ -33,6 +34,7 @@ public class ElementAllowlistRule implements Rule {
 	
 	@Override
 	public void check(@NotNull String contentId,
+					  @NotNull AuthenticationToken authToken,
 					  @NotNull CmsContent cmsContent,
 					  @NotNull SimpleErrors errors) throws ValidationException {
 		

@@ -11,8 +11,11 @@ public class TokenAuthenticationToken implements Authentication {
 
 	private String token;
 	
-	public TokenAuthenticationToken(String token) {
+	private String pin;
+	
+	public TokenAuthenticationToken(String token, String pin) {
 		this.setToken(token);
+		this.setPin(pin);
 	}
 
 	@Override
@@ -55,6 +58,14 @@ public class TokenAuthenticationToken implements Authentication {
 
 	public void setToken(String token) {
 		this.token = token;
+	}
+
+	public String getPin() {
+		return pin;
+	}
+
+	public void setPin(String pin) {
+		this.pin = pin;
 	}
 	
 }

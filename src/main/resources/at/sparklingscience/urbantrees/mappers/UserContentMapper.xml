@@ -34,6 +34,7 @@
     
     <resultMap id="UserContentFileResultMap" type="at.sparklingscience.urbantrees.domain.UserContentFile">
         <id 	column="id"					property="id" />
+        <result column="content_path"		property="contentPath" />
         <result column="path"				property="path" />
         <result column="type"				property="type" />
         <result column="activate_cuid"		property="activateContentUid" />
@@ -54,6 +55,7 @@
         <result column="content_path"		property="contentPath" />
         <result column="enabled"			property="enabled" />
         <result column="keep_history"		property="keepHistory" />
+        <result column="description"		property="description" />
         <result column="anon_allow_view"	property="anonAllowView" />
         <result column="anon_allow_edit"	property="anonAllowEdit" />
         <result column="user_allow_view"	property="userAllowView" />
@@ -80,7 +82,7 @@
 	    <association column="approval_by_role"
 				     property="approvalByRole"
 				     select="at.sparklingscience.urbantrees.mapper.AuthMapper.findRoleById" />
-	     <association column="role_id"
+	    <association column="role_id"
 				     property="role"
 				     select="at.sparklingscience.urbantrees.mapper.AuthMapper.findRoleById" />
     </resultMap>
@@ -88,6 +90,24 @@
     <!--  TODO save new content = flushCache="true" -->
     
     <select id="findContentAccess" resultMap="UserContentAccessResultMap">
+		select
+			*
+		from
+			user_data.content_access ca
+	</select>
+    
+    <select id="findContentAccessForPath" resultMap="UserContentAccessResultMap">
+		select
+			*
+		from
+			user_data.content_registry_access cra,
+			user_data.content_access ca
+		where
+			cra.registry_path = #{path}
+			and cra.content_access_id = ca.id
+	</select>
+    
+    <select id="findContentAccessByExp" resultMap="UserContentAccessResultMap">
 		select
 			*
 		from
@@ -124,6 +144,93 @@
 			c.id = #{contentUid}
 	</select>
 	
+	<select id="countContentRegistryReferencesForPath" resultType="java.lang.Integer">
+		select
+			sum(counts.amount)
+		from (
+			select
+				count(*) "amount"
+			from
+				user_data."content" c
+			where
+				c.content_path = #{contentPath}
+			union all
+			select
+				count(*) "amount"
+			from
+				user_data.content_file cf
+			where
+				cf.content_path = #{contentPath}
+		) counts
+	</select>
+	
+	<sql id="countContentForAccessId">
+		select 
+			count(*)
+		from
+			user_data.content_registry_access cra,
+			user_data."content" c
+		where
+			cra.content_access_id = #{accessId}
+			and cra.registry_path = c.content_path
+	</sql>
+	
+	<select id="countContentApprovedForAccessId" resultType="java.lang.Integer">
+		<include refid="countContentForAccessId" />
+		<include refid="sqlContentIsApproved" />
+	</select>
+	
+	<select id="countContentApprovableForAccessId" resultType="java.lang.Integer">
+		<include refid="countContentForAccessId" />
+		<include refid="sqlContentIsToBeApproved" />
+	</select>
+	
+	<select id="findContentAccessForApprover" resultMap="UserContentAccessResultMap">
+		select 
+			distinct ca.*
+		from 
+			user_data.content_access ca
+		left outer join
+			user_data.content_access_role car on (ca.id = car.content_access_id)
+		where
+			exists (
+				select
+					*
+				from
+					access_data."role" r,
+					access_data.user_role ur
+				where
+					ur.user_id = #{approver.id}
+					and	r.id = ur.role_id
+					and (r.id = car.approval_by_role
+					or r.id = ca.anon_approval_by_role 
+					or r.id = ca.user_approval_by_role)
+			)
+	</select>
+	
+	<select id="findContentMetadataForAccessId" resultMap="UserContentMetadataResultMap">
+		select 
+			c.*
+		from
+			user_data.content_registry_access cra,
+			user_data."content" c
+		where
+			cra.content_access_id = #{accessId}
+			and cra.registry_path = c.content_path
+			<foreach collection="statuses" item="s" index="index" open="and (" separator=" or "  close=")">
+		    	c.status::text = #{s}
+            </foreach>
+	</select>
+	
+	<select id="findContentAccessById" resultMap="UserContentAccessResultMap">
+		select 
+			ca.*
+		from
+			user_data.content_access ca
+		where
+			ca.id = #{accessId}
+	</select>
+	
 	<!-- TODO -->
 	<sql id="sqlContentList">
 		with recursive content_rec as (
@@ -135,13 +242,17 @@
 			where
 				content_path = #{contentPath}
 				and content_lang = #{contentLang.id}
-				<if test="!substituteUserDrafts">
-					and status::text like 'APPROVED%'
-				</if>
-				<if test="substituteUserDrafts">
-					and (status = 'DRAFT'
-					or status::text like 'APPROVED%')
-				</if>
+				<choose>
+				    <when test="substituteUserDrafts and userId != null">
+						and (
+							((status = 'DRAFT' or status = 'DRAFT_AWAITING_APPROVAL') and user_id = #{userId})
+							or (status::text like 'APPROVED%')
+						)
+				    </when>
+				    <otherwise>
+				      and status::text like 'APPROVED%'
+				    </otherwise>
+			    </choose>
 				and prev_id is null
 				and (
 					select
@@ -176,29 +287,41 @@
 						and content_path = c.content_path
 						and status::text like 'APPROVED%'
 				) = 0
-				<if test="substituteUserDrafts">
-					and (
-						select
-							count(*)
-						from 
-							user_data."content"
-						where
-							id != c.id
-							and content_path = c.content_path
-							and content_lang = c.content_lang
-							and hist_id = c.hist_id
-							and status = 'DRAFT'
-					) = 0
-					and (
-						(c.status = 'DRAFT' and c.user_id = #{userId})
-						or (c.status::text like 'APPROVED%')
-					)
-				</if>
-				<if test="!substituteUserDrafts">
-					and c.status::text like 'APPROVED%'
-				</if>
+				<choose>
+				    <when test="substituteUserDrafts and userId != null">
+						and (
+							select
+								count(*)
+							from 
+								user_data."content"
+							where
+								id != c.id
+								and content_path = c.content_path
+								and content_lang = c.content_lang
+								and hist_id = c.hist_id
+								and (status = 'DRAFT' or status = 'DRAFT_AWAITING_APPROVAL')
+						) = 0
+						and (
+							((c.status = 'DRAFT' or c.status = 'DRAFT_AWAITING_APPROVAL') and c.user_id = #{userId})
+							or (c.status::text like 'APPROVED%')
+						)
+				    </when>
+				    <otherwise>
+				      and c.status::text like 'APPROVED%'
+				    </otherwise>
+			    </choose>
 			)
 		)
+	</sql>
+	
+	<sql id="sqlContentIsToBeApproved">
+		and (status = 'DRAFT_AWAITING_APPROVAL'
+		or status::text like '%AWAITING_DELETION')
+	</sql>
+	
+	<sql id="sqlContentIsApproved">
+		and (status = 'APPROVED'
+		or status = 'APPROVED_AWAITING_DELETION')
 	</sql>
 	
 	<select id="findContentIdListForPath" resultType="java.lang.Long">
@@ -213,6 +336,15 @@
 		SELECT 
 			*
 		FROM content_rec c
+	</select>
+	
+	<select id="findContentById" resultMap="UserContentResultMap">
+		select
+			*
+		from
+			user_data."content" c
+		where
+			c.id = #{contentUid}
 	</select>
 	
 	<select id="findContentForHistoryId" resultMap="UserContentResultMap">
@@ -268,7 +400,7 @@
 		limit #{limit}
 	</select>
 	
-	<update id="approveContentById"> <!-- TODO -->
+	<update id="approveContentById">
 		update
 			user_data."content"
 		set
@@ -278,8 +410,7 @@
 			mod_usr = user
 		where 
 			id = #{contentUid}
-			and status = 'AWAITING_APPROVAL'
-			or status::text like '%AWAITING_DELETION'
+			<include refid="sqlContentIsToBeApproved" />
 	</update>
 	
 	<insert id="registerContent">
@@ -293,8 +424,31 @@
 				#{contentPath}
 			)
 		on conflict
-			do nothing
+			do nothing;
+		
+		<if test="access != null and access.size() > 0">
+			insert into
+				user_data.content_registry_access
+				(
+					registry_path,
+					content_access_id
+				)
+			values
+				<foreach collection="access" item="a" index="index" open="(" separator="),("  close=")">
+			    	#{contentPath},
+	                #{a.id}
+	            </foreach>
+			on conflict
+				do nothing		
+		</if>
 	</insert>
+	
+	<delete id="deregisterContent">
+		delete from
+			user_data.content_registry
+		where
+			"path" = #{contentPath}
+	</delete>
 	
 	<insert id="insertContent" useGeneratedKeys="true" keyColumn="id" keyProperty="c.id">
 		insert into
@@ -383,6 +537,10 @@
 			user_data."content"
 		set
 			status = #{status,jdbcType=OTHER},
+			<if test="status.name().equals('APPROVED') or status.name().equals('DRAFT')">
+				approve_dat = now(),
+				approve_user_id = #{approveUserId},
+			</if>
 			mod_dat = now(),
 			mod_usr = user
 		where
@@ -400,11 +558,41 @@
 			and c.status = 'DRAFT'
 			and c.user_id = #{userId}
 			and (
-				c.id = #{historyId}
-				or
-				c.hist_id = #{historyId}
+				<if test="historyId == null">
+					c.id is null
+					or
+					c.hist_id is null
+				</if>
+				<if test="historyId != null">
+					c.id = #{historyId}
+					or
+					c.hist_id = #{historyId}
+				</if>
+			)
+			and (
+				<if test="prevId == null">
+					c.prev_id is null
+				</if>
+				<if test="prevId != null">
+					c.prev_id = #{prevId}
+				</if>
+			)
+			and (
+				<if test="nextId == null">
+					c.next_id is null
+				</if>
+				<if test="nextId != null">
+					c.next_id = #{nextId}
+				</if>
 			)
 	</select>
+	
+	<delete id="deleteContent">
+		delete from
+			user_data."content" c
+		where
+			id = #{id}
+	</delete>
 	
 	<delete id="deleteContentUserDraft">
 		delete from
@@ -474,7 +662,12 @@
 			id = #{id}
 			and activate_cuid is null
 			and active = false
-			and user_id = #{userId}
+			<if test="user == null">
+				and user_id is null
+			</if>
+			<if test="user != null">
+				and user_id = #{user.id}
+			</if>
 	</update>
 	
 	<update id="updateDeactivateContentFile">
@@ -492,6 +685,13 @@
 			and active = true
 	</update>
 	
+	<delete id="deleteContentFile">
+		delete from
+			user_data.content_file
+		where 
+			id = #{id}
+	</delete>
+	
 	<select id="findContentFile" resultMap="UserContentFileResultMap">
 		select
 			*
@@ -499,11 +699,33 @@
 			user_data.content_file
 		where
 			id = #{id}
-			and content_path = #{contentPath}
 	</select>
 	
-	<select id="findActiveContentFilesForContentUid" resultMap="UserContentFileResultMap">
+	<select id="findContentFiles" resultMap="UserContentFileResultMap">
+		select
+			*
+		from 
+			user_data.content_file
+		where
+			id in
+			<foreach collection="ids" item="id" index="index" open="(" separator=","  close=")">
+		    	#{id}
+            </foreach>
+	</select>
+	
+	<select id="findActiveContentFilesForContentUid" resultType="java.lang.Long">
 		<include refid="sqlHistoryList"></include>
+		select 
+			cf.id
+		from
+			content_rec c,
+			user_data.content_file cf
+		where
+			c.id = cf.activate_cuid
+			and cf.active = true
+	</select>
+	
+	<select id="findInactiveContentFilesForContentPathAndUser" resultMap="UserContentFileResultMap">
 		select 
 			cf.id,
 			cf."path",
@@ -512,11 +734,16 @@
 			cf.deactivate_cuid,
 			cf.active
 		from
-			content_rec c,
 			user_data.content_file cf
 		where
-			c.id = cf.activate_cuid
-			and cf.active = true
+			cf.content_path = #{contentPath}
+			<if test="user == null">
+				and cf.user_id is null
+			</if>
+			<if test="user != null">
+			and cf.user_id = #{user.id}
+			</if>
+			and cf.activate_cuid is null
 	</select>
 
 </mapper>

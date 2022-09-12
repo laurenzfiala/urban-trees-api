@@ -44,8 +44,10 @@ logging:
 at:
   sparklingscience:
     urbantrees:
+      corsAllowedOriginPatterns: http://localhost:4200
       dateFormatPattern: "yyyy-MM-dd'T'HH-mm-ss"
       otpIssuer: "UT local"
+      loginQrUri: "http://localhost:4200/login/{token}?pin=true"
       userContent:
         maxSavesPerUserPerDay: 9999
       

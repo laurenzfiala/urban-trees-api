@@ -2,18 +2,36 @@ package at.sparklingscience.urbantrees.cms;
 
 import java.nio.file.Path;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
+
+import at.sparklingscience.urbantrees.cms.action.UserContentActions;
+import at.sparklingscience.urbantrees.cms.action.XpRewardAction;
 import at.sparklingscience.urbantrees.cms.component.FileComponent;
+import at.sparklingscience.urbantrees.cms.component.ImageComponent;
 import at.sparklingscience.urbantrees.cms.component.TextComponent;
-import at.sparklingscience.urbantrees.cms.layout.TwoColumnLayout;
+import at.sparklingscience.urbantrees.cms.layout.BlockLayout;
 import at.sparklingscience.urbantrees.cms.validation.ElementAllowlistRule;
+import at.sparklingscience.urbantrees.cms.validation.IdentityRule;
 import at.sparklingscience.urbantrees.cms.validation.UserContentValidator;
+import at.sparklingscience.urbantrees.domain.UserLevelAction;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
+import at.sparklingscience.urbantrees.service.UserService;
 
 /**
  * Holds configuration used for user content.
  * @author Laurenz Fiala
  * @since 2021/08/02
  */
+@Configuration
 public class UserContentConfiguration {
+	
+	@Autowired
+	private ApplicationContext applicationContext;
 	
 	/**
 	 * The root directory relative to the service working directory.
@@ -53,20 +71,36 @@ public class UserContentConfiguration {
 	 */
 	public static final String CONTENT_PATH_EXP_VALIDATION_REGEX = "(\\/(([a-zA-Z0-9]+)|\\*{1,2}))+";
 	
-	public UserContentConfiguration(UserContentValidator validator) {
-		this.configure(validator);
+	
+	@Bean
+	public PathMatcher userContentPathMatcher() {
+		return new AntPathMatcher(CONTENT_PATH_SEPARATOR);
 	}
 	
-	/**
-	 * Configure user content/CMS validation.
-	 * @param validator validator to configure here
-	 */
-	private void configure(UserContentValidator validator) {
-		
+	@Bean
+	public UserContentValidator userContentValidator() {
+		UserContentValidator validator = new UserContentValidator(this.userContentPathMatcher());
 		validator
-			.path("/test/*")
-				.rule(new ElementAllowlistRule(TextComponent.class, TwoColumnLayout.class, FileComponent.class));
+			.path("/tree/*")
+				.rule(new ElementAllowlistRule(TextComponent.class, FileComponent.class, ImageComponent.class, BlockLayout.class))
+			.path("/user/*/**")
+				.rule(new IdentityRule((String path, AuthenticationToken auth) -> Integer.parseInt(path.split("/")[2]) == auth.getId()));
 		
+		return validator;
+	}
+	
+	@Bean
+	public UserContentActions userContentActions() {
+		UserContentActions actions = new UserContentActions(this.userContentPathMatcher());
+		actions
+			.path("/user/*/expdays")
+				.action(new XpRewardAction(this.applicationContext.getBean(UserService.class), UserLevelAction.USER_EXP_DAYS_SUBMIT))
+			.path("/user/*/sensor2app")
+				.action(new XpRewardAction(this.applicationContext.getBean(UserService.class), UserLevelAction.USER_MODULE_SENSOR2APP_SUBMIT))
+			.path("/user/*/app2analyse")
+				.action(new XpRewardAction(this.applicationContext.getBean(UserService.class), UserLevelAction.USER_MODULE_APP2ANALYSE_SUBMIT));
+		
+		return actions;
 	}
 	
 }

@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.cms.validation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.validation.Errors;
 
 /**
- * Inspires by Spring's {@link Errors}, this class
+ * Inspired by Spring's {@link Errors}, this class
  * is intended for occasions where, for proper validation reporting,
  * a list of nested errors is required.
  * This class does not access any fields and does not do any magic.
@@ -88,7 +89,9 @@ public class SimpleErrors {
 	 * @return current nested path
 	 */
 	private String getCurrentPath() {
-		return this.path.stream().collect(Collectors.joining(PATH_SEPARATOR));
+		return this.path.stream()
+				.sorted(Collections.reverseOrder())
+				.collect(Collectors.joining(PATH_SEPARATOR));
 	}
 	
 	/**
@@ -98,6 +101,15 @@ public class SimpleErrors {
 	public boolean hasErrors() {
 		return this.errors.size() > 0;
 	}
+
+	/**
+	 * Get an unmodifiable list of reported errors.
+	 * @return list of errors
+	 */
+	public List<Error> getErrors() {
+		return Collections.unmodifiableList(this.errors);
+	}
+	
 	
 	@Override
 	public String toString() {

@@ -8,15 +8,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.util.PathMatcher;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import at.sparklingscience.urbantrees.cms.UserContentConfiguration;
-import at.sparklingscience.urbantrees.cms.validation.UserContentValidator;
 
 @Configuration
 public class AppConfiguration {
@@ -36,6 +31,7 @@ public class AppConfiguration {
 	@Bean
 	public ObjectMapper jsonObjectMapper() {
 		return this.jsonObjectMapperBuilder()
+				.visibility(PropertyAccessor.ALL, Visibility.ANY)
 				.build();
 	}
 	
@@ -45,21 +41,6 @@ public class AppConfiguration {
 				.defaultViewInclusion(true)
 				.visibility(PropertyAccessor.ALL, Visibility.NONE)
 				.build();
-	}
-	
-	@Bean
-	public PathMatcher userContentPathMatcher() {
-		return new AntPathMatcher(UserContentConfiguration.CONTENT_PATH_SEPARATOR);
-	}
-	
-	@Bean
-	public UserContentValidator userContentValidator() {
-		return new UserContentValidator(this.userContentPathMatcher());
-	}
-	
-	@Bean
-	public UserContentConfiguration userContentConfiguration() {
-		return new UserContentConfiguration(this.userContentValidator());
 	}
 	
 }

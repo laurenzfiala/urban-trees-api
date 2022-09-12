@@ -48,6 +48,9 @@ public enum UserLevelAction implements UserLevelActionInterface {
 			return isAfter ? 0 : this.getDefaultRewardXp();
 		}
 	},
+	USER_EXP_DAYS_SUBMIT(250, Duration.ofSeconds(Long.MAX_VALUE)),
+	USER_MODULE_SENSOR2APP_SUBMIT(250, Duration.ofSeconds(Long.MAX_VALUE)),
+	USER_MODULE_APP2ANALYSE_SUBMIT(250, Duration.ofSeconds(Long.MAX_VALUE)),
 	BEACON_READOUT(100, Duration.of(5, ChronoUnit.DAYS)),
 	UPGRADE_ACCOUNT(0),
 	ADMIN_THANKYOU(null),

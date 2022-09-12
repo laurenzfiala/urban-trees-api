@@ -4,6 +4,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -19,6 +20,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class WebConfiguration implements WebMvcConfigurer {
+	
+	@Value("${at.sparklingscience.urbantrees.corsAllowedOriginPatterns}")
+	private String corsAllowedOriginPatterns;
 		
 	/**
 	 * Set json as default and disallow unregistered extensions.
@@ -34,7 +38,9 @@ public class WebConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 	    registry.addMapping("/**")
-	            .allowedMethods("GET", "POST", "PUT", "DELETE");
+	            .allowedMethods("GET", "POST", "PUT", "DELETE")
+	            .allowedOriginPatterns(this.corsAllowedOriginPatterns)
+	            .allowCredentials(true);
 	}
 	
 	/**

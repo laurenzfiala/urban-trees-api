@@ -1,6 +1,5 @@
 package at.sparklingscience.urbantrees.cms.layout;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import org.springframework.validation.Errors;
@@ -46,16 +45,8 @@ public class TwoColumnLayout implements CmsElement {
 	}
 
 	@Override
-	public List<CmsElement> getChildren() {
-		
-		List<CmsElement> elements = new LinkedList<>();
-		elements.add(this.slotLeft);
-		elements.addAll(this.slotLeft.getChildren());
-		elements.add(this.slotRight);
-		elements.addAll(this.slotRight.getChildren());
-		
-		return elements;
-		
+	public List<CmsElement> getChildren() {		
+		return List.of(this.slotLeft, this.slotRight);
 	}
 
 	public CmsElement getSlotLeft() {

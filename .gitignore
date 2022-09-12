@@ -1,5 +1,6 @@
 target/
 logs/
+data/
 /pom.xml.releaseBackup
 /release.properties
 !.mvn/wrapper/maven-wrapper.jar

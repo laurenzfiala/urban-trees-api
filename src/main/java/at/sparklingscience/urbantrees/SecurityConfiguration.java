@@ -3,7 +3,6 @@ package at.sparklingscience.urbantrees;
 import java.util.Arrays;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,29 +11,16 @@ import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.vote.AuthenticatedVoter;
 import org.springframework.security.access.vote.RoleVoter;
 import org.springframework.security.access.vote.UnanimousBased;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import at.sparklingscience.urbantrees.controller.AdminController;
-import at.sparklingscience.urbantrees.mapper.AuthMapper;
 import at.sparklingscience.urbantrees.security.AdminAccessDecisionVoter;
-import at.sparklingscience.urbantrees.security.authentication.AuthenticationFilter;
-import at.sparklingscience.urbantrees.security.authentication.apikey.ApiKeyFilter;
-import at.sparklingscience.urbantrees.security.authentication.otk.TokenAuthenticationProvider;
-import at.sparklingscience.urbantrees.security.authentication.otp.UserOtpAuthenticationProvider;
-import at.sparklingscience.urbantrees.security.authentication.user.UserAuthenticationProvider;
-import at.sparklingscience.urbantrees.security.authorization.JWTAuthorizationFilter;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
 import io.jsonwebtoken.SignatureAlgorithm;
 
@@ -48,7 +34,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+public class SecurityConfiguration {
 	
 	/**
 	 * Duration after which a generated JWT token expires.
@@ -60,7 +46,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	 * Duration after which a generated login link expire.
 	 * In milliseconds.
 	 */
-	public static final long				LOGIN_LINK_EXPIRATION_TIME		= 604_800_000; /* 7 days */
+	public static final long				LOGIN_LINK_EXPIRATION_TIME		= 2_592_000_000l; /* 30 days */
 	
 	/**
 	 * Maximum allowed age of token to access admin
@@ -69,14 +55,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	public static final long				ADMIN_MAX_TOKEN_AGE				= 3_600_000; /* 1 hour */
 
 	/**
-	 * Header key for the JWT token.
+	 * Key for the JWT token in cookies.
 	 */
-	public static final String 				HEADER_KEY 						= "Authorization";
-	
-	/**
-	 * Prefix for the JWT token header value.
-	 */
-	public static final String 				JWT_TOKEN_PREFIX				= "Bearer ";
+	public static final String 				JWT_COOKIE_KEY 					= "jwt_access_token";
 
 	/**
 	 * Claims key for the user id.
@@ -151,31 +132,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	 */
 	public static final int PERMISSIONS_PIN_LENGTH = 6;
 	
-	@Autowired
-	private UserDetailsService userDetailsService;
-	
-	@Autowired
-	private AuthMapper authMapper;
-	
-	@Autowired
-	private AuthenticationService authService;
-	
-	@Autowired
-	private ObjectMapper jsonObjectMapper;
-	
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-
-    	http
+	@Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
 				.csrf().disable()
 				.cors()
 			.and()
 		    	.authorizeRequests()
-		    	.antMatchers(
-		    			"/content",
-		    			"/content/**"
-    			)
-		    	.denyAll() // TODO deny all content requests until impl is finished
 		    	.antMatchers(
 		    			HttpMethod.GET,
 		    			"/tree",
@@ -185,77 +148,44 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		    			"/beacon",
 		    			"/beacon/*",
 		    			"/beacon/*/data",
+		    			"/content",
 		    			"/content/*",
 		    			"/content/file/*"
-    			).permitAll()
-		    	/*.antMatchers( TODO uncomment when you want to allow anonymous CMS content editing
+				).permitAll()
+		    	/*.antMatchers( XXX uncomment when you want to allow anonymous CMS content editing
 		    			HttpMethod.POST,
 		    			"/content",
 		    			"/content/file"
-    			).permitAll()*/
+				).permitAll()*/
 		    	.antMatchers(
 		    			"/admin/**"
-    			).hasRole(ADMIN_ACCESS_ROLE)
+				).hasRole(ADMIN_ACCESS_ROLE)
 		    	.antMatchers(
 		    			"/beacon/**"
-    			).hasAnyRole(API_KEY_ACCESS_ROLE, USER_ACCESS_ROLE)
+				).hasAnyRole(API_KEY_ACCESS_ROLE, USER_ACCESS_ROLE)
 		    	.antMatchers(
 		    			"/account/changepassword"
-    			).hasAnyRole(USER_ACCESS_ROLE, TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE)
+				).hasAnyRole(USER_ACCESS_ROLE, TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE)
 		    	.antMatchers(
 		    			"/account/otp/activate"
-    			).hasAnyRole(USER_ACCESS_ROLE, TEMPORARY_ACTIVATE_OTP_ACCESS_ROLE)
+				).hasAnyRole(USER_ACCESS_ROLE, TEMPORARY_ACTIVATE_OTP_ACCESS_ROLE)
 		    	.antMatchers(
 		    			"/tree/**/phenology",
 		    			"/user/phenology/**"
-    			).hasAnyRole(API_KEY_ACCESS_ROLE, USER_ACCESS_ROLE)
+				).hasAnyRole(API_KEY_ACCESS_ROLE, USER_ACCESS_ROLE)
 		    	.antMatchers(
-		    			"/**"
-    			).hasAnyRole(USER_ACCESS_ROLE)
+		    			"/manage/**"
+				).authenticated()
 		    	.anyRequest().authenticated()
 		    	.accessDecisionManager(this.accessDecisionManager())
-	    	.and()
+			.and()
 		    	.sessionManagement()
 		    	.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 	    	.and()
-	    		.addFilterBefore(new ApiKeyFilter(this.authenticationManager(), this.authMapper), UsernamePasswordAuthenticationFilter.class)
-	    		.addFilter(new AuthenticationFilter(this.authenticationManager(), this.authService, this.jsonObjectMapper))
-                .addFilter(new JWTAuthorizationFilter(this.authenticationManager(), this.authService));
+	    		.apply(AuthConfiguration.authConfig());
+        return http.build();
+    }
 
-    }
-    
-    @Override
-    public void configure(AuthenticationManagerBuilder auth) throws Exception {
-    	
-        auth.authenticationProvider(this.userAuthProvider())
-        	.authenticationProvider(this.userOtpAuthProvider())
-        	.authenticationProvider(this.tokenAuthProvider());
-        
-    }
-    
-    @Bean
-    public AuthenticationProvider userAuthProvider() {
-    	UserAuthenticationProvider provider = new UserAuthenticationProvider();
-    	provider.setUserDetailsService(this.userDetailsService);
-    	provider.setPasswordEncoder(this.bCryptPasswordEncoder());
-        return provider;
-    }
-    
-    @Bean
-    public AuthenticationProvider userOtpAuthProvider() {
-    	UserOtpAuthenticationProvider provider = new UserOtpAuthenticationProvider();
-    	provider.setUserDetailsService(this.userDetailsService);
-    	provider.setPasswordEncoder(this.bCryptPasswordEncoder());
-        return provider;
-    }  
-
-    @Bean
-    public AuthenticationProvider tokenAuthProvider() {
-    	TokenAuthenticationProvider provider = new TokenAuthenticationProvider();
-    	provider.setUserDetailsService(this.userDetailsService);
-        return provider;
-    }
-    
 	@Bean
     public AccessDecisionManager accessDecisionManager() {
 		List<AccessDecisionVoter<? extends Object>> decisionVoters =
@@ -267,7 +197,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 				);
       return new UnanimousBased(decisionVoters);
     }
-    
+	
 	/**
 	 * NOTE:
 	 * There is another instance of this encoder in {@link AuthenticationService}

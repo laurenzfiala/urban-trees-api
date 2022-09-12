@@ -22,6 +22,8 @@ public class UserContentAccess {
 	
 	private boolean keepHistory;
 	
+	private String description;
+	
 	private boolean anonAllowView;
 	
 	private boolean anonAllowEdit;
@@ -122,6 +124,14 @@ public class UserContentAccess {
 
 	public void setKeepHistory(boolean keepHistory) {
 		this.keepHistory = keepHistory;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 	
 }

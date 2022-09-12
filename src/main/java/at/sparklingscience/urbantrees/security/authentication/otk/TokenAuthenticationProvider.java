@@ -32,10 +32,20 @@ public class TokenAuthenticationProvider extends DaoAuthenticationProvider {
 						"AbstractUserDetailsAuthenticationProvider.onlySupports",
 						"Only TokenAuthenticationToken is supported"));
 		
-		User user = (User) ((UserDetailsService) this.getUserDetailsService()).loadUserByLoginKey(
-				((TokenAuthenticationToken) authentication).getToken()
-				);
-		
+		var userDetailsService = (UserDetailsService) this.getUserDetailsService();
+		var token = ((TokenAuthenticationToken) authentication);
+		at.sparklingscience.urbantrees.domain.User domainUser = userDetailsService.loadUserByLoginKey(token.getToken(), token.getPin());
+		User user = userDetailsService.domainUserToSecUser(domainUser);
+
+		if (domainUser.getSecureLoginKeyPin() != null) { // do PIN check
+			if (token.getPin() == null) {
+				throw new IncorrectOtkTokenException("Invalid login token given."); // OTK-PIN missing
+			}
+			final boolean pinMatches = super.getPasswordEncoder().matches(token.getPin(), domainUser.getSecureLoginKeyPin());
+			if (!pinMatches) {
+				throw new BadCredentialsException("Token invalid.");
+			}
+		}
 		if (user == null) {
 			throw new BadCredentialsException("Token invalid.");
 		}

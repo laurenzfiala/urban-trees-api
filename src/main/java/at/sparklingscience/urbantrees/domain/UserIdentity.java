@@ -55,6 +55,9 @@ public class UserIdentity {
 	}
 	
 	public static UserIdentity fromAuthToken(AuthenticationToken token) {
+		if (token == null) {
+			return null;
+		}
 		return new UserIdentity(token.getId(), token.getName());
 	}
 	

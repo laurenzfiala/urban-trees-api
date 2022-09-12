@@ -47,7 +47,7 @@ public final class ApiKeyFilter extends BasicAuthenticationFilter {
 	 * @see {@link AuthMapper}
 	 */
 	private AuthMapper authMapper;
-	
+
 	public ApiKeyFilter(AuthenticationManager authenticationManager, AuthMapper authMapper) {
 		super(authenticationManager);
 		this.authMapper = authMapper;

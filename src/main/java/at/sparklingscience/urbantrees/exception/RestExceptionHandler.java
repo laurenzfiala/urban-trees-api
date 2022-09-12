@@ -20,6 +20,8 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import at.sparklingscience.urbantrees.controller.dto.error.ApiError;
+import at.sparklingscience.urbantrees.controller.dto.error.ValidationApiError;
 import at.sparklingscience.urbantrees.domain.EventSeverity;
 import at.sparklingscience.urbantrees.security.authentication.otp.IncorrectOtpTokenException;
 import at.sparklingscience.urbantrees.service.ApplicationService;
@@ -50,7 +52,11 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	@Override
 	protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
-		final String error = "Malformed JSON request";
+		String error = "Malformed JSON request";
+		Throwable mostSpecific = ex.getMostSpecificCause();
+		if (mostSpecific instanceof CmsElementDeserializationException) {
+			error = mostSpecific.getMessage();
+		}
 		LOGGER.debug("handleHttpMessageNotReadable: {}", error, ex);
 		this.appService.logEvent(error, null, EventSeverity.SUSPICIOUS);
 		return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
@@ -146,9 +152,10 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(ValidationException.class)
 	protected ResponseEntity<Object> handleInvalid(ValidationException ex) {
 		LOGGER.trace("handleInvalid: {}", ex.getMessage());
-		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
+		ValidationApiError apiError = new ValidationApiError(HttpStatus.BAD_REQUEST);
 		apiError.setMessage(ex.getMessage());
 		apiError.setClientErrorCodeFromClientError(ex.getClientError());
+		apiError.setErrors(ex.getErrors().getAllErrors());
 		this.appService.logExceptionEvent(ex, EventSeverity.SUSPICIOUS);
 		return buildResponseEntity(apiError);
 	}
@@ -157,7 +164,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleInvalidSimple(SimpleValidationException ex) {
 		LOGGER.trace("handleInvalidSimple: {}", ex.getMessage());
 		ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
-		apiError.setMessage(ex.getMessage());
+		apiError.setMessage(ex.getErrors().toString());
 		apiError.setClientErrorCodeFromClientError(ex.getClientError());
 		this.appService.logExceptionEvent(ex, EventSeverity.SUSPICIOUS);
 		return buildResponseEntity(apiError);

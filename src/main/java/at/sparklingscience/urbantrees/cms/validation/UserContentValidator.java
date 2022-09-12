@@ -15,6 +15,7 @@ import at.sparklingscience.urbantrees.cms.CmsContent;
 import at.sparklingscience.urbantrees.cms.UserContentConfiguration;
 import at.sparklingscience.urbantrees.exception.BadRequestException;
 import at.sparklingscience.urbantrees.exception.SimpleValidationException;
+import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 
 /**
  * Handles validation of user content.
@@ -47,13 +48,15 @@ public class UserContentValidator {
 	}
 	
 	/**
-	 * Check if the given content matches the requirements for the
+	 * Check if the given CMS content matches the requirements for the
 	 * given contentPath.
 	 * @param contentPath content path to be stored
+	 * @param authToken users' auth token
 	 * @param cmsContent content to be stored at the given contentPath
 	 */
 	public void check(@NotNull String contentPath,
-					  @NotNull CmsContent cmsContent) throws SimpleValidationException {
+					  @NotNull AuthenticationToken authToken,
+			  		  @NotNull CmsContent cmsContent) throws SimpleValidationException {
 
 		SimpleErrors errors = new SimpleErrors(contentPath);
 		
@@ -62,7 +65,7 @@ public class UserContentValidator {
 			
 			if(this.pathMatcher.match(configEntry.getKey(), contentPath)) {
 				anyMatch = true;
-				configEntry.getValue().check(contentPath, cmsContent, errors);
+				configEntry.getValue().check(contentPath, authToken, cmsContent, errors);
 			}
 			
 		}
@@ -133,7 +136,7 @@ public class UserContentValidator {
 		
 		/**
 		 * Holds all rules that apply to a specific ANT-style path expression
-		 * defined in {@link UserContentPathValidator}.
+		 * defined in {@link UserContentConfiguration}.
 		 */
 		private List<Rule> rules = new LinkedList<>();
 		
@@ -141,15 +144,17 @@ public class UserContentValidator {
 		 * Check whether the given cms content adheres to all configured
 		 * restrictions. Results are written to errors.
 		 * @param contentPath actual content path to be saved
+		 * @param authToken users' auth token
 		 * @param cmsContent content to be saved
 		 * @param errors used to populate with validation errors
 		 */
 		public void check(@NotNull String contentPath,
+						  @NotNull AuthenticationToken authToken,
 						  @NotNull CmsContent cmsContent,
 						  @NotNull SimpleErrors errors) {
 			
 			this.rules.forEach(r -> {
-				r.check(contentPath, cmsContent, errors);
+				r.check(contentPath, authToken, cmsContent, errors);
 			});
 			
 		}

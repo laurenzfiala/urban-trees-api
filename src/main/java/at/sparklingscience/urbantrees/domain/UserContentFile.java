@@ -16,6 +16,9 @@ public class UserContentFile {
 	private long id;
 	
 	@NotNull
+	private String contentPath;
+	
+	@NotNull
 	private String path;
 	
 	@NotNull
@@ -35,7 +38,8 @@ public class UserContentFile {
 
 	public UserContentFile() {}
 	
-	public UserContentFile(String path, String type, Integer userId) {
+	public UserContentFile(String contentPath, String path, String type, Integer userId) {
+		this.contentPath = contentPath;
 		this.path = path;
 		this.type = type;
 		this.userId = userId;
@@ -95,6 +99,14 @@ public class UserContentFile {
 
 	public void setPath(String path) {
 		this.path = path;
+	}
+
+	public String getContentPath() {
+		return contentPath;
+	}
+
+	public void setContentPath(String contentPath) {
+		this.contentPath = contentPath;
 	}
 	
 }

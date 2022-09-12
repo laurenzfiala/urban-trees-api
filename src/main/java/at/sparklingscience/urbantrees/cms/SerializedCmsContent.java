@@ -1,5 +1,6 @@
 package at.sparklingscience.urbantrees.cms;
 
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -65,25 +66,18 @@ public class SerializedCmsContent {
 	public List<CmsElement> gatherAllElements() {
 		
 		List<CmsElement> elements = new LinkedList<>();
-		this.elements.forEach(e -> {
-			gatherElementsRecursive(elements, e);
+		Deque<CmsElement> elQueue = new LinkedList<>();
+		this.elements.forEach(el -> {
+			elQueue.offer(el);
 		});
+		
+		while (!elQueue.isEmpty()) {
+			CmsElement el = elQueue.pollFirst();
+			elQueue.addAll(el.getChildren());
+			elements.add(el);
+		}		
 		
 		return elements;
-		
-	}
-	
-	/**
-	 * Recursive method going through all children of given element.
-	 * @param collection to add found elements to
-	 * @param element from which to start (element is also added to collection)
-	 */
-	private void gatherElementsRecursive(List<CmsElement> collection, CmsElement element) {
-		
-		collection.add(element);
-		element.getChildren().forEach(e -> {
-			gatherElementsRecursive(collection, e);
-		});
 		
 	}
 

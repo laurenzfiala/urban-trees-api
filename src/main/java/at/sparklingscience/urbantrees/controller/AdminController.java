@@ -1,15 +1,24 @@
 package at.sparklingscience.urbantrees.controller;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import javax.imageio.ImageIO;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -51,6 +60,7 @@ import at.sparklingscience.urbantrees.mapper.TreeMapper;
 import at.sparklingscience.urbantrees.mapper.UiMapper;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
+import at.sparklingscience.urbantrees.util.QrCodeRenderer;
 
 @RestController
 @RequestMapping("/admin")
@@ -384,6 +394,36 @@ public class AdminController {
 			LOGGER.info("[[ GET ]] getLoginKey |END| - userId: {}", userId);
 		}
 		
+	}
+	
+	@RequestMapping(method = RequestMethod.GET,
+					path = "/users/{userId:\\d+}/loginkey/qr")
+	public ResponseEntity<ByteArrayResource> getPermanentLoginQr(@PathVariable int userId) {
+		
+		LOGGER.debug("[[ GET ]] getPermanentLoginQr - generate permanent login QR for user: {}", userId);
+		
+		var user = this.authService.findUser(userId);
+		if (user == null) {
+			throw new BadRequestException("User does not exist");
+		}
+		this.authService.updateLoginKeyExpirationDate(user, null);
+		var qrCode = this.authService.generateLoginQr(user);
+		
+		var bufferedImage = QrCodeRenderer.toImage(qrCode, 10, 1);
+		try (ByteArrayOutputStream imageOutput = new ByteArrayOutputStream()) {
+			ImageIO.write(bufferedImage, "png", imageOutput);
+			
+			return ResponseEntity.ok()
+					.header("Content-Disposition", "attachment; filename=\"login_qr_" + user.getUsername() + ".png\"")
+					.cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
+					.contentType(MediaType.IMAGE_PNG)
+					.body(new ByteArrayResource(imageOutput.toByteArray()));
+		} catch (IOException e) {
+			throw new InternalException("Failed to copy QR code to output", e);
+		} finally {
+			LOGGER.debug("[[ GET ]] getPermanentLoginQr |END| Successfully generated login QR for user: {}", userId);
+		}
+
 	}
 	
 	@RequestMapping(method = RequestMethod.PUT, path = "/users")

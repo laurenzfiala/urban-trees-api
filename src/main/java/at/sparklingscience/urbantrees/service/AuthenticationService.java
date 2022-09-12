@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import at.sparklingscience.urbantrees.domain.User;
 import at.sparklingscience.urbantrees.domain.UserBulkAction;
 import at.sparklingscience.urbantrees.domain.UserBulkActionData;
 import at.sparklingscience.urbantrees.domain.UserCreation;
+import at.sparklingscience.urbantrees.domain.UserIdentity;
 import at.sparklingscience.urbantrees.domain.UserLevelAction;
 import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
@@ -47,6 +49,7 @@ import at.sparklingscience.urbantrees.security.authentication.otp.Totp;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.WeakKeyException;
+import io.nayuki.qrcodegen.QrCode;
 
 /**
  * Service provides functionality for authorization,
@@ -81,6 +84,9 @@ public class AuthenticationService {
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
 	
+	@Value("${at.sparklingscience.urbantrees.loginQrUri}")
+	private String loginQrUri;
+	
 	/**
 	 * Searches for a user with the given username.
 	 * @param userId Users' id.
@@ -89,6 +95,19 @@ public class AuthenticationService {
 	@Transactional
 	public User findUser(final int userId) {
 		return this.authMapper.findUserById(userId);
+	}
+	
+	/**
+	 * Searches for a suser with the given user identities' ID.
+	 * @param user user identity or null to designate anonymous user
+	 * @return null if user identity is null or no user with given ID was found
+	 */
+	@Transactional
+	public User findUser(@Nullable UserIdentity user) {
+		if (user == null) {
+			return null;
+		}
+		return this.findUser(user.getId());
 	}
 	
 	/**
@@ -188,8 +207,10 @@ public class AuthenticationService {
 	 * @return the newly created user.
 	 * @throws DuplicateUsernameException if the username was already given to another user.
 	 */
-	public UserLight registerUser(final String username, final String rawPassword, final List<Role> roles)
-			throws DuplicateUsernameException {
+	public UserLight registerUser(final String username,
+								  final String rawPassword,
+								  final List<Role> roles)
+										  throws DuplicateUsernameException {
 		
 		User newUser = new User();
 		newUser.setUsername(username);
@@ -275,8 +296,17 @@ public class AuthenticationService {
 		return this.authMapper.hasPermissionsPIN(userId, ppin);
 	}
 	
-	@Transactional
+	/**
+	 * TODO
+	 * @param userId
+	 * @return
+	 */
 	public String getLoginKey(int userId) {
+	    return this.getLoginKey(userId, new Date(System.currentTimeMillis() + SecurityConfiguration.LOGIN_LINK_EXPIRATION_TIME));
+	}
+	
+	@Transactional
+	public String getLoginKey(int userId, Date expirationDate) {
 		
 		String storedToken = this.authMapper.findUserLoginKey(userId);
 		if (storedToken != null) {
@@ -287,11 +317,45 @@ public class AuthenticationService {
 	    this.authMapper.updateUserLoginKey(
     		userId,
     		secureToken,
-    		new Date(System.currentTimeMillis() + SecurityConfiguration.LOGIN_LINK_EXPIRATION_TIME)
+    		expirationDate
 		);
 	    
 	    return secureToken;
 		
+	}
+	
+	/**
+	 * Update the expiration date of the current login key for the given user.
+	 * @param user user to be affected
+	 * @param expiration time until the login key is valid, or null to be valid indefinitely
+	 * @throws RuntimeException if no login key is currently set
+	 */
+	public void updateLoginKeyExpirationDate(User user, Date expiration) {
+		if (user.getSecureLoginKey() == null) {
+			throw new RuntimeException("User has no login key set.");
+		}
+		this.authMapper.updateUserLoginKey(user.getId(), user.getSecureLoginKey(), expiration);
+	}
+	
+	/**
+	 * Generate a QR code that lets the user login in and
+	 * set a PIN.
+	 * @param user user to generate QR code for
+	 * @return qr code
+	 */
+	public QrCode generateLoginQr(User user) {
+		
+		final String loginKey = user.getSecureLoginKey();
+		String uri = this.loginQrUri;
+		uri = uri.replace("{token}", loginKey);
+		return QrCode.encodeText(uri, QrCode.Ecc.HIGH);
+		
+	}
+	
+	@Transactional
+	public void updateUserLoginKeyPin(int userId, String pin) {
+		var encodedPin = this.bCryptPasswordEncoder.encode(pin);
+		this.authMapper.updateUserLoginKeyPin(userId, encodedPin);
 	}
 	
 	private String generateSecureToken() {
@@ -483,6 +547,10 @@ public class AuthenticationService {
 	
 				case CREATE_LOGIN_LINKS:
 					this.getLoginKey(u.getId());
+					break;
+	
+				case CREATE_LOGIN_LINKS_PERMANENT:
+					this.getLoginKey(u.getId(), null);
 					break;
 	
 				case ADD_ROLES:

@@ -24,6 +24,7 @@
         <result column="last_login_attempt_dat" 	property="lastLoginAttemptDate" />
         <result column="last_login_dat" 			property="lastLoginDate" />
         <result column="secure_login_key" 			property="secureLoginKey" />
+        <result column="secure_login_key_pin" 		property="secureLoginKeyPin" />
         <result column="is_using_otp" 				property="isUsingOtp" />
         <result column="cre_dat" 					property="creationDate" />
         
@@ -88,13 +89,17 @@
 			u.last_login_attempt_dat,
 			u.last_login_dat,
 			u.secure_login_key,
+			u.secure_login_key_pin,
 			u.is_using_otp,
 			u.cre_dat
 		from 
 		    access_data."user" u
 		where
 		    u.secure_login_key = #{token}
-			and secure_login_key_expiration_dat &gt; now()
+		    and (
+		    	secure_login_key_expiration_dat is null 
+		    	or secure_login_key_expiration_dat &gt; now()
+		    )
     </select>
     
     <select id="findUserById" resultMap="UserMap" useCache="false">
@@ -453,7 +458,17 @@
 			access_data."user"
 		set
 			secure_login_key = #{token},
+			secure_login_key_pin = null,
 			secure_login_key_expiration_dat = #{tokenExpirationDate}
+		where
+			id = #{userId}
+    </update>
+    
+    <update id="updateUserLoginKeyPin">
+        update
+			access_data."user"
+		set
+			secure_login_key_pin = #{pin}
 		where
 			id = #{userId}
     </update>

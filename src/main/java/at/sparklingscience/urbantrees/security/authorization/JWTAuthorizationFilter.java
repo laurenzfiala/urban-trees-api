@@ -2,8 +2,10 @@ package at.sparklingscience.urbantrees.security.authorization;
 
 import java.io.IOException;
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -45,7 +47,8 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 	
 	private AuthenticationService authService;
 
-	public JWTAuthorizationFilter(AuthenticationManager authManager, AuthenticationService authService) {
+	public JWTAuthorizationFilter(AuthenticationManager authManager,
+								  AuthenticationService authService) {
         super(authManager);
         this.authService = authService;
     }
@@ -57,15 +60,23 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     	
     	LOGGER.trace("Starting token authentication.");
     	
-        final String header = req.getHeader(SecurityConfiguration.HEADER_KEY);
+        final Optional<String> token;
+        if (req.getCookies() == null) {
+        	token = Optional.empty();
+        } else {
+        	token = Arrays.stream(req.getCookies())
+        			.filter(c -> SecurityConfiguration.JWT_COOKIE_KEY.equals(c.getName()))
+        			.map(c -> c.getValue())
+        			.findFirst();        	
+        }
 
-        if (header == null || !header.startsWith(SecurityConfiguration.JWT_TOKEN_PREFIX)) {
-        	LOGGER.trace("Skipping token authentication, since header is {}.", header);
+        if (token.isEmpty()) {
+        	LOGGER.trace("Skipping token authentication, since token is empty.");
             chain.doFilter(req, res);
             return;
         }
 
-        Authentication authentication = this.getAuthentication(header, req);
+        Authentication authentication = this.getAuthentication(token.get(), req);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         chain.doFilter(req, res);
@@ -92,7 +103,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     		jwtClaims = Jwts.parserBuilder()
     				.setSigningKeyResolver(signingKeyResolver)
     				.build()
-    				.parseClaimsJws(token.replace(SecurityConfiguration.JWT_TOKEN_PREFIX, ""))
+    				.parseClaimsJws(token)
     				.getBody();
     	} catch (SignatureException e) {
     		LOGGER.warn("Users' auth token is untrusted {}", e.getMessage(), e);

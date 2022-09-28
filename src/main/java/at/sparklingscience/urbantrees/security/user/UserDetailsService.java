@@ -98,7 +98,7 @@ public class UserDetailsService implements org.springframework.security.core.use
 		return new at.sparklingscience.urbantrees.security.user.User(
 				domainUser.getId(),
 				domainUser.getUsername(),
-				domainUser.getPassword() == null ? domainUser.getSecureLoginKey() : domainUser.getPassword(),
+				domainUser.getPassword(),
 				domainUser.isActive(),
 				true,
 				domainUser.isCredentialsNonExpired(),

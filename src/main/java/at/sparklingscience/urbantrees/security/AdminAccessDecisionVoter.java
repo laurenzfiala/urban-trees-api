@@ -14,7 +14,7 @@ import at.sparklingscience.urbantrees.security.authentication.jwt.JWTAuthenticat
 
 /**
  * Decides if access should be granted to the admin.
- * Admins are only allowed to access admin-functionality the first 30 minutes after token creation.
+ * Admins are only allowed to access admin-functionality the first hour after token creation.
  * 
  * @author Laurenz Fiala
  * @since 2019/02/06

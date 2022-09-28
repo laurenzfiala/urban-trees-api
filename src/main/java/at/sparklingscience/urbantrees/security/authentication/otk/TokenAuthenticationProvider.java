@@ -3,7 +3,10 @@ package at.sparklingscience.urbantrees.security.authentication.otk;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -46,14 +49,28 @@ public class TokenAuthenticationProvider extends DaoAuthenticationProvider {
 				throw new BadCredentialsException("Token invalid.");
 			}
 		}
+		
 		if (user == null) {
-			throw new BadCredentialsException("Token invalid.");
+			throw new AuthenticationCredentialsNotFoundException("Token invalid.");
+		}
+		if (!user.isEnabled()) {
+			throw new DisabledException("Account is locked.");
+		}
+		if (!user.isAccountNonLocked()) {
+			throw new LockedException("Account is temporarily locked.");
 		}
 		
 		final List<GrantedAuthority> grantedAuthorities = user.getAuthorities()
 				.stream()
-				.filter((a) -> !a.getAuthority().equals(SecurityUtil.role(SecurityConfiguration.ADMIN_ACCESS_ROLE)))
+				.map(a -> {
+					if (a.getAuthority().equals(SecurityUtil.role(SecurityConfiguration.ADMIN_ACCESS_ROLE))) {
+						return SecurityUtil.grantedAuthority(SecurityConfiguration.ADMIN_LOCKED_ACCESS_ROLE);
+					}
+					return a;
+					
+				})
 				.collect(Collectors.toList());
+		grantedAuthorities.add(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_LOGIN_LINK_ACCESS_ROLE));
 		
 		JWTAuthenticationToken authToken = new JWTAuthenticationToken(
 				user.getId(),

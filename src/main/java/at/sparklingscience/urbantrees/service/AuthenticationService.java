@@ -1,46 +1,26 @@
 package at.sparklingscience.urbantrees.service;
 
-import java.security.SecureRandom;
-import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
-import java.util.Base64.Encoder;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import at.sparklingscience.urbantrees.SecurityConfiguration;
-import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.OtpCredentials;
 import at.sparklingscience.urbantrees.domain.Role;
-import at.sparklingscience.urbantrees.domain.SearchResult;
 import at.sparklingscience.urbantrees.domain.User;
-import at.sparklingscience.urbantrees.domain.UserBulkAction;
-import at.sparklingscience.urbantrees.domain.UserBulkActionData;
-import at.sparklingscience.urbantrees.domain.UserCreation;
 import at.sparklingscience.urbantrees.domain.UserIdentity;
-import at.sparklingscience.urbantrees.domain.UserLevelAction;
-import at.sparklingscience.urbantrees.domain.UserLight;
 import at.sparklingscience.urbantrees.domain.UserPermission;
-import at.sparklingscience.urbantrees.exception.BadRequestException;
-import at.sparklingscience.urbantrees.exception.DuplicateUsernameException;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.AuthMapper;
-import at.sparklingscience.urbantrees.mapper.UserMapper;
 import at.sparklingscience.urbantrees.security.AuthSettings;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.security.authentication.jwt.JWTUserAuthentication;
@@ -49,7 +29,6 @@ import at.sparklingscience.urbantrees.security.authentication.otp.Totp;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.WeakKeyException;
-import io.nayuki.qrcodegen.QrCode;
 
 /**
  * Service provides functionality for authorization,
@@ -75,20 +54,8 @@ public class AuthenticationService {
 	@Autowired
 	private AuthMapper authMapper;
 	
-	@Autowired
-    private UserMapper userMapper;
-	
-	@Autowired
-    private ApplicationService appService;
-	
-	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
-	private String dateFormatPattern;
-	
-	@Value("${at.sparklingscience.urbantrees.loginQrUri}")
-	private String loginQrUri;
-	
 	/**
-	 * Searches for a user with the given username.
+	 * Searches for a user with the given user id.
 	 * @param userId Users' id.
 	 * @return If the user is found, return that user; if not, null will be returned.
 	 */
@@ -129,129 +96,6 @@ public class AuthenticationService {
 	public User findUserByLoginKey(final String token) {
 		return this.authMapper.findUserByLoginKey(token);
 	}
-	
-	/**
-	 * Un-expire the given users' credentials.
-	 */
-	@Transactional
-	public void unexpireCredentials(final int userId) {
-		
-		this.authMapper.updateCredentialsNonExpired(userId, true);
-		
-	}
-	
-	/**
-	 * Expire the given users' credentials.
-	 */
-	@Transactional
-	public void expireCredentials(final int userId) {
-		
-		this.authMapper.updateCredentialsNonExpired(userId, false);
-		
-	}
-
-	/**
-	 * Set given user active.
-	 */
-	@Transactional
-	public void activate(final int userId) {
-		
-		this.authMapper.updateActive(userId, true);
-		
-	}
-	
-	/**
-	 * Set given user inactive.
-	 */
-	@Transactional
-	public void inactivate(final int userId) {
-		
-		this.authMapper.updateActive(userId, false);
-		this.authMapper.deleteAllUserSessions(userId);
-		
-	}
-	
-	/**
-	 * Inserts a new user into the database.
-	 * @param username Username to register (raw).
-	 * @param rawPassword Password entered by the user (raw).
-	 * @param roles Roles to assign to the new user.
-	 * @return The given user object with ID set.
-	 * @throws DuplicateUsernameException if any of the given usernames already existed.
-	 * 								 	  This rolls back any changes that may have occurred
-	 * 								 	  before that.
-	 */
-	@Transactional
-	public List<UserLight> registerUsers(final UserCreation creation)
-			throws DuplicateUsernameException {
-		
-		List<UserLight> registeredUsers = new ArrayList<UserLight>();
-		
-		User template = creation.getTemplate();
-		for (String username : creation.getUsernames()) {
-			registeredUsers.add(this.registerUser(username, null, template.getRoles()));
-		}
-		
-		return registeredUsers;
-		
-	}
-	
-	/**
-	 * Inserts a new user into the database.
-	 * If the given password is null, we automatically generate a secure login key.
-	 * Note: Transactional annotation of this method has been removed
-	 * 		 since this method is called in {@link #registerUsers(String, String, List)}.
-	 * @param username Username to register (raw).
-	 * @param rawPassword Password entered by the user (raw).
-	 * @param roles Roles to assign to the new user.
-	 * @return the newly created user.
-	 * @throws DuplicateUsernameException if the username was already given to another user.
-	 */
-	public UserLight registerUser(final String username,
-								  final String rawPassword,
-								  final List<Role> roles)
-										  throws DuplicateUsernameException {
-		
-		User newUser = new User();
-		newUser.setUsername(username);
-		
-		boolean generateLoginKey = false;
-		if (rawPassword == null) {
-			newUser.setPassword(null);
-			generateLoginKey = true;
-		} else {
-			newUser.setPassword(this.bCryptPasswordEncoder.encode(rawPassword));
-		}
-		
-		try {
-			this.authMapper.insertUser(newUser);			
-		} catch (DuplicateKeyException e) {
-			throw new DuplicateUsernameException(e, username);
-		}
-		if (roles != null && roles.size() > 0) {
-			this.authMapper.insertUserRoles(newUser.getId(), roles);
-		}
-		// prepare xp
-		try {
-			this.userMapper.insertLevel(
-					newUser.getId(),
-					UserLevelAction.INITIAL.getDefaultRewardXp(),
-					UserLevelAction.INITIAL.toString(),
-					null
-			);			
-		} catch (Throwable t) {
-			LOGGER.error("Failed to insert XP for user {}: {}", newUser.getId(), t.getMessage(), t);
-			this.appService.logExceptionEvent("Failed to insert XP for user " + newUser.getId() + ": " + t.getMessage(), t);
-		}
-		if (generateLoginKey) {
-			this.getLoginKey(newUser.getId());			
-		}
-		
-		return this.authMapper.findUserLightById(newUser.getId());
-		
-	}
-
-	
 
 	/**
 	 * Check the DB user againt the given raw password.
@@ -296,77 +140,10 @@ public class AuthenticationService {
 		return this.authMapper.hasPermissionsPIN(userId, ppin);
 	}
 	
-	/**
-	 * TODO
-	 * @param userId
-	 * @return
-	 */
-	public String getLoginKey(int userId) {
-	    return this.getLoginKey(userId, new Date(System.currentTimeMillis() + SecurityConfiguration.LOGIN_LINK_EXPIRATION_TIME));
-	}
-	
-	@Transactional
-	public String getLoginKey(int userId, Date expirationDate) {
-		
-		String storedToken = this.authMapper.findUserLoginKey(userId);
-		if (storedToken != null) {
-			return storedToken;
-		}
-		
-		final String secureToken = this.generateSecureToken();
-	    this.authMapper.updateUserLoginKey(
-    		userId,
-    		secureToken,
-    		expirationDate
-		);
-	    
-	    return secureToken;
-		
-	}
-	
-	/**
-	 * Update the expiration date of the current login key for the given user.
-	 * @param user user to be affected
-	 * @param expiration time until the login key is valid, or null to be valid indefinitely
-	 * @throws RuntimeException if no login key is currently set
-	 */
-	public void updateLoginKeyExpirationDate(User user, Date expiration) {
-		if (user.getSecureLoginKey() == null) {
-			throw new RuntimeException("User has no login key set.");
-		}
-		this.authMapper.updateUserLoginKey(user.getId(), user.getSecureLoginKey(), expiration);
-	}
-	
-	/**
-	 * Generate a QR code that lets the user login in and
-	 * set a PIN.
-	 * @param user user to generate QR code for
-	 * @return qr code
-	 */
-	public QrCode generateLoginQr(User user) {
-		
-		final String loginKey = user.getSecureLoginKey();
-		String uri = this.loginQrUri;
-		uri = uri.replace("{token}", loginKey);
-		return QrCode.encodeText(uri, QrCode.Ecc.HIGH);
-		
-	}
-	
 	@Transactional
 	public void updateUserLoginKeyPin(int userId, String pin) {
 		var encodedPin = this.bCryptPasswordEncoder.encode(pin);
 		this.authMapper.updateUserLoginKeyPin(userId, encodedPin);
-	}
-	
-	private String generateSecureToken() {
-		
-		Random random = new SecureRandom();
-		byte[] randomData = new byte[SecurityConfiguration.SECURE_LOGIN_KEY_BYTES];
-		random.nextBytes(randomData);
-		
-		Encoder encoder = Base64.getUrlEncoder().withoutPadding();
-	    return encoder.encodeToString(randomData);
-		
 	}
 	
 	/**
@@ -380,17 +157,6 @@ public class AuthenticationService {
 	}
 	
 	@Transactional
-	public void modifyRoles(int userId, List<Role> roles, boolean isAdd) {
-		
-		if (isAdd) {
-			this.authMapper.insertUserRoles(userId, roles);
-		} else {
-			this.authMapper.deleteUserRoles(userId, roles);
-		}
-		
-	}
-	
-	@Transactional
 	public void increaseFailedLoginAttempts(final int userId) {
 		this.authMapper.increaseFailedLoginAttempts(userId);
 	}
@@ -401,8 +167,18 @@ public class AuthenticationService {
 	}
 	
 	@Transactional
+	public void increaseFailedLoginAttemptsByLoginKey(final String token) {
+		this.authMapper.increaseFailedLoginAttemptsByLoginKey(token);
+	}
+
+	@Transactional
 	public void updateLastLoginAttemptDat(final String username) {
 		this.authMapper.updateLastLoginAttemptDatByUsername(username);
+	}
+	
+	@Transactional
+	public void updateLastLoginAttemptDatByLoginKey(final String token) {
+		this.authMapper.updateLastLoginAttemptDatByLoginKey(token);
 	}
 	
 	@Transactional
@@ -410,6 +186,7 @@ public class AuthenticationService {
 		
 		this.authMapper.resetFailedLoginAttempts(userId);
 		this.authMapper.updateLastLoginDat(userId);
+		this.authMapper.updateLastLoginAttemptDat(userId);
 		
 	}
 	
@@ -477,121 +254,6 @@ public class AuthenticationService {
 			return true;
 		}
 		return this.authMapper.hasUserPermission(grantingUserIdsWOReceivingUser, receivingUserId, permission.name());
-	}
-	
-	/**
-	 * Fetches all users in a light version that match the given filters.
-	 * Important Note: THIS METHOD MUST SOLELY BE CALLED BY AN ADMIN VIA ADMINCONTROLLER!
-	 * @param filters filters to restrict users to return
-	 * @param limit limit nr. of results
-	 * @param offset page offset
-	 * @return list of users wrapped in a {@link SearchResult} met-info wrapper
-	 * @throws BadRequestException if conversion of filter strings to date fails
-	 */
-	public SearchResult<List<UserLight>> getUsersLight(Map<String, Object> filters,
-													   Integer limit,
-													   Integer offset) throws BadRequestException {
-
-		this.prepareUserSearchFilters(filters);
-		
-		List<UserLight> results = this.authMapper.findUsersLight(filters, limit, offset);
-		results.forEach(r -> r.setNonLocked(this.isUserNonLocked(r)));
-		
-		int totalResultAmount = this.authMapper.findUsersLightAmount(filters);
-		return new SearchResult<List<UserLight>>(results).withMetadata("totalResultAmount", totalResultAmount);
-		
-	}
-	
-	/**
-	 * Prepare search filters for user search.
-	 * This converts predefined fields from string to date.
-	 * @param filters given filters from teh frontend
-	 */
-	private void prepareUserSearchFilters(final Map<String, Object> filters) {
-		
-		try {
-			ControllerUtil.filterStringToDate(
-					this.dateFormatPattern,
-					filters,
-					"lastLoginDateFrom",
-					"lastLoginDateTo",
-					"creationDateFrom",
-					"creationDateTo"
-					);
-		} catch (ParseException e) {
-			LOGGER.warn("Illegal date format for filters: " + e.getMessage(), e);
-			throw new BadRequestException("Illegal date format for filters.");
-		}
-		
-	}
-	
-	/**
-	 * Execute the given bulk action for all users matching the given filters.
-	 * @param action action to execute for every matching user
-	 * @param data filters & additional data that may be needed for certain actions
-	 * @return all {@link UserLight}s that were affected in the state they were in *before* the bulk action
-	 */
-	@Transactional
-	public List<UserLight> executeBulkAction(UserBulkAction action,
-							 				 UserBulkActionData data) {
-		
-		this.prepareUserSearchFilters(data.getFilters());
-		
-		List<UserLight> users = this.authMapper.findUsersLight(data.getFilters(), null, null);
-		users.forEach(u -> {
-			try {
-				switch (action) {
-				case EXPIRE_CREDENTIALS:
-					this.expireCredentials(u.getId());
-					break;
-	
-				case CREATE_LOGIN_LINKS:
-					this.getLoginKey(u.getId());
-					break;
-	
-				case CREATE_LOGIN_LINKS_PERMANENT:
-					this.getLoginKey(u.getId(), null);
-					break;
-	
-				case ADD_ROLES:
-					this.modifyRoles(u.getId(), data.getRoles(), true);
-					break;
-	
-				case REMOVE_ROLES:
-					this.modifyRoles(u.getId(), data.getRoles(), false);
-					break;
-					
-				case ACTIVATE:
-					this.activate(u.getId());
-					break;
-					
-				case INACTIVATE:
-					this.inactivate(u.getId());
-					break;
-					
-				case DELETE:
-					this.deleteUser(u.getId());
-					break;
-	
-				default:
-					throw new IllegalArgumentException("Unsupported user bulk action: " + action);
-				}
-			} catch (Throwable t) {
-				throw new RuntimeException("Failed to execute bulk action " + action + " on user " + u.getId(), t);
-			}
-		});
-		
-		return users;
-		
-	}
-	
-	/**
-	 * Fetches all user roles available.
-	 */
-	public List<Role> getAllUserRoles() {
-		
-		return this.authMapper.findAllUserRoles();
-		
 	}
 	
 	/**

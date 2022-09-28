@@ -242,6 +242,22 @@ public class UserContentFileService {
 	}
 	
 	/**
+	 * TODO
+	 * @param content
+	 * @param user
+	 */
+	public void publishContentUpdateFiles(@NonNull UserContent content,
+										  @Nullable UserIdentity user) {
+		CmsContent cmsContent;
+		try {
+			cmsContent = this.jsonObjectMapper.readValue(content.getContent(), CmsContent.class);
+		} catch (JsonProcessingException e) {
+			throw new InternalException("Can't deserialize content.");
+		}
+		this.publishContentUpdateFiles(content, cmsContent, user);
+	}
+	
+	/**
 	 * Set the files within the given user content to active, so they
 	 * can be viewed not only by the uploader. All other files previously
 	 * referenced by APPROVED content is deactivated.

@@ -98,7 +98,7 @@ public interface UserContentMapper {
 	 * @param accessId
 	 * @return
 	 */
-	List<UserContentMetadata> findContentMetadataForAccessId(@Param("accessId") long accessId,
+	List<UserContentMetadata> findContentMetadataForAccessId(@Param("accessId") Long accessId,
 											 		 		 @Param("statuses") List<UserContentStatus> status);
 	
 	/**

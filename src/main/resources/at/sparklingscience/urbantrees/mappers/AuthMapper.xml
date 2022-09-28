@@ -209,11 +209,29 @@
 			username = #{username}
 	</update>
 	
+	<update id="updateLastLoginAttemptDatByLoginKey">
+        update
+			access_data."user"
+		set
+			last_login_attempt_dat = now()
+		where
+			secure_login_key = #{token}
+	</update>
+	
 	<update id="updateLastLoginDat">
         update
 			access_data."user"
 		set
 			last_login_dat = now()
+		where
+			id = #{userId}
+	</update>
+	
+	<update id="updateLastLoginAttemptDat">
+        update
+			access_data."user"
+		set
+			last_login_attempt_dat = now()
 		where
 			id = #{userId}
 	</update>
@@ -234,6 +252,15 @@
 			failed_login_attempts = failed_login_attempts + 1
 		where
 			username = #{username}
+	</update>
+    
+    <update id="increaseFailedLoginAttemptsByLoginKey">
+        update
+			access_data."user"
+		set
+			failed_login_attempts = failed_login_attempts + 1
+		where
+			secure_login_key = #{token}
 	</update>
 	
     <update id="resetFailedLoginAttempts">
@@ -324,6 +351,28 @@
 			access_data."user" u
 		where
 			u.id = #{id}
+    </select>
+    
+    <select id="findUsersLightById" resultMap="UserLightMap" useCache="false">
+       	select
+			u.id,
+			u.username,
+			u.password,
+			u.is_active,
+			u.is_credentials_non_expired,
+			u.failed_login_attempts,
+			u.last_login_attempt_dat,
+			u.last_login_dat,
+			u.secure_login_key,
+			u.is_using_otp,
+			u.cre_dat
+		from
+			access_data."user" u
+		where
+			u.id in
+			<foreach item="userId" collection="userIds" separator="," open="(" close=")">
+		        #{userId}
+		    </foreach>
     </select>
     
     <sql id="findUsersLightWhere">

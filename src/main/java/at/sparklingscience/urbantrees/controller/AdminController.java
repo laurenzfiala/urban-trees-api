@@ -1,20 +1,18 @@
 package at.sparklingscience.urbantrees.controller;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
@@ -28,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.controller.util.Timespan;
@@ -59,8 +58,8 @@ import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.TreeMapper;
 import at.sparklingscience.urbantrees.mapper.UiMapper;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
-import at.sparklingscience.urbantrees.service.AuthenticationService;
-import at.sparklingscience.urbantrees.util.QrCodeRenderer;
+import at.sparklingscience.urbantrees.service.AdminService;
+import at.sparklingscience.urbantrees.service.ApplicationService;
 
 @RestController
 @RequestMapping("/admin")
@@ -84,7 +83,10 @@ public class AdminController {
 	private ApplicationMapper appMapper;
 	
 	@Autowired
-	private AuthenticationService authService;
+	private AdminService adminService;
+	
+	@Autowired
+	private ApplicationService appService;
 	
 	@Value("${at.sparklingscience.urbantrees.dateFormatPattern}")
 	private String dateFormatPattern;
@@ -272,7 +274,7 @@ public class AdminController {
 		LOGGER.info("[[ POST ]] postFindUsers - by user with id: {}", authToken.getId());
 		
 		try {
-			return this.authService.getUsersLight(filters, limit, offset);
+			return this.adminService.getUsersLight(filters, limit, offset);
 		} catch (BadRequestException e) {
 			throw e;
 		} catch (Throwable t) {
@@ -286,6 +288,7 @@ public class AdminController {
 	
 	@RequestMapping(method = RequestMethod.POST, path = "/users/bulk/{action}")
 	public List<UserLight> postUserBulkAction(@PathVariable UserBulkAction action,
+											  @RequestParam UUID tid,
 											  @RequestBody UserBulkActionData data,
 											  Authentication auth) {
 		
@@ -293,7 +296,7 @@ public class AdminController {
 		LOGGER.info("[[ POST ]] postUserBulkAction - action: {} by user with id: {}", action, authToken.getId());
 		
 		try {
-			return this.authService.executeBulkAction(action, data);
+			return this.adminService.executeBulkAction(action, tid, data);
 		} finally {
 			LOGGER.info("[[ POST ]] postUserBulkAction - action: {} by user with id: {} |END|", action, authToken.getId());
 		}
@@ -306,7 +309,7 @@ public class AdminController {
 		LOGGER.info("[[ DELETE ]] deleteUser - userId: " + userId);
 		
 		try {
-			this.authService.deleteUser(userId);
+			this.adminService.deleteUser(userId);
 		} catch (Throwable t) {
 			LOGGER.error("Could not delete user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to delete user.", ClientError.GENERIC_ERROR);
@@ -322,7 +325,7 @@ public class AdminController {
 		LOGGER.info("[[ GET ]] getExpireCredentials - userId: " + userId);
 		
 		try {
-			this.authService.expireCredentials(userId);
+			this.adminService.expireCredentials(userId);
 		} catch (Throwable t) {
 			LOGGER.error("Could not expire credentials: {}", t.getMessage(), t);
 			throw new InternalException("Failed to expire credentials.", ClientError.GENERIC_ERROR);
@@ -338,7 +341,7 @@ public class AdminController {
 		LOGGER.info("[[ GET ]] getInactivate - userId: " + userId);
 		
 		try {
-			this.authService.activate(userId);
+			this.adminService.activate(userId);
 		} catch (Throwable t) {
 			LOGGER.error("Could not activate user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to activate user.", ClientError.GENERIC_ERROR);
@@ -354,7 +357,7 @@ public class AdminController {
 		LOGGER.info("[[ GET ]] getInactivate - userId: " + userId);
 		
 		try {
-			this.authService.inactivate(userId);
+			this.adminService.inactivate(userId);
 		} catch (Throwable t) {
 			LOGGER.error("Could not inactivate user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to inactivate user.", ClientError.GENERIC_ERROR);
@@ -370,7 +373,7 @@ public class AdminController {
 		LOGGER.info("[[ GET ]] getUserRoles");
 		
 		try {
-			return this.authService.getAllUserRoles();
+			return this.adminService.getAllUserRoles();
 		} catch (Throwable t) {
 			LOGGER.error("Could not get user roles: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get user roles.", ClientError.GENERIC_ERROR);
@@ -386,7 +389,7 @@ public class AdminController {
 		LOGGER.info("[[ GET ]] getLoginKey - userId: {}", userId);
 		
 		try {
-			return this.authService.getLoginKey(userId);
+			return this.adminService.getLoginKey(userId);
 		} catch (Throwable t) {
 			LOGGER.error("Could not get secure login key for user: {}", t.getMessage(), t);
 			throw new InternalException("Failed to get secure login key for user.", ClientError.FAILED_KEY_STORE);
@@ -398,30 +401,42 @@ public class AdminController {
 	
 	@RequestMapping(method = RequestMethod.GET,
 					path = "/users/{userId:\\d+}/loginkey/qr")
-	public ResponseEntity<ByteArrayResource> getPermanentLoginQr(@PathVariable int userId) {
+	public ResponseEntity<StreamingResponseBody> getPermanentLoginQr(@PathVariable int userId,
+		 	 														 HttpServletResponse response) {
 		
 		LOGGER.debug("[[ GET ]] getPermanentLoginQr - generate permanent login QR for user: {}", userId);
 		
-		var user = this.authService.findUser(userId);
-		if (user == null) {
-			throw new BadRequestException("User does not exist");
-		}
-		this.authService.updateLoginKeyExpirationDate(user, null);
-		var qrCode = this.authService.generateLoginQr(user);
-		
-		var bufferedImage = QrCodeRenderer.toImage(qrCode, 10, 1);
-		try (ByteArrayOutputStream imageOutput = new ByteArrayOutputStream()) {
-			ImageIO.write(bufferedImage, "png", imageOutput);
-			
+		try {
+			var user = this.adminService.findUser(userId);
 			return ResponseEntity.ok()
 					.header("Content-Disposition", "attachment; filename=\"login_qr_" + user.getUsername() + ".png\"")
 					.cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
 					.contentType(MediaType.IMAGE_PNG)
-					.body(new ByteArrayResource(imageOutput.toByteArray()));
-		} catch (IOException e) {
-			throw new InternalException("Failed to copy QR code to output", e);
+					.body(d -> this.adminService.writeLoginQr(user, response.getOutputStream()));
 		} finally {
 			LOGGER.debug("[[ GET ]] getPermanentLoginQr |END| Successfully generated login QR for user: {}", userId);
+		}
+
+	}
+	
+	@RequestMapping(method = RequestMethod.GET,
+					path = "/users/loginkey/qr")
+	public ResponseEntity<StreamingResponseBody> getBulkPermanentLoginQr(@RequestParam("tid") UUID transactionId,
+																	 	 HttpServletResponse response) {
+		
+		LOGGER.debug("[[ GET ]] getBulkPermanentLoginQr - generate permanent login QR for users affected by bulk action {}", transactionId);
+
+		List<Integer> userIds = this.appService.getTransaction(transactionId);
+		List<UserLight> affectedUsers = this.adminService.findUsersLightById(userIds);
+		
+		try {
+			return ResponseEntity.ok()
+					.header("Content-Disposition", "attachment; filename=\"bulk_login_qr.zip\"")
+					.cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS))
+					.contentType(MediaType.APPLICATION_OCTET_STREAM)
+					.body(d -> this.adminService.writeBulkLoginQr(affectedUsers, response.getOutputStream()));
+		} finally {
+			LOGGER.debug("[[ GET ]] getBulkPermanentLoginQr |END| Successfully generated bulk permanent login QR for users");
 		}
 
 	}
@@ -433,7 +448,7 @@ public class AdminController {
 		LOGGER.info("[[ PUT ]] putNewUser - called by: {}, users to create: {}", authToken.getId(), creation);
 		
 		try {
-			return this.authService.registerUsers(creation);
+			return this.adminService.registerUsers(creation);
 		} catch (DuplicateUsernameException e) {
 			throw new BadRequestException("Username " + e.getUsername() + " already exists.", ClientError.USERNAME_DUPLICATE);
 		} catch (Throwable t) {
@@ -453,7 +468,7 @@ public class AdminController {
 		LOGGER.info("[[ PUT ]] putAddRole - called by: {}, user to add roles to: {}, roles: {}", auth.getName(), userId, roles);
 		
 		try {
-			this.authService.modifyRoles(userId, roles, true);
+			this.adminService.modifyRoles(userId, roles, true);
 		} catch (Throwable t) {
 			LOGGER.error("Could not add roles: {}", t.getMessage(), t);
 			throw new InternalException("Failed to add roles.", ClientError.GENERIC_ERROR);
@@ -471,7 +486,7 @@ public class AdminController {
 		LOGGER.info("[[ PUT ]] putRemoveRole - called by: {}, user to remove roles from: {}, roles: {}", auth.getName(), userId, roles);
 		
 		try {
-			this.authService.modifyRoles(userId, roles, false);
+			this.adminService.modifyRoles(userId, roles, false);
 		} catch (Throwable t) {
 			LOGGER.error("Could not remove roles: {}", t.getMessage(), t);
 			throw new InternalException("Failed to remove roles.", ClientError.GENERIC_ERROR);

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -34,6 +35,11 @@ public class WebConfiguration implements WebMvcConfigurer {
 	      .defaultContentType(MediaType.APPLICATION_JSON)
 	      .mediaType("json", MediaType.APPLICATION_JSON);
 	}
+	
+	@Override  
+    public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+        configurer.setDefaultTimeout(5l * 60l * 1000l); 
+    }  
 	
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {

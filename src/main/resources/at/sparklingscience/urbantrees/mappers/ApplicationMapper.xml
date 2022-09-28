@@ -248,5 +248,34 @@
 		order by
 			cre_dat desc
 	</select>
+	
+	<select id="findTransaction" resultType="java.lang.String">
+    	select
+			payload
+		from
+			application.transaction
+		where
+			tid = #{tid}
+	</select>
+	
+	<insert id="insertTransaction">
+    	insert into
+			application.transaction
+			(tid, payload, cre_dat, cre_usr)
+		values
+			(
+				#{tid},
+				#{payload},
+				now(),
+				user
+			)
+	</insert>
+	
+	<delete id="deleteOldTransactions">
+    	delete from
+    		application.transaction
+   		where
+   			cre_dat &lt; #{date}
+	</delete>
 
 </mapper>

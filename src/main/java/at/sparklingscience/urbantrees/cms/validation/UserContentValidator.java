@@ -65,7 +65,8 @@ public class UserContentValidator {
 			
 			if(this.pathMatcher.match(configEntry.getKey(), contentPath)) {
 				anyMatch = true;
-				configEntry.getValue().check(contentPath, authToken, cmsContent, errors);
+				var vars = this.pathMatcher.extractUriTemplateVariables(configEntry.getKey(), contentPath);
+				configEntry.getValue().check(contentPath, vars, authToken, cmsContent, errors);
 			}
 			
 		}
@@ -144,17 +145,19 @@ public class UserContentValidator {
 		 * Check whether the given cms content adheres to all configured
 		 * restrictions. Results are written to errors.
 		 * @param contentPath actual content path to be saved
+		 * @param uriVars variables captured by the matching path expression
 		 * @param authToken users' auth token
 		 * @param cmsContent content to be saved
 		 * @param errors used to populate with validation errors
 		 */
 		public void check(@NotNull String contentPath,
+						  @NotNull Map<String, String> uriVars,
 						  @NotNull AuthenticationToken authToken,
 						  @NotNull CmsContent cmsContent,
 						  @NotNull SimpleErrors errors) {
 			
 			this.rules.forEach(r -> {
-				r.check(contentPath, authToken, cmsContent, errors);
+				r.check(contentPath, uriVars, authToken, cmsContent, errors);
 			});
 			
 		}

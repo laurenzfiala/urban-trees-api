@@ -60,7 +60,7 @@ public class SecurityUtil {
 	 * @param roles to map to granted authorities
 	 * @return granted authorities
 	 */
-	public static Collection<? extends GrantedAuthority> rolesToGrantedAuthorities(@NotNull List<Role> roles) {
+	public static Collection<GrantedAuthority> rolesToGrantedAuthorities(@NotNull List<Role> roles) {
 		return roles.stream()
 					.filter(r -> r != null)
 					.map(r -> roleToGrantedAuthority(r))

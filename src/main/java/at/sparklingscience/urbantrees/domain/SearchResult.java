@@ -2,6 +2,7 @@ package at.sparklingscience.urbantrees.domain;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * A wrapper for return values to add meta-info to search results.
@@ -12,6 +13,8 @@ import java.util.Map;
  * @param <T> the type of value this filter holds
  */
 public class SearchResult<T> {
+	
+	private UUID transactionId;
 	
 	/**
 	 * Map of search metadata.
@@ -31,6 +34,11 @@ public class SearchResult<T> {
 		this.metadata.put(key, metadatum);
 		return this;
 	}
+	
+	public SearchResult<T> withTid(UUID transactionId) {
+		this.transactionId = transactionId;
+		return this;
+	}
 
 	public T getResult() {
 		return result;
@@ -38,6 +46,14 @@ public class SearchResult<T> {
 
 	public Map<String, Object> getMetadata() {
 		return metadata;
+	}
+
+	public UUID getTransactionId() {
+		return transactionId;
+	}
+
+	public void setTransactionId(UUID transactionId) {
+		this.transactionId = transactionId;
 	}
 	
 }

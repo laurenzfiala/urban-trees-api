@@ -1,6 +1,7 @@
 package at.sparklingscience.urbantrees.cms;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -81,10 +82,12 @@ public class UserContentConfiguration {
 	public UserContentValidator userContentValidator() {
 		UserContentValidator validator = new UserContentValidator(this.userContentPathMatcher());
 		validator
-			.path("/tree/*")
+			.path("/tree/{treeId:\\d+}")
 				.rule(new ElementAllowlistRule(TextComponent.class, FileComponent.class, ImageComponent.class, BlockLayout.class))
-			.path("/user/*/**")
-				.rule(new IdentityRule((String path, AuthenticationToken auth) -> Integer.parseInt(path.split("/")[2]) == auth.getId()));
+			.path("/methodbox")
+				.rule(new ElementAllowlistRule(TextComponent.class, FileComponent.class, ImageComponent.class, BlockLayout.class))
+			.path("/user/{userId:\\d+}/**")
+				.rule(new IdentityRule((Map<String, String> uriVars, AuthenticationToken auth) -> Integer.parseInt(uriVars.get("userId")) == auth.getId()));
 		
 		return validator;
 	}
@@ -93,12 +96,10 @@ public class UserContentConfiguration {
 	public UserContentActions userContentActions() {
 		UserContentActions actions = new UserContentActions(this.userContentPathMatcher());
 		actions
+			.path("/tree/*")
+				.action(new XpRewardAction(this.applicationContext.getBean(UserService.class), UserLevelAction.USER_TREE_CONTENT_SUBMIT))
 			.path("/user/*/expdays")
-				.action(new XpRewardAction(this.applicationContext.getBean(UserService.class), UserLevelAction.USER_EXP_DAYS_SUBMIT))
-			.path("/user/*/sensor2app")
-				.action(new XpRewardAction(this.applicationContext.getBean(UserService.class), UserLevelAction.USER_MODULE_SENSOR2APP_SUBMIT))
-			.path("/user/*/app2analyse")
-				.action(new XpRewardAction(this.applicationContext.getBean(UserService.class), UserLevelAction.USER_MODULE_APP2ANALYSE_SUBMIT));
+				.action(new XpRewardAction(this.applicationContext.getBean(UserService.class), UserLevelAction.USER_EXP_DAYS_SUBMIT));
 		
 		return actions;
 	}

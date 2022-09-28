@@ -51,6 +51,13 @@ public interface AuthMapper {
 	User findUserById(@Param("userId") int userId);
 	
 	/**
+	 * TODO
+	 * @param userIds
+	 * @return
+	 */
+	List<UserLight> findUsersLightById(@Param("userIds") List<Integer> userIds);
+	
+	/**
 	 * Find a user by their username.
 	 * @param username username (hashed)
 	 * @return The user found, or null.
@@ -139,12 +146,25 @@ public interface AuthMapper {
 	 * @param username Username of user to update.
 	 */
 	void updateLastLoginAttemptDatByUsername(@Param("username") String username);
+
+	/**
+	 * Update the given users' last login attempt date
+	 * to the current time.
+	 * @param token Users' secure login key
+	 */
+	void updateLastLoginAttemptDatByLoginKey(@Param("token") String token);
 	
 	/**
 	 * Update last login date to current time.
 	 * @param userId Users' id.
 	 */
 	void updateLastLoginDat(@Param("userId") int userId);
+	
+	/**
+	 * Update last login attenmpt date to current time.
+	 * @param userId Users' id.
+	 */
+	void updateLastLoginAttemptDat(@Param("userId") int userId);
 	
 	/**
 	 * Increase failed user login attempts by 1.
@@ -157,6 +177,12 @@ public interface AuthMapper {
 	 * @param username Users' username.
 	 */
 	void increaseFailedLoginAttemptsByUsername(@Param("username") String username);
+	
+	/**
+	 * Increase failed user login attempts by 1.
+	 * @param token Users' secure login key
+	 */
+	void increaseFailedLoginAttemptsByLoginKey(@Param("token") String token);
 
 	/**
 	 * Reset failed login attempts upon successful login.

@@ -35,7 +35,6 @@ import at.sparklingscience.urbantrees.exception.ClientError;
 import at.sparklingscience.urbantrees.exception.UnauthorizedException;
 import at.sparklingscience.urbantrees.mapper.PhenologyMapper;
 import at.sparklingscience.urbantrees.mapper.UserMapper;
-import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 import at.sparklingscience.urbantrees.service.ApplicationService;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
@@ -164,15 +163,9 @@ public class UserController {
 	@RequestMapping(method = RequestMethod.GET, path = "/data")
 	public UserData getUserData(Authentication auth) {
 		
-		final AuthenticationToken authToken = ControllerUtil.getAuthToken(auth);
-		if (!SecurityUtil.isAdmin(authToken)) {
-			return UserData.empty();
-		}
+		LOGGER.debug("[[ GET ]] getUserData");
 		
-		final int userId = authToken.getId();
-		LOGGER.debug("[[ GET ]] getUserData - user: {}", userId);
-		
-		return this.userMapper.findUserData(userId);
+		return this.userService.getUserData(auth);
 		
 	}
 	

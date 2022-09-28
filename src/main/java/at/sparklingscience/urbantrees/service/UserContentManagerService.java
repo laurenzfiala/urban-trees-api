@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.sun.jdi.InternalException;
 
@@ -201,9 +202,10 @@ public class UserContentManagerService {
 	 * @param authToken
 	 * @return
 	 */
+	@Transactional
 	public UserContentStatus updateContentStatus(long contentUid,
-									boolean approve,
-									@NonNull AuthenticationToken authToken) {
+												 boolean approve,
+												 @NonNull AuthenticationToken authToken) {
 		
 		UserIdentity user = UserIdentity.fromAuthToken(authToken);
 		UserContent userContent = this.contentMapper.findContentById(contentUid);
@@ -223,6 +225,9 @@ public class UserContentManagerService {
 		}
 		if (newStatus == UserContentStatus.DELETED) {
 			this.contentService.deleteContent(user, userContent);
+		} else if (newStatus == UserContentStatus.APPROVED) {
+			this.contentMapper.stitchContent(userContent, userContent.getId(), userContent.getId());
+			this.fileService.publishContentUpdateFiles(userContent, userContent.getUser());
 		}
 		
 		// post-save actions

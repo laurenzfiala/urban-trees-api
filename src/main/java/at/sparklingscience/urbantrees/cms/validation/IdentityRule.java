@@ -1,5 +1,7 @@
 package at.sparklingscience.urbantrees.cms.validation;
 
+import java.util.Map;
+
 import javax.validation.constraints.NotNull;
 
 import at.sparklingscience.urbantrees.cms.CmsContent;
@@ -7,7 +9,7 @@ import at.sparklingscience.urbantrees.cms.UserContentConfiguration;
 import at.sparklingscience.urbantrees.security.authentication.AuthenticationToken;
 
 /**
- * Create a new rule which allowes only certain users to save a
+ * Create a new rule which allows only certain users to save a
  * {@link CmsContent}.
  * @author Laurenz Fiala
  * @since 2021/12/13
@@ -33,12 +35,13 @@ public class IdentityRule implements Rule {
 
 	@Override
 	public void check(@NotNull String contentPath,
+			   		  @NotNull Map<String, String> uriVars,
 					  @NotNull AuthenticationToken authToken,
 					  @NotNull CmsContent cmsContent,
 					  @NotNull SimpleErrors errors) {
 		
 		try {
-			if (!this.evaluator.evaluate(contentPath, authToken)) {
+			if (!this.evaluator.evaluate(uriVars, authToken)) {
 				errors.reject("Given content path may not be saved by this user.");
 			}			
 		} catch (RuntimeException e) {
@@ -53,7 +56,7 @@ public class IdentityRule implements Rule {
 	 * Use for lambdas in {@link UserContentConfiguration}.
 	 */
 	public interface Evaluator {
-		boolean evaluate(String path, AuthenticationToken auth);
+		boolean evaluate(Map<String, String> uriVars, AuthenticationToken auth);
 	}
 	
 }

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,6 +21,7 @@ import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
@@ -33,7 +35,6 @@ import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.security.SecurityUtil;
 import at.sparklingscience.urbantrees.security.authentication.jwt.JWTUserAuthentication;
 import at.sparklingscience.urbantrees.security.authentication.otk.TokenAuthenticationToken;
-import at.sparklingscience.urbantrees.security.authentication.otp.IncorrectOtpTokenException;
 import at.sparklingscience.urbantrees.security.authentication.otp.UserOtpAuthenticationToken;
 import at.sparklingscience.urbantrees.security.authentication.user.UserAuthenticationToken;
 import at.sparklingscience.urbantrees.service.AuthenticationService;
@@ -129,15 +130,17 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 		} catch (IncorrectTokenException e) {
 			LOGGER.trace("Incorrect token given");
 			throw e;
-		} catch (Throwable e) {
-			if (creds != null && creds.getUsername() != null) {
-				this.authService.increaseFailedLoginAttempts(creds.getUsername());				
+		} catch (BadCredentialsException e) {
+			if (creds != null) {
+				if (creds.getUsername() != null) {
+					this.authService.increaseFailedLoginAttempts(creds.getUsername());
+					this.authService.updateLastLoginAttemptDat(creds.getUsername());
+				} else if (creds.getSecureLoginKey() != null) {
+					this.authService.increaseFailedLoginAttemptsByLoginKey(creds.getSecureLoginKey());
+					this.authService.updateLastLoginAttemptDatByLoginKey(creds.getSecureLoginKey());
+				}
 			}
 			throw e;
-		} finally {
-			if (creds != null && creds.getUsername() != null) {
-				this.authService.updateLastLoginAttemptDat(creds.getUsername());
-			}
 		}
 
 	}
@@ -150,10 +153,15 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter i
 		at.sparklingscience.urbantrees.security.user.User user =
 				(at.sparklingscience.urbantrees.security.user.User) auth.getDetails();
 		
-		Collection<? extends GrantedAuthority> authorities = null;
+		Collection<GrantedAuthority> authorities = null;
 		if (!user.isCredentialsNonExpired()) {
 			LOGGER.info("Credentials of user {} are expired. Granting temp change role only.", user.getId());
 			authorities = Arrays.asList(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE));
+		} else if (user.getPassword() == null) {
+			LOGGER.info("Password of user {} is not set. Adding temp no password role.", user.getId());
+			authorities = new LinkedList<>();
+			authorities.addAll(auth.getAuthorities());
+			authorities.add(SecurityUtil.grantedAuthority(SecurityConfiguration.TEMPORARY_NO_PASSWORD_ACCESS_ROLE));
 		} else if (!this.getEnvironment().acceptsProfiles(Profiles.of("dev")) &&
 				SecurityUtil.isAdmin(authToken) &&
 				!user.isUsingOtp()) {

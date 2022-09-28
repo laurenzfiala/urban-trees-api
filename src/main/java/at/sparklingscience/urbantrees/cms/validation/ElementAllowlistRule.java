@@ -3,6 +3,7 @@ package at.sparklingscience.urbantrees.cms.validation;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.validation.constraints.NotNull;
 
@@ -15,6 +16,8 @@ import at.sparklingscience.urbantrees.security.authentication.AuthenticationToke
  * Create a new allowlist rule where only the passed element types may
  * be present in the {@link CmsContent}. Order or amount of times the
  * elements occur are not checked.
+ * @author Laurenz Fiala
+ * @since 2022/09/27 (doc)
  */
 public class ElementAllowlistRule implements Rule {
 	
@@ -34,6 +37,7 @@ public class ElementAllowlistRule implements Rule {
 	
 	@Override
 	public void check(@NotNull String contentId,
+			   		  @NotNull Map<String, String> uriVars,
 					  @NotNull AuthenticationToken authToken,
 					  @NotNull CmsContent cmsContent,
 					  @NotNull SimpleErrors errors) throws ValidationException {

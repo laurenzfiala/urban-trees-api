@@ -48,9 +48,8 @@ public enum UserLevelAction implements UserLevelActionInterface {
 			return isAfter ? 0 : this.getDefaultRewardXp();
 		}
 	},
-	USER_EXP_DAYS_SUBMIT(250, Duration.ofSeconds(Long.MAX_VALUE)),
-	USER_MODULE_SENSOR2APP_SUBMIT(250, Duration.ofSeconds(Long.MAX_VALUE)),
-	USER_MODULE_APP2ANALYSE_SUBMIT(250, Duration.ofSeconds(Long.MAX_VALUE)),
+	USER_EXP_DAYS_SUBMIT(250, Duration.of(3650, ChronoUnit.DAYS)),
+	USER_TREE_CONTENT_SUBMIT(250, Duration.of(5, ChronoUnit.DAYS)),
 	BEACON_READOUT(100, Duration.of(5, ChronoUnit.DAYS)),
 	UPGRADE_ACCOUNT(0),
 	ADMIN_THANKYOU(null),
@@ -88,7 +87,7 @@ public enum UserLevelAction implements UserLevelActionInterface {
 			UserLevelActionXpChecker checker) {
 		
 		Optional<UserXp> lastSimilarUserXp = xpHistory.stream()
-				.filter(x -> x.getAction() == action && x.getXp() > 0 && x.getContext().getCommonId() == context.getCommonId())
+				.filter(x -> x.getAction() == action && x.getXp() > 0 && context.hasInCommon(x.getContext()))
 				.findFirst();
 		return lastSimilarUserXp.isPresent() &&
 				checker.getXpTimeout(lastSimilarUserXp.get().getDate().toInstant()).isAfter(Instant.now());

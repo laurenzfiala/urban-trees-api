@@ -2,7 +2,6 @@ package at.sparklingscience.urbantrees.service;
 
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

@@ -1,6 +1,10 @@
 package at.sparklingscience.urbantrees.service;
 
+import java.sql.Date;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,10 +13,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import at.sparklingscience.urbantrees.controller.util.ControllerUtil;
 import at.sparklingscience.urbantrees.domain.Event;
 import at.sparklingscience.urbantrees.domain.EventSeverity;
 import at.sparklingscience.urbantrees.domain.Report;
+import at.sparklingscience.urbantrees.exception.InternalException;
 import at.sparklingscience.urbantrees.mapper.ApplicationMapper;
 
 /**
@@ -28,6 +37,9 @@ public class ApplicationService {
 	
 	@Autowired
     private ApplicationMapper appMapper;
+	
+	@Autowired
+	private ObjectMapper jsonObjectMapper;
 	
 	/**
 	 * TODO
@@ -145,6 +157,46 @@ public class ApplicationService {
 			this.appMapper.insertUserRef(refId, uid);			
 		}
 		return refId;
+		
+	}
+	
+	/**
+	 * TODO
+	 * @param <T>
+	 * @param payloadObj
+	 * @return
+	 */
+	public <T> UUID transaction(T payloadObj) {
+		
+		try {
+			final UUID tid = UUID.randomUUID();
+			final String payload = this.jsonObjectMapper.writeValueAsString(payloadObj);
+			
+			this.appMapper.insertTransaction(tid, payload);
+			this.appMapper.deleteOldTransactions(Date.from(Instant.now().minus(1, ChronoUnit.DAYS)));
+			
+			return tid;
+		} catch (JsonProcessingException e) {
+			throw new InternalException("Could not serialize object and failed to create transaction", e);
+		}
+		
+	}
+	
+	/**
+	 * TODO
+	 * @param <T>
+	 * @param transactionId
+	 * @param clazz
+	 * @return
+	 */
+	public <T> T getTransaction(UUID transactionId) {
+		
+		try {
+			final String payload = this.appMapper.findTransaction(transactionId);
+			return this.jsonObjectMapper.readValue(payload, new TypeReference<T>() {});
+		} catch (JsonProcessingException e) {
+			throw new InternalException("Could not deserialize transaction payload", e);
+		}
 		
 	}
 

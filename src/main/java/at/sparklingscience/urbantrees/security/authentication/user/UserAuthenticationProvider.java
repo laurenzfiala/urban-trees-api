@@ -1,6 +1,9 @@
 package at.sparklingscience.urbantrees.security.authentication.user;
 
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -35,19 +38,19 @@ public class UserAuthenticationProvider extends DaoAuthenticationProvider {
 				);
 		
 		if (user == null) {
-			throw new BadCredentialsException("Username invalid.");
+			throw new AuthenticationCredentialsNotFoundException("Token invalid.");
+		}
+		if (!user.isEnabled()) {
+			throw new DisabledException("Account is locked.");
+		}
+		if (!user.isAccountNonLocked()) {
+			throw new LockedException("Account is temporarily locked.");
 		}
 		
 		final String rawPassword = String.valueOf(authentication.getCredentials());
 		final boolean passwordMatches = super.getPasswordEncoder().matches(rawPassword, user.getPassword());
 		if (!passwordMatches) {
 			throw new BadCredentialsException("Password invalid.");
-		}
-		if (!user.isEnabled()) {
-			throw new BadCredentialsException("Account is locked.");
-		}
-		if (!user.isAccountNonLocked()) {
-			throw new BadCredentialsException("Account is temporarily locked.");
 		}
 		
 		if (UserAuthenticationToken.class.equals(authentication.getClass()) && user.isUsingOtp()) {

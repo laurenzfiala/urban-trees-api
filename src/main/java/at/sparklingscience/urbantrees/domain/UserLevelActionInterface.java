@@ -1,5 +1,6 @@
 package at.sparklingscience.urbantrees.domain;
 
+import java.time.Duration;
 import java.util.List;
 
 /**

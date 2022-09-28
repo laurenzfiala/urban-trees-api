@@ -16,7 +16,7 @@ public interface Action {
 	/**
 	 * Execute the action of the implementor.
 	 * @param userContent content inserted
-	 * @param authToken users' authentication token
+	 * @param user 
 	 */
 	void doAction(@NotNull UserContent userContent,
 				  @NotNull AuthenticationToken authToken);

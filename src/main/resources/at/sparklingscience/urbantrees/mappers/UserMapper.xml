@@ -31,7 +31,7 @@
     </resultMap>
     
     <resultMap id="UserDataMap" type="at.sparklingscience.urbantrees.domain.UserData">
-        <result column="new_msg_amount"			property="newMessagesAmount" />
+        <result column="unresolved_msg_amount"			property="unresolvedReportsAmount" />
     </resultMap>
 
 	<insert id="insertPhenologyImage">
@@ -117,7 +117,7 @@
 	
 	<select id="findUserData" resultMap="UserDataMap" useCache="false">
 		select
-			count(0) as new_msg_amount
+			count(0) as unresolved_msg_amount
 		from
 			application.report
 		where

@@ -2,6 +2,7 @@ package at.sparklingscience.urbantrees.mapper;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -69,6 +70,19 @@ public interface ApplicationMapper {
 	
 	List<Integer> findUserIdsByRefId(
 			@Param("refId") int refId
+			);
+	
+	String findTransaction(
+			@Param("tid") UUID tid
+			);
+	
+	void insertTransaction(
+			@Param("tid") UUID tid,
+			@Param("payload") String payload
+			);
+	
+	int deleteOldTransactions(
+			@Param("date") Date date
 			);
 	
 }

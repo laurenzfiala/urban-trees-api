@@ -40,7 +40,7 @@ public class SecurityConfiguration {
 	 * Duration after which a generated JWT token expires.
 	 * In milliseconds.
 	 */
-	public static final long 				JWT_EXPIRATION_TIME				= 86_400_000; /* 24 hours */
+	public static final long 				JWT_EXPIRATION_TIME				= 432_000_000; /* 5 days */
 	
 	/**
 	 * Duration after which a generated login link expire.
@@ -86,6 +86,13 @@ public class SecurityConfiguration {
 	public static final String ADMIN_ACCESS_ROLE = "ADMIN";
 	
 	/**
+	 * Role which is used to notify the user that their authentication
+	 * method did not meet the requirements for admins.
+	 * "ROLE_" is automatically prepended by spring.
+	 */
+	public static final String ADMIN_LOCKED_ACCESS_ROLE = "ADMIN_LOCKED";
+	
+	/**
 	 * Role for users that need access to more system data than is default.
 	 * "ROLE_" is automatically prepended by spring.
 	 */
@@ -114,6 +121,21 @@ public class SecurityConfiguration {
 	 * "ROLE_" is automatically prepended by spring.
 	 */
 	public static final String TEMPORARY_CHANGE_PASSWORD_ACCESS_ROLE = "TEMP_CHANGE_PASSWORD";
+	
+	/**
+	 * Role granted only temporarily when no password is set.
+	 * This is used to let the frontend know whether to require the
+	 * old password or not.
+	 * "ROLE_" is automatically prepended by spring.
+	 */
+	public static final String TEMPORARY_NO_PASSWORD_ACCESS_ROLE = "TEMP_NO_PASSWORD";
+	
+	/**
+	 * Role granted only temporarily when logged in via login link.
+	 * This is used to let the frontend know what info to show on forced logout or credentials change.
+	 * "ROLE_" is automatically prepended by spring.
+	 */
+	public static final String TEMPORARY_LOGIN_LINK_ACCESS_ROLE = "TEMP_LOGIN_LINK";
 	
 	/**
 	 * Role granted only temporarily to only allow the user

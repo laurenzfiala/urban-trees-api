@@ -1,7 +1,6 @@
 package at.sparklingscience.urbantrees.utility;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import org.apache.http.client.ClientProtocolException;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,7 @@ public class AuthenticationTests {
 	@Commit
 	public void registerUser() throws ClientProtocolException, IOException, DuplicateUsernameException {
 		
-		this.authenticationService.registerUser("test", "test", new ArrayList<>());
+		//this.authenticationService.registerUser("test", "test", new ArrayList<>());
 		
 	}
 	

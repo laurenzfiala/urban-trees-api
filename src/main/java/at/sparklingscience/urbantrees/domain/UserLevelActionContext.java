@@ -17,42 +17,60 @@ public class UserLevelActionContext {
 	/**
 	 * Context version.
 	 */
-	private final long version = 20210512L;
+	private final long version = 20220913L;
 	
 	/**
 	 * Associated ID, uniquely identifying the source action.
 	 * Meaning depends on {@link UserLevelAction}.
 	 */
-	private long assocId = -1;
+	private String assocId = null;
 	
 	/**
 	 * Common ID, which is used to check if XP may be applied again.
 	 * Meaning depends on {@link UserLevelAction}.
 	 */
-	private long commonId = -1;
+	private String commonId = null;
 	
 	public UserLevelActionContext() {}
 	
-	public UserLevelActionContext(long assocId, long commonId) {
+	public UserLevelActionContext(String assocId, String commonId) {
 		this.assocId = assocId;
 		this.commonId = commonId;
 	}
+	
+	public UserLevelActionContext(long assocId, long commonId) {
+		this(String.valueOf(assocId), String.valueOf(commonId));
+	}
 
-	public long getAssocId() {
+	public String getCommonId() {
+		return commonId;
+	}
+
+	public String getAssocId() {
 		return assocId;
 	}
 
 	public long getVersion() {
 		return version;
 	}
-
-	public long getCommonId() {
-		return commonId;
-	}
 	
 	@Override
 	public String toString() {
 		return "UserLevelActionContext[version=" + version +", assocId=" + assocId + "]";
+	}
+	
+	public boolean hasInCommon(UserLevelActionContext context) {
+		if (this.commonId == null) {
+			return false;
+		}
+		if (this.commonId.equals(context.commonId)) {
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean hasNotInCommon(UserLevelActionContext context) {
+		return !this.hasInCommon(context);
 	}
 	
 }

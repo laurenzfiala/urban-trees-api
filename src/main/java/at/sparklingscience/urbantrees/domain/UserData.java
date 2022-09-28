@@ -10,19 +10,25 @@ import java.io.Serializable;
  */
 public class UserData implements Serializable {
 
-	private static final long serialVersionUID = 20190729L;
+	private static final long serialVersionUID = 20220928L;
 
-	/**
-	 * Users' unique identifier.
-	 */
-	private int newMessagesAmount;
+	private int unresolvedReportsAmount;
+	private int unapprovedContentAmount;
 
-	public int getNewMessagesAmount() {
-		return newMessagesAmount;
+	public int getUnresolvedReportsAmount() {
+		return unresolvedReportsAmount;
 	}
 
-	public void setNewMessagesAmount(int newMessagesAmount) {
-		this.newMessagesAmount = newMessagesAmount;
+	public void setUnresolvedReportsAmount(int unresolvedReportsAmount) {
+		this.unresolvedReportsAmount = unresolvedReportsAmount;
+	}
+
+	public int getUnapprovedContentAmount() {
+		return unapprovedContentAmount;
+	}
+
+	public void setUnapprovedContentAmount(int unapprovedContentAmount) {
+		this.unapprovedContentAmount = unapprovedContentAmount;
 	}
 	
 	/**

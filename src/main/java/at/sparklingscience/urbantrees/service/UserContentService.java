@@ -221,6 +221,7 @@ public class UserContentService {
 				this.contentMapper.insertContent(content);
 			}
 		} catch (DataIntegrityViolationException e) {
+			LOGGER.error("Invalid content metadata", e);
 			throw new BadRequestException("Invalid content metadata");
 		}
 		

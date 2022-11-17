@@ -96,9 +96,19 @@ public class UserContentAccessService {
 			throw new BadRequestException("Illegal content path");
 		}
 		
-		return accessCandidates.stream()
-							   .filter(c -> this.userContentPathMatcher.match(c.getContentPath(), contentPath))
-							   .collect(Collectors.toUnmodifiableList());
+		var accessList = accessCandidates.stream()
+				   .filter(c -> this.userContentPathMatcher.match(c.getContentPath(), contentPath))
+				   .collect(Collectors.toUnmodifiableList());
+		
+		if (accessList.size() == 0) {
+			LOGGER.error("No matching content access entry found after filtering using path matcher. content path: {}, candidate paths: [{}]",
+					contentPath,
+					accessCandidates.stream().map(a -> a.getContentPath()).collect(Collectors.joining(", "))
+					);
+			throw new BadRequestException("Illegal content path");
+		}
+		
+		return accessList;
 		
 	}
 	

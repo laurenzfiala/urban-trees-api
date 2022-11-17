@@ -426,7 +426,7 @@
 		on conflict
 			do nothing;
 		
-		<if test="access != null and access.size() > 0">
+		<if test="access != null and access.size > 0">
 			insert into
 				user_data.content_registry_access
 				(

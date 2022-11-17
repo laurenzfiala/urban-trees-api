@@ -9,6 +9,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 import at.sparklingscience.urbantrees.exception.BadRequestException;
@@ -66,7 +67,15 @@ public class ControllerUtil {
 		return authentication == null || !(authentication instanceof JWTAuthenticationToken);
 	}
 
+	/**
+	 * TODO
+	 * @param authentication
+	 * @return
+	 */
 	public static AuthenticationToken getAuthToken(Authentication authentication) {
+		if (authentication instanceof PreAuthenticatedAuthenticationToken) {
+			return null;
+		}
 		return (AuthenticationToken) authentication;
 	}
 	

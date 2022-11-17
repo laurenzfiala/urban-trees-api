@@ -30,7 +30,7 @@ spring:
 
 # - MyBatis -
 mybatis:
-  mapperLocations: classpath*:**/mappers/*.xml
+  mapperLocations: classpath*:at/sparklingscience/urbantrees/mappers/*.xml
   typeAliasesPackage: at.sparklingscience.urbantrees.domain
   configuration:
     #cacheEnabled: false

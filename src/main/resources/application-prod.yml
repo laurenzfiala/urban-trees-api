@@ -1,6 +1,6 @@
 # - Server -
 server:
-  port: 8443
+  port: 8080
   tomcat:
     accesslog:
       enabled: false
@@ -8,11 +8,6 @@ server:
     include-stacktrace: never
     whitelabel:
       enabled: false
-  ssl:
-    key-store-type: PKCS12
-    key-store: classpath:keystore.p12
-    key-store-password: ${keystore.password}
-    key-alias: 1
 
 # - Spring -
 spring:
@@ -37,7 +32,7 @@ spring:
 
 # - MyBatis -
 mybatis:
-  mapperLocations: classpath*:**/mappers/*.xml
+  mapperLocations: classpath*:at/sparklingscience/urbantrees/mappers/*.xml
   typeAliasesPackage: at.sparklingscience.urbantrees.domain
   configuration:
     autoMappingBehavior: NONE
@@ -50,10 +45,10 @@ logging:
 at:
   sparklingscience:
     urbantrees:
-      corsAllowedOriginPatterns: https://urban-tree-climate.sbg.ac.at:[80,443]
+      corsAllowedOriginPatterns: https://cobs.laurenz.dev
       dateFormatPattern: "yyyy-MM-dd'T'HH-mm-ss"
-      otpIssuer: "urban-trees-climate.sbg.ac.at"
-      loginQrUri: "https://urban-tree-climate.sbg.ac.at/login/{token}?pin=true"
+      otpIssuer: "cobs.laurenz.dev"
+      loginQrUri: "https://cobs.laurenz.dev/login/{token}?pin=true"
       userContent:
         maxSavesPerUserPerDay: 100
     

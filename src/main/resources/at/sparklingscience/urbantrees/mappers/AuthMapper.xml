@@ -417,7 +417,7 @@
 					and
 					<choose>
 						<when test="filters.containsKey('rolesAnd') and filters.rolesAnd">
-							<bind name="rolesAmount" value="filters.roles.size()" />
+							<bind name="rolesAmount" value="filters.roles.size" />
 							#{rolesAmount} = 
 						</when>
 						<otherwise>
